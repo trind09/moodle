@@ -93,7 +93,6 @@ class backup_task_testcase extends advanced_testcase {
         $checksum = $bt->calculate_checksum();
         $this->assertTrue($bt->is_checksum_correct($checksum));
 
-        $bc->destroy();
     }
 
     /**

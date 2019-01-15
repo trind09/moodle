@@ -56,10 +56,8 @@ class backup_anonymizer_helper {
         if (preg_match('/^anon\d*$/', $user->username)) {
             $match = preg_match('/^anonfirstname\d*$/', $user->firstname);
             $match = $match && preg_match('/^anonlastname\d*$/', $user->lastname);
-            // Check .com for backwards compatibility.
-            $emailmatch = preg_match('/^anon\d*@doesntexist\.com$/', $user->email) ||
-                preg_match('/^anon\d*@doesntexist\.invalid$/', $user->email);
-            if ($match && $emailmatch) {
+            $match = $match && preg_match('/^anon\d*@doesntexist\.com$/', $user->email);
+            if ($match) {
                 return true;
             }
         }
@@ -95,7 +93,7 @@ class backup_anonymizer_helper {
     public static function process_user_email($value) {
         static $counter = 0;
         $counter++;
-        return 'anon' . $counter . '@doesntexist.invalid'; // Just a counter.
+        return 'anon' . $counter . '@doesntexist.com'; // Just a counter
     }
 
     public static function process_user_icq($value) {

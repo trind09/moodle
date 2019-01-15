@@ -72,8 +72,7 @@ class event_form extends moodleform {
             if (!empty($eventtypes->groups) && is_array($eventtypes->groups)) {
                 $groupoptions = array();
                 foreach ($eventtypes->groups as $group) {
-                    $groupoptions[$group->id] = format_string($group->name, true,
-                        array('context' => context_course::instance($group->courseid)));
+                    $groupoptions[$group->id] = $group->name;
                 }
                 $mform->addElement('select', 'groupid', get_string('typegroup', 'calendar'), $groupoptions);
                 $mform->disabledIf('groupid', 'eventtype', 'noteq', 'group');

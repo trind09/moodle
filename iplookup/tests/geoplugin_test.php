@@ -31,39 +31,30 @@ defined('MOODLE_INTERNAL') || die();
  */
 class core_iplookup_geoplugin_testcase extends advanced_testcase {
 
-    public function setUp() {
+    public function test_geoip() {
         global $CFG;
         require_once("$CFG->libdir/filelib.php");
         require_once("$CFG->dirroot/iplookup/lib.php");
 
         if (!PHPUNIT_LONGTEST) {
             // we do not want to DDOS their server, right?
-            $this->markTestSkipped('PHPUNIT_LONGTEST is not defined');
+            return;
         }
 
         $this->resetAfterTest();
 
         $CFG->geoipfile = '';
-    }
 
-    public function test_ipv4() {
-        $result = iplookup_find_location('50.0.184.0');
+        $result = iplookup_find_location('147.230.16.1');
 
         $this->assertEquals('array', gettype($result));
-        $this->assertEquals('San Francisco', $result['city']);
-        $this->assertEquals(-122.3933, $result['longitude'], 'Coordinates are out of accepted tolerance', 0.01);
-        $this->assertEquals(37.7697, $result['latitude'], 'Coordinates are out of accepted tolerance', 0.01);
+        $this->assertEquals('Liberec', $result['city']);
+        $this->assertEquals(15.0653, $result['longitude'], '', 0.001);
+        $this->assertEquals(50.7639, $result['latitude'], '', 0.001);
         $this->assertNull($result['error']);
         $this->assertEquals('array', gettype($result['title']));
-        $this->assertEquals('San Francisco', $result['title'][0]);
-        $this->assertEquals('United States', $result['title'][1]);
-    }
-
-    public function test_geoip_ipv6() {
-        $result = iplookup_find_location('2a01:8900:2:3:8c6c:c0db:3d33:9ce6');
-
-        $this->assertNotNull($result['error']);
-        $this->assertEquals($result['error'], get_string('invalidipformat', 'error'));
+        $this->assertEquals('Liberec', $result['title'][0]);
+        $this->assertEquals('Czech Republic', $result['title'][1]);
     }
 }
 

@@ -25,5 +25,4 @@
  */
 
 $string['pluginname'] = 'XML-RPC protocol';
-$string['privacy:metadata'] = 'The XML-RPC protocol plugin does not store any personal data.';
 $string['xmlrpc:use'] = 'Use XML-RPC protocol';

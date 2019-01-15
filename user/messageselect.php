@@ -24,7 +24,6 @@
 
 require_once('../config.php');
 require_once($CFG->dirroot.'/message/lib.php');
-require_once($CFG->dirroot . '/course/lib.php');
 
 $id = required_param('id', PARAM_INT);
 $messagebody = optional_param('messagebody', '', PARAM_CLEANHTML);
@@ -98,7 +97,7 @@ if ($data = data_submitted()) {
             if (!array_key_exists($m[2], $SESSION->emailto[$id])) {
                 if ($user = $DB->get_record_select('user', "id = ?", array($m[2]), 'id, '.
                         $namefields . ', idnumber, email, mailformat, lastaccess, lang, '.
-                        'maildisplay, auth, suspended, deleted, emailstop, username')) {
+                        'maildisplay, auth, suspended, deleted, emailstop')) {
                     $SESSION->emailto[$id][$m[2]] = $user;
                     $count++;
                 }
@@ -116,7 +115,8 @@ if ($course->id == SITEID) {
 }
 
 $link = null;
-if (course_can_view_participants($coursecontext) || course_can_view_participants($systemcontext)) {
+if (has_capability('moodle/course:viewparticipants', $coursecontext) ||
+    has_capability('moodle/site:viewparticipants', $systemcontext)) {
     $link = new moodle_url("/user/index.php", array('id' => $course->id));
 }
 $PAGE->navbar->add(get_string('participants'), $link);
@@ -194,12 +194,6 @@ if (count($SESSION->emailto[$id])) {
     require("message.html");
 }
 
-$PAGE->requires->yui_module('moodle-core-formchangechecker',
-        'M.core_formchangechecker.init',
-        array(array(
-            'formid' => 'theform'
-        ))
-);
-$PAGE->requires->string_for_js('changesmadereallygoaway', 'moodle');
-
 echo $OUTPUT->footer();
+
+

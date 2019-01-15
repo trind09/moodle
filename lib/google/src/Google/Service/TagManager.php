@@ -54,9 +54,8 @@ class Google_Service_TagManager extends Google_Service
 
   public $accounts;
   public $accounts_containers;
-  public $accounts_containers_folders;
-  public $accounts_containers_folders_entities;
-  public $accounts_containers_move_folders;
+  public $accounts_containers_macros;
+  public $accounts_containers_rules;
   public $accounts_containers_tags;
   public $accounts_containers_triggers;
   public $accounts_containers_variables;
@@ -72,7 +71,6 @@ class Google_Service_TagManager extends Google_Service
   public function __construct(Google_Client $client)
   {
     parent::__construct($client);
-    $this->rootUrl = 'https://www.googleapis.com/';
     $this->servicePath = 'tagmanager/v1/';
     $this->version = 'v1';
     $this->serviceName = 'tagmanager';
@@ -194,14 +192,14 @@ class Google_Service_TagManager extends Google_Service
           )
         )
     );
-    $this->accounts_containers_folders = new Google_Service_TagManager_AccountsContainersFolders_Resource(
+    $this->accounts_containers_macros = new Google_Service_TagManager_AccountsContainersMacros_Resource(
         $this,
         $this->serviceName,
-        'folders',
+        'macros',
         array(
           'methods' => array(
             'create' => array(
-              'path' => 'accounts/{accountId}/containers/{containerId}/folders',
+              'path' => 'accounts/{accountId}/containers/{containerId}/macros',
               'httpMethod' => 'POST',
               'parameters' => array(
                 'accountId' => array(
@@ -216,7 +214,7 @@ class Google_Service_TagManager extends Google_Service
                 ),
               ),
             ),'delete' => array(
-              'path' => 'accounts/{accountId}/containers/{containerId}/folders/{folderId}',
+              'path' => 'accounts/{accountId}/containers/{containerId}/macros/{macroId}',
               'httpMethod' => 'DELETE',
               'parameters' => array(
                 'accountId' => array(
@@ -229,14 +227,14 @@ class Google_Service_TagManager extends Google_Service
                   'type' => 'string',
                   'required' => true,
                 ),
-                'folderId' => array(
+                'macroId' => array(
                   'location' => 'path',
                   'type' => 'string',
                   'required' => true,
                 ),
               ),
             ),'get' => array(
-              'path' => 'accounts/{accountId}/containers/{containerId}/folders/{folderId}',
+              'path' => 'accounts/{accountId}/containers/{containerId}/macros/{macroId}',
               'httpMethod' => 'GET',
               'parameters' => array(
                 'accountId' => array(
@@ -249,14 +247,14 @@ class Google_Service_TagManager extends Google_Service
                   'type' => 'string',
                   'required' => true,
                 ),
-                'folderId' => array(
+                'macroId' => array(
                   'location' => 'path',
                   'type' => 'string',
                   'required' => true,
                 ),
               ),
             ),'list' => array(
-              'path' => 'accounts/{accountId}/containers/{containerId}/folders',
+              'path' => 'accounts/{accountId}/containers/{containerId}/macros',
               'httpMethod' => 'GET',
               'parameters' => array(
                 'accountId' => array(
@@ -271,7 +269,7 @@ class Google_Service_TagManager extends Google_Service
                 ),
               ),
             ),'update' => array(
-              'path' => 'accounts/{accountId}/containers/{containerId}/folders/{folderId}',
+              'path' => 'accounts/{accountId}/containers/{containerId}/macros/{macroId}',
               'httpMethod' => 'PUT',
               'parameters' => array(
                 'accountId' => array(
@@ -284,7 +282,7 @@ class Google_Service_TagManager extends Google_Service
                   'type' => 'string',
                   'required' => true,
                 ),
-                'folderId' => array(
+                'macroId' => array(
                   'location' => 'path',
                   'type' => 'string',
                   'required' => true,
@@ -298,14 +296,49 @@ class Google_Service_TagManager extends Google_Service
           )
         )
     );
-    $this->accounts_containers_folders_entities = new Google_Service_TagManager_AccountsContainersFoldersEntities_Resource(
+    $this->accounts_containers_rules = new Google_Service_TagManager_AccountsContainersRules_Resource(
         $this,
         $this->serviceName,
-        'entities',
+        'rules',
         array(
           'methods' => array(
-            'list' => array(
-              'path' => 'accounts/{accountId}/containers/{containerId}/folders/{folderId}/entities',
+            'create' => array(
+              'path' => 'accounts/{accountId}/containers/{containerId}/rules',
+              'httpMethod' => 'POST',
+              'parameters' => array(
+                'accountId' => array(
+                  'location' => 'path',
+                  'type' => 'string',
+                  'required' => true,
+                ),
+                'containerId' => array(
+                  'location' => 'path',
+                  'type' => 'string',
+                  'required' => true,
+                ),
+              ),
+            ),'delete' => array(
+              'path' => 'accounts/{accountId}/containers/{containerId}/rules/{ruleId}',
+              'httpMethod' => 'DELETE',
+              'parameters' => array(
+                'accountId' => array(
+                  'location' => 'path',
+                  'type' => 'string',
+                  'required' => true,
+                ),
+                'containerId' => array(
+                  'location' => 'path',
+                  'type' => 'string',
+                  'required' => true,
+                ),
+                'ruleId' => array(
+                  'location' => 'path',
+                  'type' => 'string',
+                  'required' => true,
+                ),
+              ),
+            ),'get' => array(
+              'path' => 'accounts/{accountId}/containers/{containerId}/rules/{ruleId}',
               'httpMethod' => 'GET',
               'parameters' => array(
                 'accountId' => array(
@@ -318,24 +351,29 @@ class Google_Service_TagManager extends Google_Service
                   'type' => 'string',
                   'required' => true,
                 ),
-                'folderId' => array(
+                'ruleId' => array(
                   'location' => 'path',
                   'type' => 'string',
                   'required' => true,
                 ),
               ),
-            ),
-          )
-        )
-    );
-    $this->accounts_containers_move_folders = new Google_Service_TagManager_AccountsContainersMoveFolders_Resource(
-        $this,
-        $this->serviceName,
-        'move_folders',
-        array(
-          'methods' => array(
-            'update' => array(
-              'path' => 'accounts/{accountId}/containers/{containerId}/move_folders/{folderId}',
+            ),'list' => array(
+              'path' => 'accounts/{accountId}/containers/{containerId}/rules',
+              'httpMethod' => 'GET',
+              'parameters' => array(
+                'accountId' => array(
+                  'location' => 'path',
+                  'type' => 'string',
+                  'required' => true,
+                ),
+                'containerId' => array(
+                  'location' => 'path',
+                  'type' => 'string',
+                  'required' => true,
+                ),
+              ),
+            ),'update' => array(
+              'path' => 'accounts/{accountId}/containers/{containerId}/rules/{ruleId}',
               'httpMethod' => 'PUT',
               'parameters' => array(
                 'accountId' => array(
@@ -348,25 +386,14 @@ class Google_Service_TagManager extends Google_Service
                   'type' => 'string',
                   'required' => true,
                 ),
-                'folderId' => array(
+                'ruleId' => array(
                   'location' => 'path',
                   'type' => 'string',
                   'required' => true,
                 ),
-                'variableId' => array(
+                'fingerprint' => array(
                   'location' => 'query',
                   'type' => 'string',
-                  'repeated' => true,
-                ),
-                'tagId' => array(
-                  'location' => 'query',
-                  'type' => 'string',
-                  'repeated' => true,
-                ),
-                'triggerId' => array(
-                  'location' => 'query',
-                  'type' => 'string',
-                  'repeated' => true,
                 ),
               ),
             ),
@@ -1084,155 +1111,189 @@ class Google_Service_TagManager_AccountsContainers_Resource extends Google_Servi
 }
 
 /**
- * The "folders" collection of methods.
+ * The "macros" collection of methods.
  * Typical usage is:
  *  <code>
  *   $tagmanagerService = new Google_Service_TagManager(...);
- *   $folders = $tagmanagerService->folders;
+ *   $macros = $tagmanagerService->macros;
  *  </code>
  */
-class Google_Service_TagManager_AccountsContainersFolders_Resource extends Google_Service_Resource
+class Google_Service_TagManager_AccountsContainersMacros_Resource extends Google_Service_Resource
 {
 
   /**
-   * Creates a GTM Folder. (folders.create)
+   * Creates a GTM Macro. (macros.create)
    *
    * @param string $accountId The GTM Account ID.
    * @param string $containerId The GTM Container ID.
-   * @param Google_Folder $postBody
+   * @param Google_Macro $postBody
    * @param array $optParams Optional parameters.
-   * @return Google_Service_TagManager_Folder
+   * @return Google_Service_TagManager_Macro
    */
-  public function create($accountId, $containerId, Google_Service_TagManager_Folder $postBody, $optParams = array())
+  public function create($accountId, $containerId, Google_Service_TagManager_Macro $postBody, $optParams = array())
   {
     $params = array('accountId' => $accountId, 'containerId' => $containerId, 'postBody' => $postBody);
     $params = array_merge($params, $optParams);
-    return $this->call('create', array($params), "Google_Service_TagManager_Folder");
+    return $this->call('create', array($params), "Google_Service_TagManager_Macro");
   }
 
   /**
-   * Deletes a GTM Folder. (folders.delete)
+   * Deletes a GTM Macro. (macros.delete)
    *
    * @param string $accountId The GTM Account ID.
    * @param string $containerId The GTM Container ID.
-   * @param string $folderId The GTM Folder ID.
+   * @param string $macroId The GTM Macro ID.
    * @param array $optParams Optional parameters.
    */
-  public function delete($accountId, $containerId, $folderId, $optParams = array())
+  public function delete($accountId, $containerId, $macroId, $optParams = array())
   {
-    $params = array('accountId' => $accountId, 'containerId' => $containerId, 'folderId' => $folderId);
+    $params = array('accountId' => $accountId, 'containerId' => $containerId, 'macroId' => $macroId);
     $params = array_merge($params, $optParams);
     return $this->call('delete', array($params));
   }
 
   /**
-   * Gets a GTM Folder. (folders.get)
+   * Gets a GTM Macro. (macros.get)
    *
    * @param string $accountId The GTM Account ID.
    * @param string $containerId The GTM Container ID.
-   * @param string $folderId The GTM Folder ID.
+   * @param string $macroId The GTM Macro ID.
    * @param array $optParams Optional parameters.
-   * @return Google_Service_TagManager_Folder
+   * @return Google_Service_TagManager_Macro
    */
-  public function get($accountId, $containerId, $folderId, $optParams = array())
+  public function get($accountId, $containerId, $macroId, $optParams = array())
   {
-    $params = array('accountId' => $accountId, 'containerId' => $containerId, 'folderId' => $folderId);
+    $params = array('accountId' => $accountId, 'containerId' => $containerId, 'macroId' => $macroId);
     $params = array_merge($params, $optParams);
-    return $this->call('get', array($params), "Google_Service_TagManager_Folder");
+    return $this->call('get', array($params), "Google_Service_TagManager_Macro");
   }
 
   /**
-   * Lists all GTM Folders of a Container. (folders.listAccountsContainersFolders)
+   * Lists all GTM Macros of a Container. (macros.listAccountsContainersMacros)
    *
    * @param string $accountId The GTM Account ID.
    * @param string $containerId The GTM Container ID.
    * @param array $optParams Optional parameters.
-   * @return Google_Service_TagManager_ListFoldersResponse
+   * @return Google_Service_TagManager_ListMacrosResponse
    */
-  public function listAccountsContainersFolders($accountId, $containerId, $optParams = array())
+  public function listAccountsContainersMacros($accountId, $containerId, $optParams = array())
   {
     $params = array('accountId' => $accountId, 'containerId' => $containerId);
     $params = array_merge($params, $optParams);
-    return $this->call('list', array($params), "Google_Service_TagManager_ListFoldersResponse");
+    return $this->call('list', array($params), "Google_Service_TagManager_ListMacrosResponse");
   }
 
   /**
-   * Updates a GTM Folder. (folders.update)
+   * Updates a GTM Macro. (macros.update)
    *
    * @param string $accountId The GTM Account ID.
    * @param string $containerId The GTM Container ID.
-   * @param string $folderId The GTM Folder ID.
-   * @param Google_Folder $postBody
+   * @param string $macroId The GTM Macro ID.
+   * @param Google_Macro $postBody
    * @param array $optParams Optional parameters.
    *
    * @opt_param string fingerprint When provided, this fingerprint must match the
-   * fingerprint of the folder in storage.
-   * @return Google_Service_TagManager_Folder
+   * fingerprint of the macro in storage.
+   * @return Google_Service_TagManager_Macro
    */
-  public function update($accountId, $containerId, $folderId, Google_Service_TagManager_Folder $postBody, $optParams = array())
+  public function update($accountId, $containerId, $macroId, Google_Service_TagManager_Macro $postBody, $optParams = array())
   {
-    $params = array('accountId' => $accountId, 'containerId' => $containerId, 'folderId' => $folderId, 'postBody' => $postBody);
+    $params = array('accountId' => $accountId, 'containerId' => $containerId, 'macroId' => $macroId, 'postBody' => $postBody);
     $params = array_merge($params, $optParams);
-    return $this->call('update', array($params), "Google_Service_TagManager_Folder");
-  }
-}
-
-/**
- * The "entities" collection of methods.
- * Typical usage is:
- *  <code>
- *   $tagmanagerService = new Google_Service_TagManager(...);
- *   $entities = $tagmanagerService->entities;
- *  </code>
- */
-class Google_Service_TagManager_AccountsContainersFoldersEntities_Resource extends Google_Service_Resource
-{
-
-  /**
-   * List all entities in a GTM Folder.
-   * (entities.listAccountsContainersFoldersEntities)
-   *
-   * @param string $accountId The GTM Account ID.
-   * @param string $containerId The GTM Container ID.
-   * @param string $folderId The GTM Folder ID.
-   * @param array $optParams Optional parameters.
-   * @return Google_Service_TagManager_FolderEntities
-   */
-  public function listAccountsContainersFoldersEntities($accountId, $containerId, $folderId, $optParams = array())
-  {
-    $params = array('accountId' => $accountId, 'containerId' => $containerId, 'folderId' => $folderId);
-    $params = array_merge($params, $optParams);
-    return $this->call('list', array($params), "Google_Service_TagManager_FolderEntities");
+    return $this->call('update', array($params), "Google_Service_TagManager_Macro");
   }
 }
 /**
- * The "move_folders" collection of methods.
+ * The "rules" collection of methods.
  * Typical usage is:
  *  <code>
  *   $tagmanagerService = new Google_Service_TagManager(...);
- *   $move_folders = $tagmanagerService->move_folders;
+ *   $rules = $tagmanagerService->rules;
  *  </code>
  */
-class Google_Service_TagManager_AccountsContainersMoveFolders_Resource extends Google_Service_Resource
+class Google_Service_TagManager_AccountsContainersRules_Resource extends Google_Service_Resource
 {
 
   /**
-   * Moves entities to a GTM Folder. (move_folders.update)
+   * Creates a GTM Rule. (rules.create)
    *
    * @param string $accountId The GTM Account ID.
    * @param string $containerId The GTM Container ID.
-   * @param string $folderId The GTM Folder ID.
+   * @param Google_Rule $postBody
+   * @param array $optParams Optional parameters.
+   * @return Google_Service_TagManager_Rule
+   */
+  public function create($accountId, $containerId, Google_Service_TagManager_Rule $postBody, $optParams = array())
+  {
+    $params = array('accountId' => $accountId, 'containerId' => $containerId, 'postBody' => $postBody);
+    $params = array_merge($params, $optParams);
+    return $this->call('create', array($params), "Google_Service_TagManager_Rule");
+  }
+
+  /**
+   * Deletes a GTM Rule. (rules.delete)
+   *
+   * @param string $accountId The GTM Account ID.
+   * @param string $containerId The GTM Container ID.
+   * @param string $ruleId The GTM Rule ID.
+   * @param array $optParams Optional parameters.
+   */
+  public function delete($accountId, $containerId, $ruleId, $optParams = array())
+  {
+    $params = array('accountId' => $accountId, 'containerId' => $containerId, 'ruleId' => $ruleId);
+    $params = array_merge($params, $optParams);
+    return $this->call('delete', array($params));
+  }
+
+  /**
+   * Gets a GTM Rule. (rules.get)
+   *
+   * @param string $accountId The GTM Account ID.
+   * @param string $containerId The GTM Container ID.
+   * @param string $ruleId The GTM Rule ID.
+   * @param array $optParams Optional parameters.
+   * @return Google_Service_TagManager_Rule
+   */
+  public function get($accountId, $containerId, $ruleId, $optParams = array())
+  {
+    $params = array('accountId' => $accountId, 'containerId' => $containerId, 'ruleId' => $ruleId);
+    $params = array_merge($params, $optParams);
+    return $this->call('get', array($params), "Google_Service_TagManager_Rule");
+  }
+
+  /**
+   * Lists all GTM Rules of a Container. (rules.listAccountsContainersRules)
+   *
+   * @param string $accountId The GTM Account ID.
+   * @param string $containerId The GTM Container ID.
+   * @param array $optParams Optional parameters.
+   * @return Google_Service_TagManager_ListRulesResponse
+   */
+  public function listAccountsContainersRules($accountId, $containerId, $optParams = array())
+  {
+    $params = array('accountId' => $accountId, 'containerId' => $containerId);
+    $params = array_merge($params, $optParams);
+    return $this->call('list', array($params), "Google_Service_TagManager_ListRulesResponse");
+  }
+
+  /**
+   * Updates a GTM Rule. (rules.update)
+   *
+   * @param string $accountId The GTM Account ID.
+   * @param string $containerId The GTM Container ID.
+   * @param string $ruleId The GTM Rule ID.
+   * @param Google_Rule $postBody
    * @param array $optParams Optional parameters.
    *
-   * @opt_param string variableId The variables to be moved to the folder.
-   * @opt_param string tagId The tags to be moved to the folder.
-   * @opt_param string triggerId The triggers to be moved to the folder.
+   * @opt_param string fingerprint When provided, this fingerprint must match the
+   * fingerprint of the rule in storage.
+   * @return Google_Service_TagManager_Rule
    */
-  public function update($accountId, $containerId, $folderId, $optParams = array())
+  public function update($accountId, $containerId, $ruleId, Google_Service_TagManager_Rule $postBody, $optParams = array())
   {
-    $params = array('accountId' => $accountId, 'containerId' => $containerId, 'folderId' => $folderId);
+    $params = array('accountId' => $accountId, 'containerId' => $containerId, 'ruleId' => $ruleId, 'postBody' => $postBody);
     $params = array_merge($params, $optParams);
-    return $this->call('update', array($params));
+    return $this->call('update', array($params), "Google_Service_TagManager_Rule");
   }
 }
 /**
@@ -1614,9 +1675,9 @@ class Google_Service_TagManager_AccountsContainersVersions_Resource extends Goog
 
   /**
    * Restores a Container Version. This will overwrite the container's current
-   * configuration (including its variables, triggers and tags). The operation
-   * will not have any effect on the version that is being served (i.e. the
-   * published version). (versions.restore)
+   * configuration (including its macros, rules and tags). The operation will not
+   * have any effect on the version that is being served (i.e. the published
+   * version). (versions.restore)
    *
    * @param string $accountId The GTM Account ID.
    * @param string $containerId The GTM Container ID.
@@ -1997,8 +2058,6 @@ class Google_Service_TagManager_ContainerVersion extends Google_Collection
   public $containerVersionId;
   public $deleted;
   public $fingerprint;
-  protected $folderType = 'Google_Service_TagManager_Folder';
-  protected $folderDataType = 'array';
   protected $macroType = 'Google_Service_TagManager_Macro';
   protected $macroDataType = 'array';
   public $name;
@@ -2060,14 +2119,6 @@ class Google_Service_TagManager_ContainerVersion extends Google_Collection
   public function getFingerprint()
   {
     return $this->fingerprint;
-  }
-  public function setFolder($folder)
-  {
-    $this->folder = $folder;
-  }
-  public function getFolder()
-  {
-    return $this->folder;
   }
   public function setMacro($macro)
   {
@@ -2287,98 +2338,6 @@ class Google_Service_TagManager_CreateContainerVersionResponse extends Google_Mo
   }
 }
 
-class Google_Service_TagManager_Folder extends Google_Model
-{
-  protected $internal_gapi_mappings = array(
-  );
-  public $accountId;
-  public $containerId;
-  public $fingerprint;
-  public $folderId;
-  public $name;
-
-
-  public function setAccountId($accountId)
-  {
-    $this->accountId = $accountId;
-  }
-  public function getAccountId()
-  {
-    return $this->accountId;
-  }
-  public function setContainerId($containerId)
-  {
-    $this->containerId = $containerId;
-  }
-  public function getContainerId()
-  {
-    return $this->containerId;
-  }
-  public function setFingerprint($fingerprint)
-  {
-    $this->fingerprint = $fingerprint;
-  }
-  public function getFingerprint()
-  {
-    return $this->fingerprint;
-  }
-  public function setFolderId($folderId)
-  {
-    $this->folderId = $folderId;
-  }
-  public function getFolderId()
-  {
-    return $this->folderId;
-  }
-  public function setName($name)
-  {
-    $this->name = $name;
-  }
-  public function getName()
-  {
-    return $this->name;
-  }
-}
-
-class Google_Service_TagManager_FolderEntities extends Google_Collection
-{
-  protected $collection_key = 'variable';
-  protected $internal_gapi_mappings = array(
-  );
-  protected $tagType = 'Google_Service_TagManager_Tag';
-  protected $tagDataType = 'array';
-  protected $triggerType = 'Google_Service_TagManager_Trigger';
-  protected $triggerDataType = 'array';
-  protected $variableType = 'Google_Service_TagManager_Variable';
-  protected $variableDataType = 'array';
-
-
-  public function setTag($tag)
-  {
-    $this->tag = $tag;
-  }
-  public function getTag()
-  {
-    return $this->tag;
-  }
-  public function setTrigger($trigger)
-  {
-    $this->trigger = $trigger;
-  }
-  public function getTrigger()
-  {
-    return $this->trigger;
-  }
-  public function setVariable($variable)
-  {
-    $this->variable = $variable;
-  }
-  public function getVariable()
-  {
-    return $this->variable;
-  }
-}
-
 class Google_Service_TagManager_ListAccountUsersResponse extends Google_Collection
 {
   protected $collection_key = 'userAccess';
@@ -2465,22 +2424,41 @@ class Google_Service_TagManager_ListContainersResponse extends Google_Collection
   }
 }
 
-class Google_Service_TagManager_ListFoldersResponse extends Google_Collection
+class Google_Service_TagManager_ListMacrosResponse extends Google_Collection
 {
-  protected $collection_key = 'folders';
+  protected $collection_key = 'macros';
   protected $internal_gapi_mappings = array(
   );
-  protected $foldersType = 'Google_Service_TagManager_Folder';
-  protected $foldersDataType = 'array';
+  protected $macrosType = 'Google_Service_TagManager_Macro';
+  protected $macrosDataType = 'array';
 
 
-  public function setFolders($folders)
+  public function setMacros($macros)
   {
-    $this->folders = $folders;
+    $this->macros = $macros;
   }
-  public function getFolders()
+  public function getMacros()
   {
-    return $this->folders;
+    return $this->macros;
+  }
+}
+
+class Google_Service_TagManager_ListRulesResponse extends Google_Collection
+{
+  protected $collection_key = 'rules';
+  protected $internal_gapi_mappings = array(
+  );
+  protected $rulesType = 'Google_Service_TagManager_Rule';
+  protected $rulesDataType = 'array';
+
+
+  public function setRules($rules)
+  {
+    $this->rules = $rules;
+  }
+  public function getRules()
+  {
+    return $this->rules;
   }
 }
 
@@ -2556,7 +2534,6 @@ class Google_Service_TagManager_Macro extends Google_Collection
   public $notes;
   protected $parameterType = 'Google_Service_TagManager_Parameter';
   protected $parameterDataType = 'array';
-  public $parentFolderId;
   public $scheduleEndMs;
   public $scheduleStartMs;
   public $type;
@@ -2633,14 +2610,6 @@ class Google_Service_TagManager_Macro extends Google_Collection
   public function getParameter()
   {
     return $this->parameter;
-  }
-  public function setParentFolderId($parentFolderId)
-  {
-    $this->parentFolderId = $parentFolderId;
-  }
-  public function getParentFolderId()
-  {
-    return $this->parentFolderId;
   }
   public function setScheduleEndMs($scheduleEndMs)
   {
@@ -2824,35 +2793,9 @@ class Google_Service_TagManager_Rule extends Google_Collection
   }
 }
 
-class Google_Service_TagManager_SetupTag extends Google_Model
-{
-  protected $internal_gapi_mappings = array(
-  );
-  public $stopOnSetupFailure;
-  public $tagName;
-
-
-  public function setStopOnSetupFailure($stopOnSetupFailure)
-  {
-    $this->stopOnSetupFailure = $stopOnSetupFailure;
-  }
-  public function getStopOnSetupFailure()
-  {
-    return $this->stopOnSetupFailure;
-  }
-  public function setTagName($tagName)
-  {
-    $this->tagName = $tagName;
-  }
-  public function getTagName()
-  {
-    return $this->tagName;
-  }
-}
-
 class Google_Service_TagManager_Tag extends Google_Collection
 {
-  protected $collection_key = 'teardownTag';
+  protected $collection_key = 'parameter';
   protected $internal_gapi_mappings = array(
   );
   public $accountId;
@@ -2867,17 +2810,11 @@ class Google_Service_TagManager_Tag extends Google_Collection
   public $notes;
   protected $parameterType = 'Google_Service_TagManager_Parameter';
   protected $parameterDataType = 'array';
-  public $parentFolderId;
   protected $priorityType = 'Google_Service_TagManager_Parameter';
   protected $priorityDataType = '';
   public $scheduleEndMs;
   public $scheduleStartMs;
-  protected $setupTagType = 'Google_Service_TagManager_SetupTag';
-  protected $setupTagDataType = 'array';
-  public $tagFiringOption;
   public $tagId;
-  protected $teardownTagType = 'Google_Service_TagManager_TeardownTag';
-  protected $teardownTagDataType = 'array';
   public $type;
 
 
@@ -2969,14 +2906,6 @@ class Google_Service_TagManager_Tag extends Google_Collection
   {
     return $this->parameter;
   }
-  public function setParentFolderId($parentFolderId)
-  {
-    $this->parentFolderId = $parentFolderId;
-  }
-  public function getParentFolderId()
-  {
-    return $this->parentFolderId;
-  }
   public function setPriority(Google_Service_TagManager_Parameter $priority)
   {
     $this->priority = $priority;
@@ -3001,22 +2930,6 @@ class Google_Service_TagManager_Tag extends Google_Collection
   {
     return $this->scheduleStartMs;
   }
-  public function setSetupTag($setupTag)
-  {
-    $this->setupTag = $setupTag;
-  }
-  public function getSetupTag()
-  {
-    return $this->setupTag;
-  }
-  public function setTagFiringOption($tagFiringOption)
-  {
-    $this->tagFiringOption = $tagFiringOption;
-  }
-  public function getTagFiringOption()
-  {
-    return $this->tagFiringOption;
-  }
   public function setTagId($tagId)
   {
     $this->tagId = $tagId;
@@ -3025,14 +2938,6 @@ class Google_Service_TagManager_Tag extends Google_Collection
   {
     return $this->tagId;
   }
-  public function setTeardownTag($teardownTag)
-  {
-    $this->teardownTag = $teardownTag;
-  }
-  public function getTeardownTag()
-  {
-    return $this->teardownTag;
-  }
   public function setType($type)
   {
     $this->type = $type;
@@ -3040,32 +2945,6 @@ class Google_Service_TagManager_Tag extends Google_Collection
   public function getType()
   {
     return $this->type;
-  }
-}
-
-class Google_Service_TagManager_TeardownTag extends Google_Model
-{
-  protected $internal_gapi_mappings = array(
-  );
-  public $stopTeardownOnFailure;
-  public $tagName;
-
-
-  public function setStopTeardownOnFailure($stopTeardownOnFailure)
-  {
-    $this->stopTeardownOnFailure = $stopTeardownOnFailure;
-  }
-  public function getStopTeardownOnFailure()
-  {
-    return $this->stopTeardownOnFailure;
-  }
-  public function setTagName($tagName)
-  {
-    $this->tagName = $tagName;
-  }
-  public function getTagName()
-  {
-    return $this->tagName;
   }
 }
 
@@ -3094,7 +2973,6 @@ class Google_Service_TagManager_Trigger extends Google_Collection
   protected $limitType = 'Google_Service_TagManager_Parameter';
   protected $limitDataType = '';
   public $name;
-  public $parentFolderId;
   public $triggerId;
   public $type;
   protected $uniqueTriggerIdType = 'Google_Service_TagManager_Parameter';
@@ -3202,14 +3080,6 @@ class Google_Service_TagManager_Trigger extends Google_Collection
   public function getName()
   {
     return $this->name;
-  }
-  public function setParentFolderId($parentFolderId)
-  {
-    $this->parentFolderId = $parentFolderId;
-  }
-  public function getParentFolderId()
-  {
-    return $this->parentFolderId;
   }
   public function setTriggerId($triggerId)
   {
@@ -3331,7 +3201,6 @@ class Google_Service_TagManager_Variable extends Google_Collection
   public $notes;
   protected $parameterType = 'Google_Service_TagManager_Parameter';
   protected $parameterDataType = 'array';
-  public $parentFolderId;
   public $scheduleEndMs;
   public $scheduleStartMs;
   public $type;
@@ -3401,14 +3270,6 @@ class Google_Service_TagManager_Variable extends Google_Collection
   public function getParameter()
   {
     return $this->parameter;
-  }
-  public function setParentFolderId($parentFolderId)
-  {
-    $this->parentFolderId = $parentFolderId;
-  }
-  public function getParentFolderId()
-  {
-    return $this->parentFolderId;
   }
   public function setScheduleEndMs($scheduleEndMs)
   {

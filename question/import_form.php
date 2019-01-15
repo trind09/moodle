@@ -38,8 +38,7 @@ require_once($CFG->libdir . '/formslib.php');
 class question_import_form extends moodleform {
 
     protected function definition() {
-        global $OUTPUT;
-
+        global $COURSE;
         $mform = $this->_form;
 
         $defaultcategory = $this->_customdata['defaultcategory'];
@@ -50,21 +49,19 @@ class question_import_form extends moodleform {
 
         $fileformatnames = get_import_export_formats('import');
         $radioarray = array();
-        $separators = array();
+        $i = 0 ;
         foreach ($fileformatnames as $shortname => $fileformatname) {
-            $radioarray[] = $mform->createElement('radio', 'format', '', $fileformatname, $shortname);
+            $currentgrp1 = array();
+            $currentgrp1[] = $mform->createElement('radio', 'format', '', $fileformatname, $shortname);
+            $mform->addGroup($currentgrp1, "formathelp[{$i}]", '', array('<br />'), false);
 
-            $separator = '';
             if (get_string_manager()->string_exists('pluginname_help', 'qformat_' . $shortname)) {
-                $separator .= $OUTPUT->help_icon('pluginname', 'qformat_' . $shortname);
+                $mform->addHelpButton("formathelp[{$i}]", 'pluginname', 'qformat_' . $shortname);
             }
-            $separator .= '<br>';
-            $separators[] = $separator;
-        }
 
-        $radioarray[] = $mform->createElement('static', 'makelasthelpiconshowup', '');
-        $mform->addGroup($radioarray, "formatchoices", '', $separators, false);
-        $mform->addRule("formatchoices", null, 'required', null, 'client');
+            $i++ ;
+        }
+        $mform->addRule("formathelp[0]", null, 'required', null, 'client');
 
         // Import options.
         $mform->addElement('header','general', get_string('general', 'form'));

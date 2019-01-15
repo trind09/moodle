@@ -1,6 +1,5 @@
 YUI.add('moodle-course-dragdrop', function (Y, NAME) {
 
-/* eslint-disable no-unused-vars */
 /**
  * Drag and Drop for course sections and course modules.
  *
@@ -45,7 +44,7 @@ Y.extend(DRAGSECTION, M.core.dragdrop, {
 
     initializer: function() {
         // Set group for parent class
-        this.groups = [CSS.SECTIONDRAGGABLE];
+        this.groups = [ CSS.SECTIONDRAGGABLE ];
         this.samenodeclass = M.course.format.get_sectionwrapperclass();
         this.parentnodeclass = M.course.format.get_containerclass();
 
@@ -107,31 +106,10 @@ Y.extend(DRAGSECTION, M.core.dragdrop, {
                     cssleft.appendChild(this.get_drag_handle(title, CSS.SECTIONHANDLE, 'icon', true));
 
                     if (moveup) {
-                        if (moveup.previous('br')) {
-                            moveup.previous('br').remove();
-                        } else if (moveup.next('br')) {
-                            moveup.next('br').remove();
-                        }
-
-                        if (moveup.ancestor('.section_action_menu') && moveup.ancestor().get('nodeName').toLowerCase() == 'li') {
-                            moveup.ancestor().remove();
-                        } else {
-                            moveup.remove();
-                        }
+                        moveup.remove();
                     }
                     if (movedown) {
-                        if (movedown.previous('br')) {
-                            movedown.previous('br').remove();
-                        } else if (movedown.next('br')) {
-                            movedown.next('br').remove();
-                        }
-
-                        var movedownParentType = movedown.ancestor().get('nodeName').toLowerCase();
-                        if (movedown.ancestor('.section_action_menu') && movedownParentType == 'li') {
-                            movedown.ancestor().remove();
-                        } else {
-                            movedown.remove();
-                        }
+                        movedown.remove();
                     }
 
                     // This section can be moved - add the class to indicate this to Y.DD.
@@ -153,7 +131,7 @@ Y.extend(DRAGSECTION, M.core.dragdrop, {
         containernode.addClass(M.course.format.get_containerclass());
         var sectionnode = Y.Node.create('<' + M.course.format.get_sectionwrappernode() +
                 '></' + M.course.format.get_sectionwrappernode() + '>');
-        sectionnode.addClass(M.course.format.get_sectionwrapperclass());
+        sectionnode.addClass( M.course.format.get_sectionwrapperclass());
         sectionnode.setStyle('margin', 0);
         sectionnode.setContent(drag.get('node').get('innerHTML'));
         containernode.appendChild(sectionnode);
@@ -247,9 +225,7 @@ Y.extend(DRAGSECTION, M.core.dragdrop, {
                             new M.core.ajaxException(responsetext);
                         }
                         M.course.format.process_sections(Y, sectionlist, responsetext, loopstart, loopend);
-                    } catch (e) {
-                        // Ignore.
-                    }
+                    } catch (e) {}
 
                     // Update all of the section IDs - first unset them, then set them
                     // to avoid duplicates in the DOM.
@@ -290,7 +266,7 @@ Y.extend(DRAGSECTION, M.core.dragdrop, {
                     lightbox.hide();
                 }
             },
-            context: this
+            context:this
         });
     }
 
@@ -329,6 +305,8 @@ Y.extend(DRAGRESOURCE, M.core.dragdrop, {
         this.groups = ['resource'];
         this.samenodeclass = CSS.ACTIVITY;
         this.parentnodeclass = CSS.SECTION;
+        this.resourcedraghandle = this.get_drag_handle(M.util.get_string('movecoursemodule', 'moodle'),
+                CSS.EDITINGMOVE, CSS.ICONCLASS, true);
 
         this.samenodelabel = {
             identifier: 'afterresource',
@@ -421,9 +399,7 @@ Y.extend(DRAGRESOURCE, M.core.dragdrop, {
             // Replace move icons
             var move = resourcesnode.one('a.' + CSS.EDITINGMOVE);
             if (move) {
-                var sr = move.getData('sectionreturn');
-                move.replace(this.get_drag_handle(M.util.get_string('movecoursemodule', 'moodle'),
-                             CSS.EDITINGMOVE, CSS.ICONCLASS, true).setAttribute('data-sectionreturn', sr));
+                move.replace(this.resourcedraghandle.cloneNode(true));
             }
         }, this);
     },
@@ -500,7 +476,7 @@ Y.extend(DRAGRESOURCE, M.core.dragdrop, {
                     // TODO: revert nodes location
                 }
             },
-            context: this
+            context:this
         });
     }
 }, {

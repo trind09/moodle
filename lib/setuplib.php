@@ -51,6 +51,20 @@ define('MEMORY_EXTRA', -3);
 /** Extremely large memory limit - not recommended for standard scripts */
 define('MEMORY_HUGE', -4);
 
+
+/**
+ * Simple class. It is usually used instead of stdClass because it looks
+ * more familiar to Java developers ;-) Do not use for type checking of
+ * function parameters. Please use stdClass instead.
+ *
+ * @package    core
+ * @subpackage lib
+ * @copyright  2009 Petr Skoda  {@link http://skodak.org}
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @deprecated since 2.0
+ */
+class object extends stdClass {};
+
 /**
  * Base Moodle Exception class
  *
@@ -363,23 +377,8 @@ function default_exception_handler($ex) {
                 // If you enable db debugging and exception is thrown, the print footer prints a lot of rubbish
                 $DB->set_debug(0);
             }
-            if (AJAX_SCRIPT) {
-                // If we are in an AJAX script we don't want to use PREFERRED_RENDERER_TARGET.
-                // Because we know we will want to use ajax format.
-                $renderer = new core_renderer_ajax($PAGE, 'ajax');
-            } else {
-                $renderer = $OUTPUT;
-            }
-            echo $renderer->fatal_error($info->message, $info->moreinfourl, $info->link, $info->backtrace, $info->debuginfo,
-                $info->errorcode);
-        } catch (Exception $e) {
-            $out_ex = $e;
-        } catch (Throwable $e) {
-            // Engine errors in PHP7 throw exceptions of type Throwable (this "catch" will be ignored in PHP5).
-            $out_ex = $e;
-        }
-
-        if (isset($out_ex)) {
+            echo $OUTPUT->fatal_error($info->message, $info->moreinfourl, $info->link, $info->backtrace, $info->debuginfo);
+        } catch (Exception $out_ex) {
             // default exception handler MUST not throw any exceptions!!
             // the problem here is we do not know if page already started or not, we only know that somebody messed up in outputlib or theme
             // so we just print at least something instead of "Exception thrown without a stack frame in Unknown on line 0":-(
@@ -447,7 +446,7 @@ function is_early_init($backtrace) {
     $dangerouscode = array(
         array('function' => 'header', 'type' => '->'),
         array('class' => 'bootstrap_renderer'),
-        array('file' => __DIR__.'/setup.php'),
+        array('file' => dirname(__FILE__).'/setup.php'),
     );
     foreach ($backtrace as $stackframe) {
         foreach ($dangerouscode as $pattern) {
@@ -578,8 +577,11 @@ function get_exception_info($ex) {
 
     // When printing an error the continue button should never link offsite.
     // We cannot use clean_param() here as it is not guaranteed that it has been loaded yet.
+    $httpswwwroot = str_replace('http:', 'https:', $CFG->wwwroot);
     if (stripos($link, $CFG->wwwroot) === 0) {
         // Internal HTTP, all good.
+    } else if (!empty($CFG->loginhttps) && stripos($link, $httpswwwroot) === 0) {
+        // Internal HTTPS, all good.
     } else {
         // External link spotted!
         $link = $CFG->wwwroot . '/';
@@ -713,16 +715,13 @@ function get_docs_url($path = null) {
 /**
  * Formats a backtrace ready for output.
  *
- * This function does not include function arguments because they could contain sensitive information
- * not suitable to be exposed in a response.
- *
  * @param array $callers backtrace array, as returned by debug_backtrace().
  * @param boolean $plaintext if false, generates HTML, if true generates plain text.
  * @return string formatted backtrace, ready for output.
  */
 function format_backtrace($callers, $plaintext = false) {
     // do not use $CFG->dirroot because it might not be available in destructors
-    $dirroot = dirname(__DIR__);
+    $dirroot = dirname(dirname(__FILE__));
 
     if (empty($callers)) {
         return '';
@@ -828,13 +827,6 @@ function initialise_fullme() {
         initialise_fullme_cli();
         return;
     }
-    if (!empty($CFG->overridetossl)) {
-        if (strpos($CFG->wwwroot, 'http://') === 0) {
-            $CFG->wwwroot = str_replace('http:', 'https:', $CFG->wwwroot);
-        } else {
-            unset_config('overridetossl');
-        }
-    }
 
     $rurl = setup_get_remote_url();
     $wwwroot = parse_url($CFG->wwwroot.'/');
@@ -887,11 +879,7 @@ function initialise_fullme() {
     // (That is, the Moodle server uses http, with an external box translating everything to https).
     if (empty($CFG->sslproxy)) {
         if ($rurl['scheme'] === 'http' and $wwwroot['scheme'] === 'https') {
-            if (defined('REQUIRE_CORRECT_ACCESS') && REQUIRE_CORRECT_ACCESS) {
-                print_error('sslonlyaccess', 'error');
-            } else {
-                redirect($CFG->wwwroot, get_string('wwwrootmismatch', 'error', $CFG->wwwroot), 3);
-            }
+            print_error('sslonlyaccess', 'error');
         }
     } else {
         if ($wwwroot['scheme'] !== 'https') {
@@ -962,29 +950,6 @@ function setup_get_remote_url() {
     if (stripos($_SERVER['SERVER_SOFTWARE'], 'apache') !== false) {
         //Apache server
         $rurl['fullpath'] = $_SERVER['REQUEST_URI'];
-
-        // Fixing a known issue with:
-        // - Apache versions lesser than 2.4.11
-        // - PHP deployed in Apache as PHP-FPM via mod_proxy_fcgi
-        // - PHP versions lesser than 5.6.3 and 5.5.18.
-        if (isset($_SERVER['PATH_INFO']) && (php_sapi_name() === 'fpm-fcgi') && isset($_SERVER['SCRIPT_NAME'])) {
-            $pathinfodec = rawurldecode($_SERVER['PATH_INFO']);
-            $lenneedle = strlen($pathinfodec);
-            // Checks whether SCRIPT_NAME ends with PATH_INFO, URL-decoded.
-            if (substr($_SERVER['SCRIPT_NAME'], -$lenneedle) === $pathinfodec) {
-                // This is the "Apache 2.4.10- running PHP-FPM via mod_proxy_fcgi" fingerprint,
-                // at least on CentOS 7 (Apache/2.4.6 PHP/5.4.16) and Ubuntu 14.04 (Apache/2.4.7 PHP/5.5.9)
-                // => SCRIPT_NAME contains 'slash arguments' data too, which is wrongly exposed via PATH_INFO as URL-encoded.
-                // Fix both $_SERVER['PATH_INFO'] and $_SERVER['SCRIPT_NAME'].
-                $lenhaystack = strlen($_SERVER['SCRIPT_NAME']);
-                $pos = $lenhaystack - $lenneedle;
-                // Here $pos is greater than 0 but let's double check it.
-                if ($pos > 0) {
-                    $_SERVER['PATH_INFO'] = $pathinfodec;
-                    $_SERVER['SCRIPT_NAME'] = substr($_SERVER['SCRIPT_NAME'], 0, $pos);
-                }
-            }
-        }
 
     } else if (stripos($_SERVER['SERVER_SOFTWARE'], 'iis') !== false) {
         //IIS - needs a lot of tweaking to make it work
@@ -1089,10 +1054,7 @@ function workaround_max_input_vars() {
         return;
     }
 
-    // Worst case is advanced checkboxes which use up to two max_input_vars
-    // slots for each entry in $_POST, because of sending two fields with the
-    // same name. So count everything twice just in case.
-    if (count($_POST, COUNT_RECURSIVE) * 2 < $max) {
+    if (count($_POST, COUNT_RECURSIVE) < $max) {
         return;
     }
 
@@ -1105,19 +1067,8 @@ function workaround_max_input_vars() {
     }
 
     $delim = '&';
-    $fun = function($p) use ($delim) {
-        return implode($delim, $p);
-    };
+    $fun = create_function('$p', 'return implode("'.$delim.'", $p);');
     $chunks = array_map($fun, array_chunk(explode($delim, $str), $max));
-
-    // Clear everything from existing $_POST array, otherwise it might be included
-    // twice (this affects array params primarily).
-    foreach ($_POST as $key => $value) {
-        unset($_POST[$key]);
-        // Also clear from request array - but only the things that are in $_POST,
-        // that way it will leave the things from a get request if any.
-        unset($_REQUEST[$key]);
-    }
 
     foreach ($chunks as $chunk) {
         $values = array();
@@ -1327,23 +1278,26 @@ function get_real_size($size = 0) {
     if (!$size) {
         return 0;
     }
+    $scan = array();
+    $scan['GB'] = 1073741824;
+    $scan['Gb'] = 1073741824;
+    $scan['G'] = 1073741824;
+    $scan['MB'] = 1048576;
+    $scan['Mb'] = 1048576;
+    $scan['M'] = 1048576;
+    $scan['m'] = 1048576;
+    $scan['KB'] = 1024;
+    $scan['Kb'] = 1024;
+    $scan['K'] = 1024;
+    $scan['k'] = 1024;
 
-    static $binaryprefixes = array(
-        'K' => 1024,
-        'k' => 1024,
-        'M' => 1048576,
-        'm' => 1048576,
-        'G' => 1073741824,
-        'g' => 1073741824,
-        'T' => 1099511627776,
-        't' => 1099511627776,
-    );
-
-    if (preg_match('/^([0-9]+)([KMGT])/i', $size, $matches)) {
-        return $matches[1] * $binaryprefixes[$matches[2]];
+    while (list($key) = each($scan)) {
+        if ((strlen($size)>strlen($key))&&(substr($size, strlen($size) - strlen($key))==$key)) {
+            $size = substr($size, 0, strlen($size) - strlen($key)) * $scan[$key];
+            break;
+        }
     }
-
-    return (int) $size;
+    return $size;
 }
 
 /**
@@ -1377,41 +1331,19 @@ function disable_output_buffering() {
     ini_set('output_handler', '');
 
     error_reporting($olddebug);
-
-    // Disable buffering in nginx.
-    header('X-Accel-Buffering: no');
-
 }
 
 /**
- * Check whether a major upgrade is needed.
- *
- * That is defined as an upgrade that changes something really fundamental
- * in the database, so nothing can possibly work until the database has
- * been updated, and that is defined by the hard-coded version number in
- * this function.
- *
- * @return bool
- */
-function is_major_upgrade_required() {
-    global $CFG;
-    $lastmajordbchanges = 2017092900.00;
-
-    $required = empty($CFG->version);
-    $required = $required || (float)$CFG->version < $lastmajordbchanges;
-    $required = $required || during_initial_install();
-    $required = $required || !empty($CFG->adminsetuppending);
-
-    return $required;
-}
-
-/**
- * Redirect to the Notifications page if a major upgrade is required, and
- * terminate the current user session.
+ * Check whether a major upgrade is needed. That is defined as an upgrade that
+ * changes something really fundamental in the database, so nothing can possibly
+ * work until the database has been updated, and that is defined by the hard-coded
+ * version number in this function.
  */
 function redirect_if_major_upgrade_required() {
     global $CFG;
-    if (is_major_upgrade_required()) {
+    $lastmajordbchanges = 2014093001.00;
+    if (empty($CFG->version) or (float)$CFG->version < $lastmajordbchanges or
+            during_initial_install() or !empty($CFG->adminsetuppending)) {
         try {
             @\core\session\manager::terminate_current();
         } catch (Exception $e) {
@@ -1662,42 +1594,6 @@ function make_request_directory($exceptiononerror = true) {
 }
 
 /**
- * Get the full path of a directory under $CFG->backuptempdir.
- *
- * @param string $directory  the relative path of the directory under $CFG->backuptempdir
- * @return string|false Returns full path to directory given a valid string; otherwise, false.
- */
-function get_backup_temp_directory($directory) {
-    global $CFG;
-    if (($directory === null) || ($directory === false)) {
-        return false;
-    }
-    return "$CFG->backuptempdir/$directory";
-}
-
-/**
- * Create a directory under $CFG->backuptempdir and make sure it is writable.
- *
- * Do not use for storing generic temp files - see make_temp_directory() instead for this purpose.
- *
- * Backup temporary files must be on a shared storage.
- *
- * @param string $directory  the relative path of the directory to be created under $CFG->backuptempdir
- * @param bool $exceptiononerror throw exception if error encountered
- * @return string|false Returns full path to directory if successful, false if not; may throw exception
- */
-function make_backup_temp_directory($directory, $exceptiononerror = true) {
-    global $CFG;
-    if ($CFG->backuptempdir !== "$CFG->tempdir/backup") {
-        check_dir_exists($CFG->backuptempdir, true, true);
-        protect_directory($CFG->backuptempdir);
-    } else {
-        protect_directory($CFG->tempdir);
-    }
-    return make_writable_directory("$CFG->backuptempdir/$directory", $exceptiononerror);
-}
-
-/**
  * Create a directory under tempdir and make sure it is writable.
  *
  * Where possible, please use make_request_directory() and limit the scope
@@ -1794,6 +1690,45 @@ function make_localcache_directory($directory, $exceptiononerror = true) {
     }
 
     return make_writable_directory("$CFG->localcachedir/$directory", $exceptiononerror);
+}
+
+/**
+ * Checks if current user is a web crawler.
+ *
+ * This list can not be made complete, this is not a security
+ * restriction, we make the list only to help these sites
+ * especially when automatic guest login is disabled.
+ *
+ * If admin needs security they should enable forcelogin
+ * and disable guest access!!
+ *
+ * @return bool
+ */
+function is_web_crawler() {
+    if (!empty($_SERVER['HTTP_USER_AGENT'])) {
+        if (strpos($_SERVER['HTTP_USER_AGENT'], 'Googlebot') !== false ) {
+            return true;
+        } else if (strpos($_SERVER['HTTP_USER_AGENT'], 'google.com') !== false ) { // Google
+            return true;
+        } else if (strpos($_SERVER['HTTP_USER_AGENT'], 'Yahoo! Slurp') !== false ) {  // Yahoo
+            return true;
+        } else if (strpos($_SERVER['HTTP_USER_AGENT'], '[ZSEBOT]') !== false ) {  // Zoomspider
+            return true;
+        } else if (stripos($_SERVER['HTTP_USER_AGENT'], 'msnbot') !== false ) {  // MSN Search
+            return true;
+        } else if (strpos($_SERVER['HTTP_USER_AGENT'], 'bingbot') !== false ) {  // Bing
+            return true;
+        } else if (strpos($_SERVER['HTTP_USER_AGENT'], 'Yandex') !== false ) {
+            return true;
+        } else if (strpos($_SERVER['HTTP_USER_AGENT'], 'AltaVista') !== false ) {
+            return true;
+        } else if (stripos($_SERVER['HTTP_USER_AGENT'], 'baiduspider') !== false ) {  // Baidu
+            return true;
+        } else if (strpos($_SERVER['HTTP_USER_AGENT'], 'Teoma') !== false ) {  // Ask.com
+            return true;
+        }
+    }
+    return false;
 }
 
 /**

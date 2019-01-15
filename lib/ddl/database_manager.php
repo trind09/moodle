@@ -70,11 +70,10 @@ class database_manager {
      * This function will execute an array of SQL commands.
      *
      * @param string[] $sqlarr Array of sql statements to execute.
-     * @param array|null $tablenames an array of xmldb table names affected by this request.
      * @throws ddl_change_structure_exception This exception is thrown if any error is found.
      */
-    protected function execute_sql_arr(array $sqlarr, $tablenames = null) {
-        $this->mdb->change_database_structure($sqlarr, $tablenames);
+    protected function execute_sql_arr(array $sqlarr) {
+        $this->mdb->change_database_structure($sqlarr);
     }
 
     /**
@@ -108,12 +107,6 @@ class database_manager {
     public function reset_sequence($table) {
         if (!is_string($table) and !($table instanceof xmldb_table)) {
             throw new ddl_exception('ddlunknownerror', NULL, 'incorrect table parameter!');
-        } else {
-            if ($table instanceof xmldb_table) {
-                $tablename = $table->getName();
-            } else {
-                $tablename = $table;
-            }
         }
 
         // Do not test if table exists because it is slow
@@ -122,7 +115,7 @@ class database_manager {
             throw new ddl_exception('ddlunknownerror', null, 'table reset sequence sql not generated');
         }
 
-        $this->execute_sql_arr($sqlarr, array($tablename));
+        $this->execute_sql_arr($sqlarr);
     }
 
     /**
@@ -329,7 +322,8 @@ class database_manager {
         if (!$sqlarr = $this->generator->getDropTableSQL($xmldb_table)) {
             throw new ddl_exception('ddlunknownerror', null, 'table drop sql not generated');
         }
-        $this->execute_sql_arr($sqlarr, array($xmldb_table->getName()));
+
+        $this->execute_sql_arr($sqlarr);
     }
 
     /**
@@ -415,14 +409,7 @@ class database_manager {
         if (!$sqlarr = $this->generator->getCreateStructureSQL($xmldb_structure)) {
             return; // nothing to do
         }
-
-        $tablenames = array();
-        foreach ($xmldb_structure as $xmldb_table) {
-            if ($xmldb_table instanceof xmldb_table) {
-                $tablenames[] = $xmldb_table->getName();
-            }
-        }
-        $this->execute_sql_arr($sqlarr, $tablenames);
+        $this->execute_sql_arr($sqlarr);
     }
 
     /**
@@ -441,7 +428,7 @@ class database_manager {
         if (!$sqlarr = $this->generator->getCreateTableSQL($xmldb_table)) {
             throw new ddl_exception('ddlunknownerror', null, 'table create sql not generated');
         }
-        $this->execute_sql_arr($sqlarr, array($xmldb_table->getName()));
+        $this->execute_sql_arr($sqlarr);
     }
 
     /**
@@ -464,7 +451,8 @@ class database_manager {
         if (!$sqlarr = $this->generator->getCreateTempTableSQL($xmldb_table)) {
             throw new ddl_exception('ddlunknownerror', null, 'temp table create sql not generated');
         }
-        $this->execute_sql_arr($sqlarr, array($xmldb_table->getName()));
+
+        $this->execute_sql_arr($sqlarr);
     }
 
     /**
@@ -542,7 +530,7 @@ class database_manager {
         if (!$sqlarr = $this->generator->getAddFieldSQL($xmldb_table, $xmldb_field)) {
             throw new ddl_exception('ddlunknownerror', null, 'addfield sql not generated');
         }
-        $this->execute_sql_arr($sqlarr, array($xmldb_table->getName()));
+        $this->execute_sql_arr($sqlarr);
     }
 
     /**
@@ -567,7 +555,7 @@ class database_manager {
             throw new ddl_exception('ddlunknownerror', null, 'drop_field sql not generated');
         }
 
-        $this->execute_sql_arr($sqlarr, array($xmldb_table->getName()));
+        $this->execute_sql_arr($sqlarr);
     }
 
     /**
@@ -592,7 +580,7 @@ class database_manager {
             return; // probably nothing to do
         }
 
-        $this->execute_sql_arr($sqlarr, array($xmldb_table->getName()));
+        $this->execute_sql_arr($sqlarr);
     }
 
     /**
@@ -655,7 +643,7 @@ class database_manager {
             return; //Empty array = nothing to do = no error
         }
 
-        $this->execute_sql_arr($sqlarr, array($xmldb_table->getName()));
+        $this->execute_sql_arr($sqlarr);
     }
 
     /**
@@ -699,7 +687,7 @@ class database_manager {
             return; //Empty array = nothing to do = no error
         }
 
-        $this->execute_sql_arr($sqlarr, array($xmldb_table->getName()));
+        $this->execute_sql_arr($sqlarr);
     }
 
     /**
@@ -753,7 +741,7 @@ class database_manager {
             return; //Empty array = nothing to do = no error
         }
 
-        $this->execute_sql_arr($sqlarr, array($xmldb_table->getName()));
+        $this->execute_sql_arr($sqlarr);
     }
 
     /**
@@ -772,7 +760,7 @@ class database_manager {
             return; //Empty array = nothing to do = no error
         }
 
-        $this->execute_sql_arr($sqlarr, array($xmldb_table->getName()));
+        $this->execute_sql_arr($sqlarr);
     }
 
     /**
@@ -796,7 +784,7 @@ class database_manager {
             throw new ddl_exception('ddlunknownerror', null, 'Some DBs do not support key renaming (MySQL, PostgreSQL, MsSQL). Rename skipped');
         }
 
-        $this->execute_sql_arr($sqlarr, array($xmldb_table->getName()));
+        $this->execute_sql_arr($sqlarr);
     }
 
     /**
@@ -823,20 +811,7 @@ class database_manager {
             throw new ddl_exception('ddlunknownerror', null, 'add_index sql not generated');
         }
 
-        try {
-            $this->execute_sql_arr($sqlarr, array($xmldb_table->getName()));
-        } catch (ddl_change_structure_exception $e) {
-            // There could be a problem with the index length related to the row format of the table.
-            // If we are using utf8mb4 and the row format is 'compact' or 'redundant' then we need to change it over to
-            // 'compressed' or 'dynamic'.
-            if (method_exists($this->mdb, 'convert_table_row_format')) {
-                $this->mdb->convert_table_row_format($xmldb_table->getName());
-                $this->execute_sql_arr($sqlarr, array($xmldb_table->getName()));
-            } else {
-                // It's some other problem that we are currently not handling.
-                throw $e;
-            }
-        }
+        $this->execute_sql_arr($sqlarr);
     }
 
     /**
@@ -863,7 +838,7 @@ class database_manager {
             throw new ddl_exception('ddlunknownerror', null, 'drop_index sql not generated');
         }
 
-        $this->execute_sql_arr($sqlarr, array($xmldb_table->getName()));
+        $this->execute_sql_arr($sqlarr);
     }
 
     /**
@@ -895,7 +870,7 @@ class database_manager {
             throw new ddl_exception('ddlunknownerror', null, 'Some DBs do not support index renaming (MySQL). Rename skipped');
         }
 
-        $this->execute_sql_arr($sqlarr, array($xmldb_table->getName()));
+        $this->execute_sql_arr($sqlarr);
     }
 
     /**

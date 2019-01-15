@@ -15,12 +15,10 @@
  * limitations under the License.
  */
 
-if (!class_exists('Google_Client')) {
-  require_once dirname(__FILE__) . '/../autoload.php';
-}
+require_once realpath(dirname(__FILE__) . '/../../../autoload.php');
 
 /**
- * Class to handle batched requests to the Google API service.
+ * @author Chirag Shah <chirags@google.com>
  */
 class Google_Http_Batch
 {
@@ -35,15 +33,12 @@ class Google_Http_Batch
 
   private $expected_classes = array();
 
-  private $root_url;
+  private $base_path;
 
-  private $batch_path;
-
-  public function __construct(Google_Client $client, $boundary = false, $rootUrl = '', $batchPath = '')
+  public function __construct(Google_Client $client, $boundary = false)
   {
     $this->client = $client;
-    $this->root_url = rtrim($rootUrl ? $rootUrl : $this->client->getBasePath(), '/');
-    $this->batch_path = $batchPath ? $batchPath : 'batch';
+    $this->base_path = $this->client->getBasePath();
     $this->expected_classes = array();
     $boundary = (false == $boundary) ? mt_rand() : $boundary;
     $this->boundary = str_replace('"', '', $boundary);
@@ -65,13 +60,14 @@ class Google_Http_Batch
     /** @var Google_Http_Request $req */
     foreach ($this->requests as $key => $req) {
       $body .= "--{$this->boundary}\n";
-      $body .= $req->toBatchString($key) . "\n\n";
+      $body .= $req->toBatchString($key) . "\n";
       $this->expected_classes["response-" . $key] = $req->getExpectedClass();
     }
 
-    $body .= "--{$this->boundary}--";
+    $body = rtrim($body);
+    $body .= "\n--{$this->boundary}--";
 
-    $url = $this->root_url . '/' . $this->batch_path;
+    $url = $this->base_path . '/batch';
     $httpRequest = new Google_Http_Request($url, 'POST');
     $httpRequest->setRequestHeaders(
         array('Content-Type' => 'multipart/mixed; boundary=' . $this->boundary)

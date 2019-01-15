@@ -9,15 +9,12 @@
             "event",
             "event-simulate",
             "event-custom",
-            "node-event-html5",
-            "node-event-simulate",
             "yui-throttle",
             "moodle-core-notification-dialogue",
             "moodle-core-notification-confirm",
             "moodle-editor_atto-rangy",
             "handlebars",
-            "timers",
-            "querystring-stringify"
+            "timers"
         ]
     },
     "moodle-editor_atto-plugin": {
@@ -29,8 +26,7 @@
             "event-outside",
             "handlebars",
             "event-custom",
-            "timers",
-            "moodle-editor_atto-menu"
+            "timers"
         ]
     },
     "moodle-editor_atto-menu": {

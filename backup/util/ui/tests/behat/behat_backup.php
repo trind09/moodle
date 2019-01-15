@@ -44,6 +44,19 @@ use Behat\Gherkin\Node\TableNode as TableNode,
 class behat_backup extends behat_base {
 
     /**
+     * Follow a link like 'Backup' or 'Import', where the link name comes from
+     * a language string, in the settings nav block of a course.
+     * @param string $langstring the lang string to look for. E.g. 'backup' or 'import'.
+     * @param string $component (optional) second argument to {@link get_string}.
+     */
+    protected function navigate_to_course_settings_link($langstring, $component = '') {
+        $behatnavigation = new behat_navigation();
+        $behatnavigation->setMink($this->getMink());
+        $behatnavigation->i_navigate_to_node_in(get_string($langstring, $component),
+                get_string('courseadministration'));
+    }
+
+    /**
      * Backups the specified course using the provided options. If you are interested in restoring this backup would be
      * useful to provide a 'Filename' option.
      *
@@ -57,31 +70,33 @@ class behat_backup extends behat_base {
 
         // Go to homepage.
         $this->getSession()->visit($this->locate_path('/?redirect=0'));
-        $this->execute("behat_general::wait_until_the_page_is_ready");
 
         // Click the course link.
-        $this->execute("behat_general::click_link", $backupcourse);
+        $this->find_link($backupcourse)->click();
 
         // Click the backup link.
-        $this->execute("behat_navigation::i_navigate_to_in_current_page_administration", get_string('backup'));
+        $this->navigate_to_course_settings_link('backup');
+        $this->wait();
 
         // Initial settings.
         $this->fill_backup_restore_form($this->get_step_options($options, "Initial"));
-        $this->execute("behat_forms::press_button", get_string('backupstage1action', 'backup'));
+        $this->find_button(get_string('backupstage1action', 'backup'))->press();
+        $this->wait();
 
         // Schema settings.
         $this->fill_backup_restore_form($this->get_step_options($options, "Schema"));
-        $this->execute("behat_forms::press_button", get_string('backupstage2action', 'backup'));
+        $this->find_button(get_string('backupstage2action', 'backup'))->press();
+        $this->wait();
 
         // Confirmation and review, backup filename can also be specified.
         $this->fill_backup_restore_form($this->get_step_options($options, "Confirmation"));
-        $this->execute("behat_forms::press_button", get_string('backupstage4action', 'backup'));
+        $this->find_button(get_string('backupstage4action', 'backup'))->press();
 
         // Waiting for it to finish.
-        $this->execute("behat_general::wait_until_the_page_is_ready");
+        $this->wait(self::EXTENDED_TIMEOUT);
 
         // Last backup continue button.
-        $this->execute("behat_general::i_click_on", array(get_string('backupstage16action', 'backup'), 'button'));
+        $this->find_button(get_string('backupstage16action', 'backup'))->press();
     }
 
     /**
@@ -101,19 +116,21 @@ class behat_backup extends behat_base {
         $this->getSession()->visit($this->locate_path('/?redirect=0'));
 
         // Click the course link.
-        $this->execute("behat_general::click_link", $backupcourse);
+        $this->find_link($backupcourse)->click();
 
         // Click the backup link.
-        $this->execute("behat_navigation::i_navigate_to_in_current_page_administration", get_string('backup'));
+        $this->find_link(get_string('backup'))->click();
+        $this->wait();
 
         // Initial settings.
-        $this->execute("behat_forms::press_button", get_string('jumptofinalstep', 'backup'));
+        $this->find_button(get_string('jumptofinalstep', 'backup'))->press();
+        $this->wait();
 
         // Waiting for it to finish.
-        $this->execute("behat_general::wait_until_the_page_is_ready");
+        $this->wait(self::EXTENDED_TIMEOUT);
 
         // Last backup continue button.
-        $this->execute("behat_general::i_click_on", array(get_string('backupstage16action', 'backup'), 'button'));
+        $this->find_button(get_string('backupstage16action', 'backup'))->press();
     }
 
     /**
@@ -135,45 +152,48 @@ class behat_backup extends behat_base {
 
         // Go to homepage.
         $this->getSession()->visit($this->locate_path('/?redirect=0'));
-        $this->execute("behat_general::wait_until_the_page_is_ready");
+        $this->wait();
 
         // Click the course link.
-        $this->execute("behat_general::click_link", $tocourse);
+        $this->find_link($tocourse)->click();
+        $this->wait();
 
         // Click the import link.
-        $this->execute("behat_navigation::i_navigate_to_in_current_page_administration", get_string('import'));
+        $this->navigate_to_course_settings_link('import');
+        $this->wait();
 
         // Select the course.
         $exception = new ExpectationException('"' . $fromcourse . '" course not found in the list of courses to import from',
             $this->getSession());
 
         // The argument should be converted to an xpath literal.
-        $fromcourse = behat_context_helper::escape($fromcourse);
+        $fromcourse = $this->getSession()->getSelectorsHandler()->xpathLiteral($fromcourse);
         $xpath = "//div[contains(concat(' ', normalize-space(@class), ' '), ' ics-results ')]" .
             "/descendant::tr[contains(., $fromcourse)]" .
             "/descendant::input[@type='radio']";
         $radionode = $this->find('xpath', $xpath, $exception);
-        $radiofield = new behat_form_field($this->getSession(), $radionode);
-        $radiofield->set_value(1);
+        $radionode->check();
+        $radionode->click();
 
-        $this->execute("behat_forms::press_button", get_string('continue'));
+        $this->find_button(get_string('continue'))->press();
+        $this->wait();
 
         // Initial settings.
         $this->fill_backup_restore_form($this->get_step_options($options, "Initial"));
-        $this->execute("behat_forms::press_button", get_string('importbackupstage1action', 'backup'));
+        $this->find_button(get_string('importbackupstage1action', 'backup'))->press();
+        $this->wait();
 
         // Schema settings.
         $this->fill_backup_restore_form($this->get_step_options($options, "Schema"));
-        $this->execute("behat_forms::press_button", get_string('importbackupstage2action', 'backup'));
+        $this->find_button(get_string('importbackupstage2action', 'backup'))->press();
+        $this->wait();
 
         // Run it.
-        $this->execute("behat_forms::press_button", get_string('importbackupstage4action', 'backup'));
-
-        // Wait to ensure restore is complete.
-        $this->execute("behat_general::wait_until_the_page_is_ready");
+        $this->find_button(get_string('importbackupstage4action', 'backup'))->press();
+        $this->wait(self::EXTENDED_TIMEOUT);
 
         // Continue and redirect to 'to' course.
-        $this->execute("behat_general::i_click_on", array(get_string('continue'), 'button'));
+        $this->find_button(get_string('continue'))->press();
     }
 
     /**
@@ -192,19 +212,21 @@ class behat_backup extends behat_base {
         $this->select_backup($backupfilename);
 
         // The argument should be converted to an xpath literal.
-        $existingcourse = behat_context_helper::escape($existingcourse);
+        $existingcourse = $this->getSession()->getSelectorsHandler()->xpathLiteral($existingcourse);
 
         // Selecting the specified course (we can not call behat_forms::select_radio here as is in another behat subcontext).
-        $radionodexpath = "//div[contains(concat(' ', normalize-space(@class), ' '), ' bcs-existing-course ')]" .
-            "/descendant::div[contains(concat(' ', normalize-space(@class), ' '), ' restore-course-search ')]" .
+        $radionode = $this->find('xpath', "//div[contains(concat(' ', normalize-space(@class), ' '), ' bcs-existing-course ')]" .
+            "/descendant::div[@class='restore-course-search']" .
             "/descendant::tr[contains(., $existingcourse)]" .
-            "/descendant::input[@type='radio']";
-        $this->execute("behat_general::i_click_on", array($radionodexpath, 'xpath_element'));
+            "/descendant::input[@type='radio']");
+        $radionode->check();
+        $radionode->click();
 
         // Pressing the continue button of the restore into an existing course section.
-        $continuenodexpath = "//div[contains(concat(' ', normalize-space(@class), ' '), ' bcs-existing-course ')]" .
-            "/descendant::input[@type='submit'][@value='" . get_string('continue') . "']";
-        $this->execute("behat_general::i_click_on", array($continuenodexpath, 'xpath_element'));
+        $continuenode = $this->find('xpath', "//div[contains(concat(' ', normalize-space(@class), ' '), ' bcs-existing-course ')]" .
+            "/descendant::input[@type='submit'][@value='" . get_string('continue') . "']");
+        $continuenode->click();
+        $this->wait();
 
         // Common restore process using provided key/value options.
         $this->process_restore($options);
@@ -225,15 +247,17 @@ class behat_backup extends behat_base {
         $this->select_backup($backupfilename);
 
         // The first category in the list.
-        $radionodexpath = "//div[contains(concat(' ', normalize-space(@class), ' '), ' bcs-new-course ')]" .
-            "/descendant::div[contains(concat(' ', normalize-space(@class), ' '), ' restore-course-search ')]" .
-            "/descendant::input[@type='radio']";
-        $this->execute("behat_general::i_click_on", array($radionodexpath, 'xpath_element'));
+        $radionode = $this->find('xpath', "//div[contains(concat(' ', normalize-space(@class), ' '), ' bcs-new-course ')]" .
+            "/descendant::div[@class='restore-course-search']" .
+            "/descendant::input[@type='radio']");
+        $radionode->check();
+        $radionode->click();
 
         // Pressing the continue button of the restore into an existing course section.
-        $continuenodexpath = "//div[contains(concat(' ', normalize-space(@class), ' '), ' bcs-new-course ')]" .
-            "/descendant::input[@type='submit'][@value='" . get_string('continue') . "']";
-        $this->execute("behat_general::i_click_on", array($continuenodexpath, 'xpath_element'));
+        $continuenode = $this->find('xpath', "//div[contains(concat(' ', normalize-space(@class), ' '), ' bcs-new-course ')]" .
+            "/descendant::input[@type='submit'][@value='" . get_string('continue') . "']");
+        $continuenode->click();
+        $this->wait();
 
         // Common restore process using provided key/value options.
         $this->process_restore($options);
@@ -254,14 +278,16 @@ class behat_backup extends behat_base {
         $this->select_backup($backupfilename);
 
         // Merge without deleting radio option.
-        $radionodexpath = "//div[contains(concat(' ', normalize-space(@class), ' '), 'bcs-current-course')]" .
-            "/descendant::input[@type='radio'][@name='target'][@value='1']";
-        $this->execute("behat_general::i_click_on", array($radionodexpath, 'xpath_element'));
+        $radionode = $this->find('xpath', "//div[contains(concat(' ', normalize-space(@class), ' '), 'bcs-current-course')]" .
+            "/descendant::input[@type='radio'][@name='target'][@value='1']");
+        $radionode->check();
+        $radionode->click();
 
         // Pressing the continue button of the restore merging section.
-        $continuenodexpath = "//div[contains(concat(' ', normalize-space(@class), ' '), 'bcs-current-course')]" .
-            "/descendant::input[@type='submit'][@value='" . get_string('continue') . "']";
-        $this->execute("behat_general::i_click_on", array($continuenodexpath, 'xpath_element'));
+        $continuenode = $this->find('xpath', "//div[contains(concat(' ', normalize-space(@class), ' '), 'bcs-current-course')]" .
+            "/descendant::input[@type='submit'][@value='" . get_string('continue') . "']");
+        $continuenode->click();
+        $this->wait();
 
         // Common restore process using provided key/value options.
         $this->process_restore($options);
@@ -282,14 +308,16 @@ class behat_backup extends behat_base {
         $this->select_backup($backupfilename);
 
         // Delete contents radio option.
-        $radionodexpath = "//div[contains(concat(' ', normalize-space(@class), ' '), 'bcs-current-course')]" .
-            "/descendant::input[@type='radio'][@name='target'][@value='0']";
-        $this->execute("behat_general::i_click_on", array($radionodexpath, 'xpath_element'));
+        $radionode = $this->find('xpath', "//div[contains(concat(' ', normalize-space(@class), ' '), 'bcs-current-course')]" .
+            "/descendant::input[@type='radio'][@name='target'][@value='0']");
+        $radionode->check();
+        $radionode->click();
 
         // Pressing the continue button of the restore merging section.
-        $continuenodexpath = "//div[contains(concat(' ', normalize-space(@class), ' '), 'bcs-current-course')]" .
-            "/descendant::input[@type='submit'][@value='" . get_string('continue') . "']";
-        $this->execute("behat_general::i_click_on", array($continuenodexpath, 'xpath_element'));
+        $continuenode = $this->find('xpath', "//div[contains(concat(' ', normalize-space(@class), ' '), 'bcs-current-course')]" .
+            "/descendant::input[@type='submit'][@value='" . get_string('continue') . "']");
+        $continuenode->click();
+        $this->wait();
 
         // Common restore process using provided key/value options.
         $this->process_restore($options);
@@ -309,14 +337,14 @@ class behat_backup extends behat_base {
             $this->getSession());
 
         // The argument should be converted to an xpath literal.
-        $backupfilename = behat_context_helper::escape($backupfilename);
+        $backupfilename = $this->getSession()->getSelectorsHandler()->xpathLiteral($backupfilename);
 
         $xpath = "//tr[contains(., $backupfilename)]/descendant::a[contains(., '" . get_string('restore') . "')]";
         $restorelink = $this->find('xpath', $xpath, $exception);
         $restorelink->click();
 
         // Confirm the backup contents.
-        $this->find_button(get_string('continue'))->press();
+        $restore = $this->find_button(get_string('continue'))->press();
     }
 
     /**
@@ -332,20 +360,23 @@ class behat_backup extends behat_base {
 
         // Settings.
         $this->fill_backup_restore_form($this->get_step_options($options, "Settings"));
-        $this->execute("behat_forms::press_button", get_string('restorestage4action', 'backup'));
+        $this->find_button(get_string('restorestage4action', 'backup'))->press();
+        $this->wait();
 
         // Schema.
         $this->fill_backup_restore_form($this->get_step_options($options, "Schema"));
-        $this->execute("behat_forms::press_button", get_string('restorestage8action', 'backup'));
+        $this->find_button(get_string('restorestage8action', 'backup'))->press();
+        $this->wait();
 
         // Review, no options here.
-        $this->execute("behat_forms::press_button", get_string('restorestage16action', 'backup'));
-
-        // Wait till the final button is visible.
-        $this->execute("behat_general::wait_until_the_page_is_ready");
+        $this->find_button(get_string('restorestage16action', 'backup'))->press();
+        $this->wait();
 
         // Last restore continue button, redirected to restore course after this.
-        $this->execute("behat_general::i_click_on", array(get_string('restorestage32action', 'backup'), 'button'));
+        $this->find_button(get_string('restorestage32action', 'backup'))->press();
+
+        // Long wait when waiting for the restore to finish.
+        $this->wait(self::EXTENDED_TIMEOUT);
     }
 
     /**
@@ -388,6 +419,8 @@ class behat_backup extends behat_base {
             return;
         }
 
+        $pageoptions = clone $options;
+
         $rows = $options->getRows();
         $newrows = array();
         foreach ($rows as $k => $data) {
@@ -400,8 +433,28 @@ class behat_backup extends behat_base {
                 $newrows[] = $data;
             }
         }
-        $pageoptions = new TableNode($newrows);
-
+        $pageoptions->setRows($newrows);
         return $pageoptions;
     }
+
+
+    /**
+     * Waits until the DOM and the page Javascript code is ready.
+     *
+     * @param int $timeout The number of seconds that we wait.
+     * @return void
+     */
+    protected function wait($timeout = false) {
+
+        if (!$this->running_javascript()) {
+            return;
+        }
+
+        if (!$timeout) {
+            $timeout = self::TIMEOUT;
+        }
+
+        $this->getSession()->wait($timeout * 1000, self::PAGE_READY_JS);
+    }
+
 }

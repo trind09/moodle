@@ -65,13 +65,11 @@ abstract class base_setting {
 
     protected $name;  // name of the setting
     protected $value; // value of the setting
-    protected $unlockedvalue; // Value to set after the setting is unlocked.
     protected $vtype; // type of value (setting_base::IS_BOOLEAN/setting_base::IS_INTEGER...)
 
     protected $visibility; // visibility of the setting (setting_base::VISIBLE/setting_base::HIDDEN)
     protected $status; // setting_base::NOT_LOCKED/setting_base::LOCKED_BY_PERMISSION...
 
-    /** @var setting_dependency[] */
     protected $dependencies = array(); // array of dependent (observer) objects (usually setting_base ones)
     protected $dependenton = array();
 
@@ -119,7 +117,6 @@ abstract class base_setting {
         $this->value       = $value;
         $this->visibility  = $visibility;
         $this->status      = $status;
-        $this->unlockedvalue = $this->value;
 
         // Generate a default ui
         $this->uisetting = new base_setting_ui($this);
@@ -204,12 +201,6 @@ abstract class base_setting {
     public function set_status($status) {
         $status = $this->validate_status($status);
 
-        if (($this->status == base_setting::LOCKED_BY_PERMISSION || $this->status == base_setting::LOCKED_BY_CONFIG)
-                && $status == base_setting::LOCKED_BY_HIERARCHY) {
-            // Lock by permission or config can not be overriden by lock by hierarchy.
-            return;
-        }
-
         // If the setting is being unlocked first check whether an other settings
         // this setting is dependent on are locked. If they are then we still don't
         // want to lock this setting.
@@ -227,11 +218,6 @@ abstract class base_setting {
         $this->status = $status;
         if ($status !== $oldstatus) { // Status has changed, let's inform dependencies
             $this->inform_dependencies(self::CHANGED_STATUS, $oldstatus);
-
-            if ($status == base_setting::NOT_LOCKED) {
-                // When setting gets unlocked set it to the original value.
-                $this->set_value($this->unlockedvalue);
-            }
         }
     }
 

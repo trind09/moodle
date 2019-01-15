@@ -118,9 +118,11 @@ M.mod_chat_ajax.init = function(Y, cfg) {
             this.thememenu = new Y.YUI2.widget.Menu('basicmenu', {xy:[0,0]});
             this.thememenu.addItems([
                 {text: M.util.get_string('bubble', 'mod_chat'), url: this.cfg.chaturl + '&theme=bubble'},
-                {text: M.util.get_string('compact', 'mod_chat'), url: this.cfg.chaturl + '&theme=compact'},
-                {text: M.util.get_string('coursetheme', 'mod_chat'), url: this.cfg.chaturl + '&theme=course_theme'}
+                {text: M.util.get_string('compact', 'mod_chat'), url: this.cfg.chaturl + '&theme=compact'}
             ]);
+            if (this.cfg.showcoursetheme == 1) {
+                this.thememenu.addItem({text: M.util.get_string('coursetheme', 'mod_chat'), url: this.cfg.chaturl + '&theme=course_theme'});
+            }
             this.thememenu.render(document.body);
             Y.one('#choosetheme').on('click', function(e) {
                 this.moveTo((e.pageX - 20), (e.pageY - 20));
@@ -133,9 +135,7 @@ M.mod_chat_ajax.init = function(Y, cfg) {
             item.addClass((message.mymessage) ? 'mdl-chat-my-entry' : 'mdl-chat-entry');
             Y.one('#messages-list').append(item);
             if (message.type && message.type == 'beep') {
-                var audioElement = document.createElement('audio');
-                audioElement.setAttribute('src', '../beep.mp3');
-                audioElement.play();
+                Y.one('#chat-notify').setContent('<embed src="../beep.wav" autostart="true" hidden="true" name="beep" />');
             }
         },
 

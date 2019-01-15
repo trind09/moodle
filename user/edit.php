@@ -29,6 +29,9 @@ require_once($CFG->dirroot.'/user/editlib.php');
 require_once($CFG->dirroot.'/user/profile/lib.php');
 require_once($CFG->dirroot.'/user/lib.php');
 
+// HTTPS is required in this page when $CFG->loginhttps enabled.
+$PAGE->https_required();
+
 $userid = optional_param('id', $USER->id, PARAM_INT);    // User id.
 $course = optional_param('course', SITEID, PARAM_INT);   // Course id (defaults to Site).
 $returnto = optional_param('returnto', null, PARAM_ALPHA);  // Code determining where to return to after save.
@@ -44,7 +47,7 @@ if ($course->id != SITEID) {
     require_login($course);
 } else if (!isloggedin()) {
     if (empty($SESSION->wantsurl)) {
-        $SESSION->wantsurl = $CFG->wwwroot.'/user/edit.php';
+        $SESSION->wantsurl = $CFG->httpswwwroot.'/user/edit.php';
     }
     redirect(get_login_url());
 } else {
@@ -67,13 +70,14 @@ if (isguestuser($user)) {
 }
 
 // User interests separated by commas.
-$user->interests = core_tag_tag::get_item_tags_array('core', 'user', $user->id);
+if (!empty($CFG->usetags)) {
+    require_once($CFG->dirroot.'/tag/lib.php');
+    $user->interests = tag_get_tags_array('user', $user->id);
+}
 
-// Remote users cannot be edited. Note we have to perform the strict user_not_fully_set_up() check.
-// Otherwise the remote user could end up in endless loop between user/view.php and here.
-// Required custom fields are not supported in MNet environment anyway.
+// Remote users cannot be edited.
 if (is_mnet_remote_user($user)) {
-    if (user_not_fully_set_up($user, true)) {
+    if (user_not_fully_set_up($user)) {
         $hostwwwroot = $DB->get_field('mnet_host', 'wwwroot', array('id' => $user->mnethostid));
         print_error('usernotfullysetup', 'mnet', '', $hostwwwroot);
     }
@@ -176,20 +180,18 @@ $userform = new user_edit_form(new moodle_url($PAGE->url, array('returnto' => $r
 
 $emailchanged = false;
 
-// Deciding where to send the user back in most cases.
-if ($returnto === 'profile') {
-    if ($course->id != SITEID) {
-        $returnurl = new moodle_url('/user/view.php', array('id' => $user->id, 'course' => $course->id));
-    } else {
-        $returnurl = new moodle_url('/user/profile.php', array('id' => $user->id));
-    }
-} else {
-    $returnurl = new moodle_url('/user/preferences.php', array('userid' => $user->id));
-}
+if ($usernew = $userform->get_data()) {
 
-if ($userform->is_cancelled()) {
-    redirect($returnurl);
-} else if ($usernew = $userform->get_data()) {
+    // Deciding where to send the user back in most cases.
+    if ($returnto === 'profile') {
+        if ($course->id != SITEID) {
+            $returnurl = new moodle_url('/user/view.php', array('id' => $user->id, 'course' => $course->id));
+        } else {
+            $returnurl = new moodle_url('/user/profile.php', array('id' => $user->id));
+        }
+    } else {
+        $returnurl = new moodle_url('/user/preferences.php', array('userid' => $user->id));
+    }
 
     $emailchangedhtml = '';
 
@@ -198,16 +200,14 @@ if ($userform->is_cancelled()) {
         // Other users require a confirmation email.
         if (isset($usernew->email) and $user->email != $usernew->email && !has_capability('moodle/user:update', $systemcontext)) {
             $a = new stdClass();
-            $emailchangedkey = random_string(20);
-            set_user_preference('newemail', $usernew->email, $user->id);
-            set_user_preference('newemailkey', $emailchangedkey, $user->id);
-            set_user_preference('newemailattemptsleft', 3, $user->id);
-
-            $a->newemail = $emailchanged = $usernew->email;
+            $a->newemail = $usernew->preference_newemail = $usernew->email;
+            $usernew->preference_newemailkey = random_string(20);
+            $usernew->preference_newemailattemptsleft = 3;
             $a->oldemail = $usernew->email = $user->email;
 
             $emailchangedhtml = $OUTPUT->box(get_string('auth_changingemailaddress', 'auth', $a), 'generalbox', 'notice');
             $emailchangedhtml .= $OUTPUT->continue_button($returnurl);
+            $emailchanged = true;
         }
     }
 
@@ -233,13 +233,13 @@ if ($userform->is_cancelled()) {
     useredit_update_user_preference($usernew);
 
     // Update interests.
-    if (isset($usernew->interests)) {
+    if (!empty($CFG->usetags)) {
         useredit_update_interests($usernew, $usernew->interests);
     }
 
     // Update user picture.
     if (empty($CFG->disableuserimages)) {
-        core_user::update_picture($usernew, $filemanageroptions);
+        useredit_update_picture($usernew, $userform, $filemanageroptions);
     }
 
     // Update mail bounces.
@@ -255,24 +255,21 @@ if ($userform->is_cancelled()) {
     \core\event\user_updated::create_from_userid($user->id)->trigger();
 
     // If email was changed and confirmation is required, send confirmation email now to the new address.
-    if ($emailchanged !== false && $CFG->emailchangeconfirmation) {
+    if ($emailchanged && $CFG->emailchangeconfirmation) {
         $tempuser = $DB->get_record('user', array('id' => $user->id), '*', MUST_EXIST);
-        $tempuser->email = $emailchanged;
-
-        $supportuser = core_user::get_support_user();
+        $tempuser->email = $usernew->preference_newemail;
 
         $a = new stdClass();
-        $a->url = $CFG->wwwroot . '/user/emailupdate.php?key=' . $emailchangedkey . '&id=' . $user->id;
+        $a->url = $CFG->wwwroot . '/user/emailupdate.php?key=' . $usernew->preference_newemailkey . '&id=' . $user->id;
         $a->site = format_string($SITE->fullname, true, array('context' => context_course::instance(SITEID)));
         $a->fullname = fullname($tempuser, true);
-        $a->supportemail = $supportuser->email;
 
         $emailupdatemessage = get_string('emailupdatemessage', 'auth', $a);
         $emailupdatetitle = get_string('emailupdatetitle', 'auth', $a);
 
         // Email confirmation directly rather than using messaging so they will definitely get an email.
-        $noreplyuser = core_user::get_noreply_user();
-        if (!$mailresults = email_to_user($tempuser, $noreplyuser, $emailupdatetitle, $emailupdatemessage)) {
+        $supportuser = core_user::get_support_user();
+        if (!$mailresults = email_to_user($tempuser, $supportuser, $emailupdatetitle, $emailupdatemessage)) {
             die("could not send email!");
         }
     }
@@ -302,6 +299,9 @@ if ($userform->is_cancelled()) {
         redirect($returnurl);
     }
 }
+
+// Make sure we really are on the https page when https login required.
+$PAGE->verify_https_required();
 
 
 // Display page header.

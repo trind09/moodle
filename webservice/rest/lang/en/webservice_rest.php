@@ -25,5 +25,4 @@
  */
 
 $string['pluginname'] = 'REST protocol';
-$string['privacy:metadata'] = 'The REST protocol plugin does not store any personal data.';
 $string['rest:use'] = 'Use REST protocol';

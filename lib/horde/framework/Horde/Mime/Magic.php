@@ -1,25 +1,18 @@
 <?php
 /**
- * Copyright 1999-2017 Horde LLC (http://www.horde.org/)
+ * The Horde_Mime_Magic:: class provides an interface to determine a MIME type
+ * for various content, if it provided with different levels of information.
+ *
+ * Copyright 1999-2014 Horde LLC (http://www.horde.org/)
  *
  * See the enclosed file COPYING for license information (LGPL). If you
  * did not receive this file, see http://www.horde.org/licenses/lgpl21.
  *
- * @category  Horde
- * @copyright 1999-2017 Horde LLC
- * @license   http://www.horde.org/licenses/lgpl21 LGPL 2.1
- * @package   Mime
- */
-
-/**
- * Utilities to determine MIME content-types of unknown content.
- *
- * @author    Anil Madhavapeddy <anil@recoil.org>
- * @author    Michael Slusarz <slusarz@horde.org>
- * @category  Horde
- * @copyright 1999-2017 Horde LLC
- * @license   http://www.horde.org/licenses/lgpl21 LGPL 2.1
- * @package   Mime
+ * @author   Anil Madhavapeddy <anil@recoil.org>
+ * @author   Michael Slusarz <slusarz@horde.org>
+ * @category Horde
+ * @license  http://www.horde.org/licenses/lgpl21 LGPL 2.1
+ * @package  Mime
  */
 class Horde_Mime_Magic
 {
@@ -28,14 +21,14 @@ class Horde_Mime_Magic
      *
      * @var array
      */
-    protected static $_map = null;
+    static protected $_map = null;
 
     /**
      * Returns a copy of the MIME extension map.
      *
      * @return array  The MIME extension map.
      */
-    protected static function _getMimeExtensionMap()
+    static protected function _getMimeExtensionMap()
     {
         if (is_null(self::$_map)) {
             require __DIR__ . '/mime.mapping.php';
@@ -57,7 +50,7 @@ class Horde_Mime_Magic
      *
      * @return string  The MIME type of the file extension.
      */
-    public static function extToMime($ext)
+    static public function extToMime($ext)
     {
         if (empty($ext)) {
             return 'application/octet-stream';
@@ -90,7 +83,7 @@ class Horde_Mime_Magic
      *
      * @return string  The MIME type of the filename.
      */
-    public static function filenameToMime($filename, $unknown = true)
+    static public function filenameToMime($filename, $unknown = true)
     {
         $pos = strlen($filename) + 1;
         $type = '';
@@ -121,7 +114,7 @@ class Horde_Mime_Magic
      *
      * @return string  The file extension of the MIME type.
      */
-    public static function mimeToExt($type)
+    static public function mimeToExt($type)
     {
         if (empty($type)) {
             return false;
@@ -154,7 +147,7 @@ class Horde_Mime_Magic
      * @return mixed  The MIME type of the file. Returns false if the file
      *                type can not be determined.
      */
-    public static function analyzeFile($path, $magic_db = null,
+    static public function analyzeFile($path, $magic_db = null,
                                        $opts = array())
     {
         if (Horde_Util::extensionExists('fileinfo')) {
@@ -199,7 +192,7 @@ class Horde_Mime_Magic
      * @return mixed  The MIME type of the file. Returns false if the file
      *                type can not be determined.
      */
-    public static function analyzeData($data, $magic_db = null,
+    static public function analyzeData($data, $magic_db = null,
                                        $opts = array())
     {
         /* If the PHP Mimetype extension is available, use that. */

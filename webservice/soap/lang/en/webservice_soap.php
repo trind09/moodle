@@ -25,5 +25,4 @@
  */
 
 $string['pluginname'] = 'SOAP protocol';
-$string['privacy:metadata'] = 'The SOAP protocol plugin does not store any personal data.';
 $string['soap:use'] = 'Use SOAP protocol';

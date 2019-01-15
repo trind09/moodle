@@ -1,5 +1,3 @@
-/* global TOOLBOX, BODY, SELECTOR */
-
 /**
  * Section toolbox class.
  *
@@ -151,7 +149,7 @@ Y.extend(SECTIONTOOLBOX, TOOLBOX, {
     edit_section_title: function(ev, button, activity) {
         // Get the element we're working on
         var activityid = activity.get('id').replace('section-', ''),
-            instancesection = activity.one(SELECTOR.INSTANCESECTION),
+            instancesection  = activity.one(SELECTOR.INSTANCESECTION),
             thisevent,
             anchor = instancesection, // Grab the anchor so that we can swap it with the edit form.
             data = {
@@ -321,7 +319,7 @@ Y.extend(SECTIONTOOLBOX, TOOLBOX, {
         this.send_request(data, spinner);
     }
 
-}, {
+},  {
     NAME: 'mod_quiz-section-toolbox',
     ATTRS: {
         courseid: {

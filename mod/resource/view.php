@@ -31,7 +31,6 @@ require_once($CFG->libdir.'/completionlib.php');
 $id       = optional_param('id', 0, PARAM_INT); // Course Module ID
 $r        = optional_param('r', 0, PARAM_INT);  // Resource instance ID
 $redirect = optional_param('redirect', 0, PARAM_BOOL);
-$forceview = optional_param('forceview', 0, PARAM_BOOL);
 
 if ($r) {
     if (!$resource = $DB->get_record('resource', array('id'=>$r))) {
@@ -77,7 +76,12 @@ if (count($files) < 1) {
 $resource->mainfile = $file->get_filename();
 $displaytype = resource_get_final_display_type($resource);
 if ($displaytype == RESOURCELIB_DISPLAY_OPEN || $displaytype == RESOURCELIB_DISPLAY_DOWNLOAD) {
-    $redirect = true;
+    // For 'open' and 'download' links, we always redirect to the content - except
+    // if the user just chose 'save and display' from the form then that would be
+    // confusing
+    if (strpos(get_local_referer(false), 'modedit.php') === false) {
+        $redirect = true;
+    }
 }
 
 // Don't redirect teachers, otherwise they can not access course or module settings.
@@ -87,7 +91,7 @@ if ($redirect && !course_get_format($course)->has_view_page() &&
     $redirect = false;
 }
 
-if ($redirect && !$forceview) {
+if ($redirect) {
     // coming from course page or url index page
     // this redirect trick solves caching problems when tracking views ;-)
     $path = '/'.$context->id.'/mod_resource/content/'.$resource->revision.$file->get_filepath().$file->get_filename();

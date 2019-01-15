@@ -26,12 +26,12 @@ defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->libdir.'/portfolio/plugin.php');
 require_once($CFG->libdir.'/filelib.php');
-require_once($CFG->libdir.'/flickrclient.php');
+require_once($CFG->libdir.'/flickrlib.php');
 
 class portfolio_plugin_flickr extends portfolio_plugin_push_base {
 
-    /** @var flickr_client */
     private $flickr;
+    private $token;
     private $raw_sets;
 
     public function supported_formats() {
@@ -52,32 +52,25 @@ class portfolio_plugin_flickr extends portfolio_plugin_push_base {
             $filesize = $file->get_filesize();
 
             if ($file->is_valid_image()) {
-                $photoid = $this->flickr->upload($file, [
-                    'title' => $this->get_export_config('title'),
-                    'description' => $this->get_export_config('description'),
-                    'tags' => $this->get_export_config('tags'),
-                    'is_public' => $this->get_export_config('is_public'),
-                    'is_friend' => $this->get_export_config('is_friend'),
-                    'is_family' => $this->get_export_config('is_family'),
-                    'safety_level' => $this->get_export_config('safety_level'),
-                    'content_type' => $this->get_export_config('content_type'),
-                    'hidden' => $this->get_export_config('hidden'),
-                ]);
-
-                if ($photoid === false) {
-                    $this->set_user_config([
-                        'accesstoken' => null,
-                        'accesstokensecret' => null,
-                    ]);
-                    throw new portfolio_plugin_exception('uploadfailed', 'portfolio_flickr', '', 'Authentication failed');
-                }
-
-                // Attach photo to a set if requested.
-                if ($this->get_export_config('set')) {
-                    $result = $this->flickr->call('photosets.addPhoto', [
-                        'photoset_id' => $this->get_export_config('set'),
-                        'photo_id' => $photoid,
-                    ], 'POST');
+                $return = $this->flickr->upload($file, array(
+                        'title'         => $this->get_export_config('title'),
+                        'description'   => $this->get_export_config('description'),
+                        'tags'          => $this->get_export_config('tags'),
+                        'is_public'     => $this->get_export_config('is_public'),
+                        'is_friend'     => $this->get_export_config('is_friend'),
+                        'is_family'     => $this->get_export_config('is_family'),
+                        'safety_level'  => $this->get_export_config('safety_level'),
+                        'content_type'  => $this->get_export_config('content_type'),
+                        'hidden'        => $this->get_export_config('hidden')));
+                if ($return) {
+                    // Attach photo to a set if requested
+                    if ($this->get_export_config('set') && !empty($this->flickr->parsed_response['photoid'])) {
+                        $this->flickr->photosets_addPhoto($this->get_export_config('set'),
+                            $this->flickr->parsed_response['photoid']);
+                    }
+                } else {
+                    throw new portfolio_plugin_exception('uploadfailed', 'portfolio_flickr',
+                        $this->flickr->error_code . ': ' . $this->flickr->error_msg);
                 }
             }
         }
@@ -88,7 +81,7 @@ class portfolio_plugin_flickr extends portfolio_plugin_push_base {
     }
 
     public function get_interactive_continue_url() {
-        return 'https://www.flickr.com/photos/organize';
+        return $this->flickr->urls_getUserPhotos();
     }
 
     public function expected_time($callertime) {
@@ -126,57 +119,43 @@ class portfolio_plugin_flickr extends portfolio_plugin_push_base {
     }
 
     public function get_allowed_user_config() {
-        return array('accesstoken', 'accesstokensecret');
+        return array('authtoken', 'nsid');
     }
 
     public function steal_control($stage) {
         if ($stage != PORTFOLIO_STAGE_CONFIG) {
             return false;
         }
-
-        $accesstoken = $this->get_user_config('accesstoken');
-        $accesstokensecret = $this->get_user_config('accesstokensecret');
-
-        $callbackurl = new moodle_url('/portfolio/add.php', ['postcontrol' => 1, 'type' => 'flickr']);
-        $this->flickr = new flickr_client($this->get_config('apikey'), $this->get_config('sharedsecret'), $callbackurl);
-
-        if (!empty($accesstoken) && !empty($accesstokensecret)) {
-            // The user has authenticated us already.
-            $this->flickr->set_access_token($accesstoken, $accesstokensecret);
+        if ($this->token) {
             return false;
         }
 
-        $reqtoken = $this->flickr->request_token();
-        $this->flickr->set_request_token_secret(['caller' => 'portfolio_flickr'], $reqtoken['oauth_token_secret']);
+        $token = $this->get_user_config('authtoken', $this->get('user')->id);
+        $nsid = $this->get_user_config('nsid', $this->get('user')->id);
 
-        $authurl = new moodle_url($reqtoken['authorize_url'], ['perms' => 'write']);
+        $this->flickr = new phpFlickr($this->get_config('apikey'), $this->get_config('sharedsecret'), $token);
 
-        return $authurl->out(false);
+        if (!empty($token)) {
+            $this->token = $token;
+            $this->flickr = new phpFlickr($this->get_config('apikey'), $this->get_config('sharedsecret'), $token);
+            return false;
+        }
+        return $this->flickr->auth('write');
     }
 
     public function post_control($stage, $params) {
         if ($stage != PORTFOLIO_STAGE_CONFIG) {
             return;
         }
-
-        if (empty($params['oauth_token']) || empty($params['oauth_verifier'])) {
+        if (!array_key_exists('frob', $params) || empty($params['frob'])) {
             throw new portfolio_plugin_exception('noauthtoken', 'portfolio_flickr');
         }
 
-        $callbackurl = new moodle_url('/portfolio/add.php', ['postcontrol' => 1, 'type' => 'flickr']);
-        $this->flickr = new flickr_client($this->get_config('apikey'), $this->get_config('sharedsecret'), $callbackurl);
+        $this->flickr = new phpFlickr($this->get_config('apikey'), $this->get_config('sharedsecret'));
 
-        $secret = $this->flickr->get_request_token_secret(['caller' => 'portfolio_flickr']);
+        $auth_info = $this->flickr->auth_getToken($params['frob']);
 
-        // Exchange the request token for the access token.
-        $accesstoken = $this->flickr->get_access_token($params['oauth_token'], $secret, $params['oauth_verifier']);
-
-        // Store the access token and the access token secret as the user
-        // config so that we can use it on behalf of the user in next exports.
-        $this->set_user_config([
-            'accesstoken' => $accesstoken['oauth_token'],
-            'accesstokensecret' => $accesstoken['oauth_token_secret'],
-        ]);
+        $this->set_user_config(array('authtoken' => $auth_info['token'], 'nsid' => $auth_info['user']['nsid']), $this->get('user')->id);
     }
 
     public function export_config_form(&$mform) {
@@ -219,29 +198,14 @@ class portfolio_plugin_flickr extends portfolio_plugin_push_base {
         }
     }
 
-    /**
-     * Fetches a list of current user's photosets (albums) on flickr.
-     *
-     * @return array (int)id => (string)title
-     */
     private function get_sets() {
-
         if (empty($this->raw_sets)) {
-            $this->raw_sets = $this->flickr->call('photosets.getList');
-        }
-
-        if ($this->raw_sets === false) {
-            // Authentication failed, drop the locally stored token to force re-authentication.
-            $this->set_user_config([
-                'accesstoken' => null,
-                'accesstokensecret' => null,
-            ]);
-            return array();
+            $this->raw_sets = $this->flickr->photosets_getList();
         }
 
         $sets = array();
-        foreach ($this->raw_sets->photosets->photoset as $set) {
-            $sets[$set->id] = $set->title->_content;
+        foreach ($this->raw_sets['photoset'] as $set_data) {
+            $sets[$set_data['id']] = $set_data['title'];
         }
         return $sets;
     }

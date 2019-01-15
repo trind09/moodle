@@ -134,8 +134,7 @@ class assignfeedback_offline_import_grades_form extends moodleform implements re
                 if (!empty($scaleoptions)) {
                     $formattedgrade = $scaleoptions[$grade];
                 } else {
-                    $gradeitem = $assignment->get_grade_item();
-                    $formattedgrade = format_float($grade, $gradeitem->get_decimals());
+                    $formattedgrade = format_float($grade, 2);
                 }
                 $updates[] = get_string('gradeupdate', 'assignfeedback_offline',
                                             array('grade'=>$formattedgrade, 'student'=>$userdesc));
@@ -182,12 +181,6 @@ class assignfeedback_offline_import_grades_form extends moodleform implements re
         $mform->setType('pluginaction', PARAM_ALPHA);
         $mform->addElement('hidden', 'importid', $gradeimporter->importid);
         $mform->setType('importid', PARAM_INT);
-
-        $mform->addElement('hidden', 'encoding', $gradeimporter->get_encoding());
-        $mform->setType('encoding', PARAM_ALPHAEXT);
-        $mform->addElement('hidden', 'separator', $gradeimporter->get_separator());
-        $mform->setType('separator', PARAM_ALPHA);
-
         $mform->addElement('hidden', 'ignoremodified', $ignoremodified);
         $mform->setType('ignoremodified', PARAM_BOOL);
         $mform->addElement('hidden', 'draftid', $draftid);

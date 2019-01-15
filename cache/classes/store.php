@@ -81,11 +81,15 @@ interface cache_store_interface {
     public static function initialise_test_instance(cache_definition $definition);
 
     /**
-     * Generates the appropriate configuration required for unit testing.
+     * Initialises a test instance for unit tests.
      *
-     * @return array Array of unit test configuration data to be used by initialise().
+     * This differs from initialise_test_instance in that it doesn't rely on interacting with the config table.
+     *
+     * @since 2.8
+     * @param cache_definition $definition
+     * @return cache_store|false
      */
-    public static function unit_test_configuration();
+    public static function initialise_unit_test_instance(cache_definition $definition);
 }
 
 /**
@@ -121,14 +125,6 @@ abstract class cache_store implements cache_store_interface {
      * The cache is searchable by key.
      */
     const IS_SEARCHABLE = 8;
-
-    /**
-     * The cache store dereferences objects.
-     *
-     * When set, loaders will assume that all data coming from this store has already had all references
-     * resolved.  So even for complex object structures it will not try to remove references again.
-     */
-    const DEREFERENCES_OBJECTS = 16;
 
     // Constants for the modes of a cache store
 
@@ -260,12 +256,12 @@ abstract class cache_store implements cache_store_interface {
     abstract public function purge();
 
     /**
+     * Performs any necessary clean up when the store instance is being deleted.
+     *
      * @deprecated since 2.5
-     * @see \cache_store::instance_deleted()
      */
     public function cleanup() {
-        throw new coding_exception('cache_store::cleanup() can not be used anymore.' .
-            ' Please use cache_store::instance_deleted() instead.');
+        debugging('This function has been renamed to instance_deleted. Please update your calls.', DEBUG_DEVELOPER);
     }
 
     /**
@@ -339,15 +335,6 @@ abstract class cache_store implements cache_store_interface {
     }
 
     /**
-     * Returns true if the store automatically dereferences objects.
-     *
-     * @return bool
-     */
-    public function supports_dereferencing_objects() {
-        return $this::get_supported_features() & self::DEREFERENCES_OBJECTS;
-    }
-
-    /**
      * Creates a clone of this store instance ready to be initialised.
      *
      * This method is used so that a cache store needs only be constructed once.
@@ -363,6 +350,20 @@ abstract class cache_store implements cache_store_interface {
         // By default we just run clone.
         // Any stores that have an issue with this will need to override the create_clone method.
         return clone($this);
+    }
+
+    /**
+     * Initialises a test instance for unit tests.
+     *
+     * This differs from initialise_test_instance in that it doesn't rely on interacting with the config table.
+     * By default however it calls initialise_test_instance to support backwards compatibility.
+     *
+     * @since 2.8
+     * @param cache_definition $definition
+     * @return cache_store|false
+     */
+    public static function initialise_unit_test_instance(cache_definition $definition) {
+        return static::initialise_test_instance($definition);
     }
 
     /**

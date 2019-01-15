@@ -35,7 +35,7 @@ defined('MOODLE_INTERNAL') || die();
 class file_info_context_module extends file_info {
     /** @var stdClass Course object */
     protected $course;
-    /** @var cm_info Course module object */
+    /** @var stdClass Course module object */
     protected $cm;
     /** @var string Module name */
     protected $modname;
@@ -58,17 +58,23 @@ class file_info_context_module extends file_info {
 
         parent::__construct($browser, $context);
         $this->course  = $course;
-        $this->cm      = cm_info::create($cm);
-        $this->modname = $this->cm->modname;
+        $this->cm      = $cm;
+        $this->modname = $modname;
         $this->nonemptychildren = null;
 
-        if ($functionname = component_callback_exists('mod_'.$modname, 'get_file_areas')) {
-            $cm = $this->cm->get_course_module_record();
+        include_once("$CFG->dirroot/mod/$modname/lib.php");
+
+        //find out all supported areas
+        $functionname     = 'mod_'.$modname.'_get_file_areas';
+        $functionname_old = $modname.'_get_file_areas';
+
+        if (function_exists($functionname)) {
             $this->areas = $functionname($course, $cm, $context);
+        } else if (function_exists($functionname_old)) {
+            $this->areas = $functionname_old($course, $cm, $context);
         } else {
             $this->areas = array();
         }
-
         unset($this->areas['intro']); // hardcoded, ignore attempts to override it
     }
 
@@ -93,12 +99,14 @@ class file_info_context_module extends file_info {
             return null;
         }
 
-        if (!is_viewing($this->context) and !$this->browser->is_enrolled($this->course->id)) {
+        if (!is_viewing($this->context) and !is_enrolled($this->context)) {
             // no peaking here if not enrolled or inspector
             return null;
         }
 
-        if (!$this->cm->uservisible) {
+        $modinfo = get_fast_modinfo($this->course);
+        $cminfo = $modinfo->get_cm($this->cm->id);
+        if (!$cminfo->uservisible) {
             // activity hidden sorry
             return null;
         }
@@ -113,10 +121,13 @@ class file_info_context_module extends file_info {
             return $this->get_area_backup($itemid, $filepath, $filename);
         }
 
-        if ($functionname = component_callback_exists('mod_'.$this->modname, 'get_file_info')) {
-            $cm = $this->cm->get_course_module_record();
-            return $functionname($this->browser, $this->areas, $this->course, $cm,
-                $this->context, $filearea, $itemid, $filepath, $filename);
+        $functionname     = 'mod_'.$this->modname.'_get_file_info';
+        $functionname_old = $this->modname.'_get_file_info';
+
+        if (function_exists($functionname)) {
+            return $functionname($this->browser, $this->areas, $this->course, $this->cm, $this->context, $filearea, $itemid, $filepath, $filename);
+        } else if (function_exists($functionname_old)) {
+            return $functionname_old($this->browser, $this->areas, $this->course, $this->cm, $this->context, $filearea, $itemid, $filepath, $filename);
         }
 
         return null;
@@ -195,7 +206,7 @@ class file_info_context_module extends file_info {
      * @return string
      */
     public function get_visible_name() {
-        return $this->cm->get_formatted_name().' ('.$this->cm->get_module_type_name().')';
+        return $this->cm->name.' ('.get_string('modulename', $this->cm->modname).')';
     }
 
     /**

@@ -33,7 +33,7 @@ require_once($CFG->dirroot . '/backup/util/dbops/backup_dbops.class.php');
 require_once($CFG->dirroot . '/backup/util/dbops/backup_controller_dbops.class.php');
 require_once($CFG->dirroot . '/backup/util/dbops/restore_dbops.class.php');
 require_once($CFG->dirroot . '/backup/util/xml/contenttransformer/xml_contenttransformer.class.php');
-require_once(__DIR__ . '/handlerlib.php');
+require_once(dirname(__FILE__) . '/handlerlib.php');
 
 /**
  * Converter of Moodle 1.9 backup into Moodle 2.x format
@@ -89,8 +89,7 @@ class moodle1_converter extends base_converter {
     public static function detect_format($tempdir) {
         global $CFG;
 
-        $tempdirpath = make_backup_temp_directory($tempdir, false);
-        $filepath = $tempdirpath . '/moodle.xml';
+        $filepath = $CFG->tempdir . '/backup/' . $tempdir . '/moodle.xml';
         if (file_exists($filepath)) {
             // looks promising, lets load some information
             $handle = fopen($filepath, 'r');
@@ -1380,7 +1379,7 @@ class moodle1_file_manager implements loggable {
     protected function make_file_record(array $fileinfo) {
 
         $defaultrecord = array(
-            'contenthash'   => file_storage::hash_from_string(''),
+            'contenthash'   => 'da39a3ee5e6b4b0d3255bfef95601890afd80709',  // sha1 of an empty file
             'contextid'     => $this->contextid,
             'component'     => $this->component,
             'filearea'      => $this->filearea,
@@ -1423,7 +1422,7 @@ class moodle1_file_manager implements loggable {
             throw new moodle1_convert_exception('file_not_readable');
         }
 
-        $contenthash = file_storage::hash_from_path($pathname);
+        $contenthash = sha1_file($pathname);
         $filesize    = filesize($pathname);
         $hashpath    = $this->converter->get_workdir_path().'/files/'.substr($contenthash, 0, 2);
         $hashfile    = "$hashpath/$contenthash";

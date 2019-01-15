@@ -1,11 +1,15 @@
 YUI.add('moodle-mod_feedback-dragdrop', function(Y) {
     var DRAGDROPNAME = 'mod_feedback_dragdrop';
     var CSS = {
-        DRAGAREA: '#feedback_dragarea',
-        DRAGITEMCLASS: 'feedback_itemlist',
-        DRAGITEM: 'div.feedback_itemlist',
-        DRAGLIST: '#feedback_dragarea form',
-        DRAGHANDLE: 'itemhandle'
+        OLDMOVE : 'span.feedback_item_command_move',
+        OLDMOVEUP : 'span.feedback_item_command_moveup',
+        OLDMOVEDOWN : 'span.feedback_item_command_movedown',
+        DRAGAREA : '#feedback_dragarea',
+        DRAGITEM : 'li.feedback_itemlist',
+        DRAGLIST : '#feedback_dragarea ul#feedback_draglist',
+        POSITIONLABEL : '.feedback_item_commands.position',
+        ITEMBOX : '#feedback_item_box_',
+        DRAGHANDLE : 'itemhandle'
     };
 
     var DRAGDROP = function() {
@@ -21,14 +25,15 @@ YUI.add('moodle-mod_feedback-dragdrop', function(Y) {
 
             var groups = ['feedbackitem'];
 
-            var handletitle = M.util.get_string('move_item', 'feedback');
+            handletitle = M.util.get_string('move_item', 'feedback');
+            this.mydraghandle = this.get_drag_handle(handletitle, CSS.DRAGHANDLE, 'icon');
 
             //Get the list of li's in the lists and add the drag handle.
             basenode = Y.Node.one(CSS.DRAGLIST);
             listitems = basenode.all(CSS.DRAGITEM).each(function(v) {
-                var item_id = this.get_node_id(v.get('id')); //Get the id of the feedback item.
-                var mydraghandle = this.get_drag_handle(handletitle, CSS.DRAGHANDLE, 'icon');
-                v.append(mydraghandle); // Insert the new handle into the item box.
+                item_id = this.get_node_id(v.get('id')); //Get the id of the feedback item.
+                item_box = Y.Node.one(CSS.ITEMBOX + item_id); //Get the current item box so we can add the drag handle.
+                v.insert(this.mydraghandle.cloneNode(true), item_box); //Insert the new handle into the item box.
             }, this);
 
             //We use a delegate to make all items draggable
@@ -67,6 +72,11 @@ YUI.add('moodle-mod_feedback-dragdrop', function(Y) {
             //Listen for all drag:dropmiss events
             del.on('drag:dropmiss',  this.drag_dropmiss_handler, this);
 
+            // Remove all legacy move icons.
+            Y.all(CSS.OLDMOVEUP).remove();
+            Y.all(CSS.OLDMOVEDOWN).remove();
+            Y.all(CSS.OLDMOVE).remove();
+
             //Create targets for drop.
             var droparea = Y.Node.one(CSS.DRAGLIST);
             var tar = new Y.DD.Drop({
@@ -88,7 +98,7 @@ YUI.add('moodle-mod_feedback-dragdrop', function(Y) {
                 drop = e.drop.get('node');
 
             //Are we dropping on an li node?
-            if (drop.hasClass(CSS.DRAGITEMCLASS)) {
+            if (drop.get('tagName').toLowerCase() === 'li') {
                 //Are we not going up?
                 if (!this.goingUp) {
                     drop = drop.get('nextSibling');
@@ -163,24 +173,22 @@ YUI.add('moodle-mod_feedback-dragdrop', function(Y) {
             var drop = e.drop.get('node'),
                 drag = e.drag.get('node');
             dragnode = Y.one(drag);
-            if (!drop.hasClass(CSS.DRAGITEMCLASS)) {
+            //If we are not on an li, we must have been dropped on a ul.
+            if (drop.get('tagName').toLowerCase() !== 'li') {
                 if (!drop.contains(drag)) {
                     drop.appendChild(drag);
                 }
-                var childElement;
-                var elementId;
-                var elements = [];
-                drop.all(CSS.DRAGITEM).each(function(v) {
-                    childElement = v.one('.felement').one('[id^="feedback_item_"]');
-                    if (childElement) {
-                        elementId = this.get_node_id(childElement.get('id'));
-                        if (elements.indexOf(elementId) == -1) {
-                            elements.push(elementId);
-                        }
-                    }
+                myElements = '';
+                counter = 1;
+                drop.get('children').each(function(v) {
+                    poslabeltext = '(' + M.util.get_string('position', 'feedback') + ':' + counter + ')';
+                    poslabel = v.one(CSS.POSITIONLABEL);
+                    poslabel.setHTML(poslabeltext);
+                    myElements = myElements + ',' + this.get_node_id(v.get('id'));
+                    counter++;
                 }, this);
                 var spinner = M.util.add_spinner(Y, dragnode);
-                this.save_item_order(this.cmid, elements.toString(), spinner);
+                this.save_item_order(this.cmid, myElements, spinner);
            }
         },
 
@@ -237,7 +245,7 @@ YUI.add('moodle-mod_feedback-dragdrop', function(Y) {
          * @return int
          */
         get_node_id : function(id) {
-            return Number(id.replace(/^.*feedback_item_/i, ''));
+            return Number(id.replace(/feedback_item_/i, ''));
         }
 
     }, {

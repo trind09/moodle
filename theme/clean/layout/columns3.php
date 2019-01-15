@@ -31,10 +31,18 @@
 // Get the HTML for the settings bits.
 $html = theme_clean_get_html_for_settings($OUTPUT, $PAGE);
 
-$regionmainbox = 'span9 desktop-first-column';
+// Set default (LTR) layout mark-up for a three column page.
+$regionmainbox = 'span9';
 $regionmain = 'span8 pull-right';
 $sidepre = 'span4 desktop-first-column';
 $sidepost = 'span3 pull-right';
+// Reset layout mark-up for RTL languages.
+if (right_to_left()) {
+    $regionmainbox = 'span9 pull-right';
+    $regionmain = 'span8';
+    $sidepre = 'span4 pull-right';
+    $sidepost = 'span3 desktop-first-column';
+}
 
 echo $OUTPUT->doctype() ?>
 <html <?php echo $OUTPUT->htmlattributes(); ?>>
@@ -43,28 +51,112 @@ echo $OUTPUT->doctype() ?>
     <link rel="shortcut icon" href="<?php echo $OUTPUT->favicon(); ?>" />
     <?php echo $OUTPUT->standard_head_html() ?>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        .FirstMenu {
+	        vertical-align: bottom;
+	        padding: 10px;
+	        padding-left: 20px;
+	        background: #004DA4;
+	        font-weight: bold;
+	        color: white;
+	        font-family: Time New Roman;
+	        width: 12.5%;
+        }
+
+        .SecondMenu {
+	        vertical-align: bottom;
+	        padding: 10px;
+	        padding-left: 20px;
+	        background: #004DA4;
+	        font-weight: bold;
+	        color: white;
+	        font-family: Time New Roman;
+	        width: 14.28571428571429%;
+        }
+
+        .LogoCell {
+	        background-image: linear-gradient(white, #DEF0F4); vertical-align: middle; text-align: left; padding: 20px;
+        }
+
+        .MenuLink {
+	        text-decoration: none; color: white;
+        }
+    </style>
+
 </head>
 
 <body <?php echo $OUTPUT->body_attributes(); ?>>
 
 <?php echo $OUTPUT->standard_top_of_body_html() ?>
 
-<header role="banner" class="navbar navbar-fixed-top<?php echo $html->navbarclass ?> moodle-has-zindex">
-    <nav role="navigation" class="navbar-inner">
-        <div class="container-fluid">
-            <?php echo $OUTPUT->navbar_home(); ?>
-            <?php echo $OUTPUT->navbar_button(); ?>
-            <?php echo $OUTPUT->user_menu(); ?>
-            <?php echo $OUTPUT->navbar_plugin_output(); ?>
-            <?php echo $OUTPUT->search_box(); ?>
-            <div class="nav-collapse collapse">
-                <?php echo $OUTPUT->custom_menu(); ?>
-                <ul class="nav pull-right">
-                    <li><?php echo $OUTPUT->page_heading_menu(); ?></li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+<header role="banner">
+    <table style="border: 0px; margin-top: -60px;" width="100%" cellspacing="0" cellpadding="0">
+	    <tr>
+		    <td class="FirstMenu"><a href="#" class="MenuLink">School of<br>
+		    Health Sciences</a></td>
+		    <td class="FirstMenu"><a href="#" class="MenuLink">Academics</a></td>
+		    <td class="FirstMenu"><a href="#" class="MenuLink">Faculty &amp; Staff</a></td>
+		    <td class="FirstMenu"><a href="#" class="MenuLink">Research</a></td>
+		    <td class="FirstMenu"><a href="#" class="MenuLink">Centers &amp; Divisions</a></td>
+		    <td class="FirstMenu"><a href="#" class="MenuLink">Community</a></td>
+		    <td class="FirstMenu"><a href="#" class="MenuLink">Feedback</a></td>
+		    <td class="FirstMenu"><a href="#" class="MenuLink">Contact</a></td>
+	    </tr>
+	    <tr>
+		    <td colspan="8">
+			    <table style="border: 0px;" width="100%" cellspacing="0" cellpadding="0">
+				    <tr>
+					    <td class="LogoCell">
+						    <a class="brand" href="<?php echo $CFG->wwwroot;?>" title="<?php echo
+		                    format_string($SITE->shortname, true, array('context' => context_course::instance(SITEID)));
+		                    ?>"><img border="0" src="http://elearning-medvnu.edu.vn/images/school3.jpg" width="593" height="68"></a>
+		                </td>
+					    <td class="LogoCell">
+					    <img border="0" src="http://elearning-medvnu.edu.vn/images/school2.jpg" width="67" height="106"></td>
+				    </tr>
+			    </table>
+		    </td>
+	    </tr>
+	    <tr>
+		    <td colspan="8">
+			    <table style="border: 0px;" width="100%" cellspacing="0" cellpadding="0">
+				    <tr>
+					    <td class="SecondMenu">
+						    <a class="brand" href="<?php echo $CFG->wwwroot;?>" title="<?php echo
+		                    format_string($SITE->shortname, true, array('context' => context_course::instance(SITEID)));
+		                    ?>"><img border="0" src="http://elearning-medvnu.edu.vn/images/home-xxl.png" width="26" height="25"></a>
+					    </td>
+					    <td class="SecondMenu"><a href="#" class="MenuLink">About</a></td>
+					    <td class="SecondMenu"><a href="#" class="MenuLink">Student Services</a></td>
+					    <td class="SecondMenu"><a href="#" class="MenuLink">Courses</a></td>
+					    <td class="SecondMenu"><a href="#" class="MenuLink">Campus Life</a></td>
+					    <td class="SecondMenu"><a href="#" class="MenuLink">News</a></td>
+					    <td class="SecondMenu"><a href="#" class="MenuLink">English Forum</a></td>
+				    </tr>
+			    </table>
+		    </td>
+	    </tr>
+        <tr>
+			<td colspan="8">
+                <table style="border: 0px;" width="100%" cellspacing="0" cellpadding="0">
+                    <tr>
+                        <td>
+                            <div class="nav-collapse collapse" style="padding-top:25px;">
+			                    <?php echo $OUTPUT->custom_menu(); ?>
+			                    <ul class="nav pull-right">
+			                        <li><?php echo $OUTPUT->page_heading_menu(); ?></li>
+			                    </ul>
+			                </div>
+                        </td>
+                        <td>
+                            <?php echo $OUTPUT->user_menu(); ?>
+                        </td>
+                    </tr>
+                </table>
+			</td>
+		</tr>
+    </table>
+
 </header>
 
 <div id="page" class="container-fluid">
@@ -76,7 +168,6 @@ echo $OUTPUT->doctype() ?>
                     <?php
                     echo $OUTPUT->course_content_header();
                     echo $OUTPUT->main_content();
-                    echo $OUTPUT->activity_navigation();
                     echo $OUTPUT->course_content_footer();
                     ?>
                 </section>

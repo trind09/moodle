@@ -57,23 +57,15 @@ class assignfeedback_offline_grade_importer {
     /** @var array $feedbackcolumnindexes A lookup of column indexes for feedback plugin text import columns */
     private $feedbackcolumnindexes = array();
 
-    /** @var string $encoding Encoding to use when reading the csv file. Defaults to utf-8. */
-    private $encoding;
-
-    /** @var string $separator How each bit of information is separated in the file. Defaults to comma separated. */
-    private $separator;
-
     /**
      * Constructor
      *
      * @param string $importid A unique id for this import
      * @param assign $assignment The current assignment
      */
-    public function __construct($importid, assign $assignment, $encoding = 'utf-8', $separator = 'comma') {
+    public function __construct($importid, assign $assignment) {
         $this->importid = $importid;
         $this->assignment = $assignment;
-        $this->encoding = $encoding;
-        $this->separator = $separator;
     }
 
     /**
@@ -85,7 +77,7 @@ class assignfeedback_offline_grade_importer {
      */
     public function parsecsv($csvdata) {
         $this->csvreader = new csv_import_reader($this->importid, 'assignfeedback_offline');
-        $this->csvreader->load_csv_content($csvdata, $this->encoding, $this->separator);
+        $this->csvreader->load_csv_content($csvdata, 'utf-8', 'comma');
     }
 
     /**
@@ -146,24 +138,6 @@ class assignfeedback_offline_grade_importer {
         }
         $this->validusers = $this->assignment->list_participants($groupid, false);
         return true;
-    }
-
-    /**
-     * Return the encoding for this csv import.
-     *
-     * @return string The encoding for this csv import.
-     */
-    public function get_encoding() {
-        return $this->encoding;
-    }
-
-    /**
-     * Return the separator for this csv import.
-     *
-     * @return string The separator for this csv import.
-     */
-    public function get_separator() {
-        return $this->separator;
     }
 
     /**

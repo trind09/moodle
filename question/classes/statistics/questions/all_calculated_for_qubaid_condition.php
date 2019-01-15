@@ -96,40 +96,22 @@ class all_calculated_for_qubaid_condition {
     }
 
     /**
-     * Do we have stats for a particular quesitonid (and optionally variant)?
-     *
-     * @param int  $questionid The id of the sub question.
-     * @param int|null $variant if not null then we want the object to store a variant of a sub-question's stats.
-     * @return bool whether those stats exist (yet).
-     */
-    public function has_subq($questionid, $variant = null) {
-        if ($variant === null) {
-            return isset($this->subquestionstats[$questionid]);
-        } else {
-            return isset($this->subquestionstats[$questionid]->variantstats[$variant]);
-        }
-    }
-
-    /**
      * Reference for a item stats instance for a questionid and optional variant no.
      *
      * @param int  $questionid The id of the sub question.
      * @param int|null $variant if not null then we want the object to store a variant of a sub-question's stats.
-     * @return calculated|calculated_for_subquestion stats instance for a questionid and optional variant no.
-     *     Will be a calculated_for_subquestion if no variant specified.
-     * @throws \coding_exception if there is an attempt to respond to a non-existant set of stats.
+     * @return calculated_for_subquestion|null null if the stats object does not yet exist.
      */
     public function for_subq($questionid, $variant = null) {
         if ($variant === null) {
             if (!isset($this->subquestionstats[$questionid])) {
-                throw new \coding_exception('Reference to unknown question id ' . $questionid);
+                return null;
             } else {
                 return $this->subquestionstats[$questionid];
             }
         } else {
             if (!isset($this->subquestionstats[$questionid]->variantstats[$variant])) {
-                throw new \coding_exception('Reference to unknown question id ' . $questionid .
-                        ' variant ' . $variant);
+                return null;
             } else {
                 return $this->subquestionstats[$questionid]->variantstats[$variant];
             }
@@ -155,38 +137,22 @@ class all_calculated_for_qubaid_condition {
     }
 
     /**
-     * Do we have stats for a particular slot (and optionally variant)?
-     *
-     * @param int  $slot The slot no.
-     * @param int|null $variant if provided then we want the object which stores a variant of a position's stats.
-     * @return bool whether those stats exist (yet).
-     */
-    public function has_slot($slot, $variant = null) {
-        if ($variant === null) {
-            return isset($this->questionstats[$slot]);
-        } else {
-            return isset($this->questionstats[$slot]->variantstats[$variant]);
-        }
-    }
-
-    /**
      * Get position stats instance for a slot and optional variant no.
      *
      * @param int  $slot The slot no.
-     * @param int|null $variant if provided then we want the object which stores a variant of a position's stats.
-     * @return calculated|calculated_for_subquestion An instance of the class storing the calculated position stats.
-     * @throws \coding_exception if there is an attempt to respond to a non-existant set of stats.
+     * @param null $variant if provided then we want the object which stores a variant of a position's stats.
+     * @return calculated|null An instance of the class storing the calculated position stats.
      */
     public function for_slot($slot, $variant = null) {
         if ($variant === null) {
             if (!isset($this->questionstats[$slot])) {
-                throw new \coding_exception('Reference to unknown slot ' . $slot);
+                return null;
             } else {
                 return $this->questionstats[$slot];
             }
         } else {
             if (!isset($this->questionstats[$slot]->variantstats[$variant])) {
-                throw new \coding_exception('Reference to unknown slot ' . $slot . ' variant ' . $variant);
+                return null;
             } else {
                 return $this->questionstats[$slot]->variantstats[$variant];
             }

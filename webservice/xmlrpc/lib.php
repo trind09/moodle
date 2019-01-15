@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+
 /**
  * Moodle XML-RPC library
  *
@@ -22,22 +23,21 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
+require_once 'Zend/XmlRpc/Client.php';
 
 /**
  * Moodle XML-RPC client
+ *
+ * It has been implemented for unit testing purpose (all protocols have similar client)
  *
  * @package    webservice_xmlrpc
  * @copyright  2010 Jerome Mouneyrac
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class webservice_xmlrpc_client {
+class webservice_xmlrpc_client extends Zend_XmlRpc_Client {
 
-    /** @var moodle_url The XML-RPC server url. */
-    protected $serverurl;
-
-    /** @var string The token for the XML-RPC call. */
-    protected $token;
+    /** @var string server url e.g. https://yyyyy.com/server.php */
+    private $serverurl;
 
     /**
      * Constructor
@@ -46,8 +46,22 @@ class webservice_xmlrpc_client {
      * @param string $token the token used to do the web service call
      */
     public function __construct($serverurl, $token) {
-        $this->serverurl = new moodle_url($serverurl);
-        $this->token = $token;
+        global $CFG;
+        $this->serverurl = $serverurl;
+        $serverurl = $serverurl . '?wstoken=' . $token;
+        parent::__construct($serverurl);
+        if (!empty($CFG->proxyhost) && !is_proxybypass($serverurl)) {
+            $config = array(
+                'adapter'    => 'Zend_Http_Client_Adapter_Proxy',
+                'proxy_host' => $CFG->proxyhost,
+                'proxy_user' => !empty($CFG->proxyuser) ? $CFG->proxyuser : null,
+                'proxy_pass' => !empty($CFG->proxypassword) ? $CFG->proxypassword : null
+            );
+            if (!empty($CFG->proxyport)) {
+                $config['proxy_port'] = $CFG->proxyport;
+            }
+            $this->getHttpClient()->setConfig($config);
+        }
     }
 
     /**
@@ -56,83 +70,26 @@ class webservice_xmlrpc_client {
      * @param string $token the token used to do the web service call
      */
     public function set_token($token) {
-        $this->token = $token;
+        $this->_serverAddress = $this->serverurl . '?wstoken=' . $token;
     }
 
     /**
      * Execute client WS request with token authentication
      *
      * @param string $functionname the function name
-     * @param array $params An associative array containing the the parameters of the function being called.
-     * @return mixed The decoded XML RPC response.
-     * @throws moodle_exception
+     * @param array $params the parameters of the function
+     * @return mixed
      */
-    public function call($functionname, $params = array()) {
-        global $CFG;
-        require_once($CFG->libdir . '/filelib.php');
+    public function call($functionname, $params=array()) {
+        global $DB, $CFG;
 
-        if ($this->token) {
-            $this->serverurl->param('wstoken', $this->token);
-        }
+        //zend expects 0 based array with numeric indexes
+        $params = array_values($params);
 
-        $request = $this->encode_request($functionname, $params);
-
-        // Set the headers.
-        $headers = array(
-            'Content-Length' => strlen($request),
-            'Content-Type' => 'text/xml; charset=utf-8',
-            'Host' => $this->serverurl->get_host(),
-            'User-Agent' => 'Moodle XML-RPC Client/1.0',
-        );
-
-        // Get the response.
-        $response = download_file_content($this->serverurl->out(false), $headers, $request);
-
-        // Decode the response.
-        $result = $this->decode_response($response);
-        if (is_array($result) && xmlrpc_is_fault($result)) {
-            throw new Exception($result['faultString'], $result['faultCode']);
-        }
+        //traditional Zend soap client call (integrating the token into the URL)
+        $result = parent::call($functionname, $params);
 
         return $result;
     }
 
-    /**
-     * Generates XML for a method request.
-     *
-     * @param string $functionname Name of the method to call.
-     * @param mixed $params Method parameters compatible with the method signature.
-     * @return string
-     */
-    protected function encode_request($functionname, $params) {
-
-        $outputoptions = array(
-            'encoding' => 'utf-8',
-            'escaping' => 'markup',
-        );
-
-        // See MDL-53962 - needed for backwards compatibility on <= 3.0.
-        $params = array_values($params);
-
-        return xmlrpc_encode_request($functionname, $params, $outputoptions);
-    }
-
-    /**
-     * Parses and decodes the response XML
-     *
-     * @param string $response
-     * @return array
-     */
-    protected function decode_response($response) {
-        // XMLRPC server in Moodle encodes response using function xmlrpc_encode_request() with method==null
-        // see {@link webservice_xmlrpc_server::prepare_response()} . We should use xmlrpc_decode_request() for decoding too.
-        $method = null;
-        $encoding = null;
-        if (preg_match('/^<\?xml version="1.0" encoding="([^"]*)"\?>/', $response, $matches)) {
-            // Sometimes xmlrpc_decode_request() fails to recognise encoding, let's help it.
-            $encoding = $matches[1];
-        }
-        $r = xmlrpc_decode_request($response, $method, $encoding);
-        return $r;
-    }
 }

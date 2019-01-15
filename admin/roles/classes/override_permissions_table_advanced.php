@@ -56,24 +56,6 @@ class core_role_override_permissions_table_advanced extends core_role_capability
         }
     }
 
-    /**
-     * This method adds an additional class to a row if capability is other than inherited.
-     *
-     * @param stdClass $capability
-     * @return array
-     */
-    protected function get_row_attributes($capability) {
-        $rowattributes = parent::get_row_attributes($capability);
-        if ($this->permissions[$capability->name] !== 0) {
-            if (empty($rowattributes['class'])) {
-                $rowattributes['class'] = "overriddenpermission";
-            } else {
-                $rowattributes['class'] .= " overriddenpermission";
-            }
-        }
-        return $rowattributes;
-    }
-
     protected function load_parent_permissions() {
         // Get the capabilities from the parent context, so that can be shown in the interface.
         $parentcontext = $this->context->get_parent_context();
@@ -91,7 +73,6 @@ class core_role_override_permissions_table_advanced extends core_role_capability
         }
 
         // One cell for each possible permission.
-        $content = '';
         foreach ($this->displaypermissions as $perm => $permname) {
             $strperm = $this->strperms[$permname];
             $extraclass = '';
@@ -102,8 +83,8 @@ class core_role_override_permissions_table_advanced extends core_role_capability
             if ($this->permissions[$capability->name] == $perm) {
                 $checked = 'checked="checked" ';
             }
-            $content .= '<td class="' . $permname . $extraclass . '">';
-            $content .= '<label><input type="radio" name="' . $capability->name .
+            echo '<td class="' . $permname . $extraclass . '">';
+            echo '<label><input type="radio" name="' . $capability->name .
                 '" value="' . $perm . '" ' . $checked . $disabled . '/> ';
             if ($perm == CAP_INHERIT) {
                 $inherited = $this->parentpermissions[$capability->name];
@@ -114,9 +95,8 @@ class core_role_override_permissions_table_advanced extends core_role_capability
                 }
                 $strperm .= ' (' . $inherited . ')';
             }
-            $content .= '<span class="note">' . $strperm . '</span>';
-            $content .= '</label></td>';
+            echo '<span class="note">' . $strperm . '</span>';
+            echo '</label></td>';
         }
-        return $content;
     }
 }

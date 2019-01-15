@@ -26,7 +26,6 @@
  */
 
 require_once("HTML/QuickForm/static.php");
-require_once('templatable_form_element.php');
 
 /**
  * Text type element
@@ -38,11 +37,7 @@ require_once('templatable_form_element.php');
  * @copyright 2006 Jamie Pratt <me@jamiep.org>
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class MoodleQuickForm_static extends HTML_QuickForm_static implements templatable {
-    use templatable_form_element {
-        export_for_template as export_for_template_base;
-    }
-
+class MoodleQuickForm_static extends HTML_QuickForm_static{
     /** @var string Form element type */
     var $_elementTemplateType='static';
 
@@ -56,18 +51,8 @@ class MoodleQuickForm_static extends HTML_QuickForm_static implements templatabl
      * @param string $elementLabel (optional) text field label
      * @param string $text (optional) Text to put in text field
      */
-    public function __construct($elementName=null, $elementLabel=null, $text=null) {
-        parent::__construct($elementName, $elementLabel, $text);
-    }
-
-    /**
-     * Old syntax of class constructor. Deprecated in PHP7.
-     *
-     * @deprecated since Moodle 3.1
-     */
-    public function MoodleQuickForm_static($elementName=null, $elementLabel=null, $text=null) {
-        debugging('Use of class name as constructor is deprecated', DEBUG_DEVELOPER);
-        self::__construct($elementName, $elementLabel, $text);
+    function MoodleQuickForm_static($elementName=null, $elementLabel=null, $text=null) {
+        parent::HTML_QuickForm_static($elementName, $elementLabel, $text);
     }
 
     /**
@@ -86,12 +71,5 @@ class MoodleQuickForm_static extends HTML_QuickForm_static implements templatabl
      */
     function getElementTemplateType(){
         return $this->_elementTemplateType;
-    }
-
-    public function export_for_template(renderer_base $output) {
-        $context = $this->export_for_template_base($output);
-        $context['html'] = $this->toHtml();
-        $context['staticlabel'] = true;
-        return $context;
     }
 }

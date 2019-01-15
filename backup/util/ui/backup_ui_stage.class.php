@@ -183,11 +183,7 @@ class backup_ui_stage_initial extends backup_ui_stage {
             foreach ($tasks as &$task) {
                 // For the initial stage we are only interested in the root settings.
                 if ($task instanceof backup_root_task) {
-                    if ($this->ui instanceof import_ui) {
-                        $form->add_heading('rootsettings', get_string('importrootsettings', 'backup'));
-                    } else {
-                        $form->add_heading('rootsettings', get_string('rootsettings', 'backup'));
-                    }
+                    $form->add_heading('rootsettings', get_string('rootsettings', 'backup'));
                     $settings = $task->get_settings();
                     // First add all settings except the filename setting.
                     foreach ($settings as &$setting) {
@@ -473,11 +469,7 @@ class backup_ui_stage_confirmation extends backup_ui_stage {
             foreach ($tasks as $task) {
                 if ($task instanceof backup_root_task) {
                     // If its a backup root add a root settings heading to group nicely.
-                    if ($this->ui instanceof import_ui) {
-                        $form->add_heading('rootsettings', get_string('importrootsettings', 'backup'));
-                    } else {
-                        $form->add_heading('rootsettings', get_string('rootsettings', 'backup'));
-                    }
+                    $form->add_heading('rootsettings', get_string('rootsettings', 'backup'));
                 } else if (!$courseheading) {
                     // We haven't already add a course heading.
                     $form->add_heading('coursesettings', get_string('includeditems', 'backup'));

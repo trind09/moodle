@@ -25,22 +25,27 @@ Feature: Option to include groups and groupings when importing a course to anoth
       | Grouping 1 | C1 | GROUPING1 |
       | Grouping 2 | C1 | GROUPING2 |
     And I log in as "teacher1"
-    And I am on "Course 1" course homepage
+    And I follow "Course 1"
+    And I turn editing mode on
 
+  @javascript
   Scenario: Include groups and groupings when importing a course to another course
-    Given I import "Course 1" course into "Course 2" course using this options:
+    When I import "Course 1" course into "Course 2" course using this options:
       | Initial | Include groups and groupings | 1 |
-    When I navigate to "Groups" node in "Course administration > Users"
+    And I expand "Users" node
+    And I follow "Groups"
     Then I should see "Group 1"
     And I should see "Group 2"
     And I follow "Groupings"
     And I should see "Grouping 1"
     And I should see "Grouping 2"
 
+  @javascript
   Scenario: Do not include groups and groupings when importing a course to another course
-    Given I import "Course 1" course into "Course 2" course using this options:
+    When I import "Course 1" course into "Course 2" course using this options:
       | Initial | Include groups and groupings | 0 |
-    When I navigate to "Groups" node in "Course administration > Users"
+    And I expand "Users" node
+    And I follow "Groups"
     Then I should not see "Group 1"
     And I should not see "Group 2"
     And I follow "Groupings"

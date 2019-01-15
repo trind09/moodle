@@ -12,7 +12,6 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
-/* global AJAXBASE */
 
 /**
  * Provides an in browser PDF editor.
@@ -63,15 +62,15 @@ var QUICKCOMMENTLIST = function(editor) {
             method: 'post',
             context: this,
             sync: false,
-            data: {
-                'sesskey': M.cfg.sesskey,
-                'action': 'addtoquicklist',
-                'userid': this.editor.get('userid'),
-                'commenttext': comment.rawtext,
-                'width': comment.width,
-                'colour': comment.colour,
-                'attemptnumber': this.editor.get('attemptnumber'),
-                'assignmentid': this.editor.get('assignmentid')
+            data : {
+                'sesskey' : M.cfg.sesskey,
+                'action' : 'addtoquicklist',
+                'userid' : this.editor.get('userid'),
+                'commenttext' : comment.rawtext,
+                'width' : comment.width,
+                'colour' : comment.colour,
+                'attemptnumber' : this.editor.get('attemptnumber'),
+                'assignmentid' : this.editor.get('assignmentid')
             },
             on: {
                 success: function(tid, response) {
@@ -86,9 +85,6 @@ var QUICKCOMMENTLIST = function(editor) {
                                                                                      jsondata.width,
                                                                                      jsondata.colour);
                             this.comments.push(quickcomment);
-                            this.comments.sort(function(a, b) {
-                                return a.rawtext.localeCompare(b.rawtext);
-                            });
                         }
                     } catch (e) {
                         return new M.core.exception(e);
@@ -122,13 +118,13 @@ var QUICKCOMMENTLIST = function(editor) {
             method: 'post',
             context: this,
             sync: false,
-            data: {
-                'sesskey': M.cfg.sesskey,
-                'action': 'removefromquicklist',
-                'userid': this.editor.get('userid'),
-                'commentid': comment.id,
-                'attemptnumber': this.editor.get('attemptnumber'),
-                'assignmentid': this.editor.get('assignmentid')
+            data : {
+                'sesskey' : M.cfg.sesskey,
+                'action' : 'removefromquicklist',
+                'userid' : this.editor.get('userid'),
+                'commentid' : comment.id,
+                'attemptnumber' : this.editor.get('attemptnumber'),
+                'assignmentid' : this.editor.get('assignmentid')
             },
             on: {
                 success: function() {
@@ -163,12 +159,12 @@ var QUICKCOMMENTLIST = function(editor) {
             method: 'get',
             context: this,
             sync: false,
-            data: {
-                'sesskey': M.cfg.sesskey,
-                'action': 'loadquicklist',
-                'userid': this.editor.get('userid'),
-                'attemptnumber': this.editor.get('attemptnumber'),
-                'assignmentid': this.editor.get('assignmentid')
+            data : {
+                'sesskey' : M.cfg.sesskey,
+                'action' : 'loadquicklist',
+                'userid' : this.editor.get('userid'),
+                'attemptnumber' : this.editor.get('attemptnumber'),
+                'assignmentid' : this.editor.get('assignmentid')
             },
             on: {
                 success: function(tid, response) {
@@ -185,10 +181,6 @@ var QUICKCOMMENTLIST = function(editor) {
                                                                                              comment.colour);
                                 this.comments.push(quickcomment);
                             }, this);
-
-                            this.comments.sort(function(a, b) {
-                                return a.rawtext.localeCompare(b.rawtext);
-                            });
                         }
                     } catch (e) {
                         return new M.core.exception(e);

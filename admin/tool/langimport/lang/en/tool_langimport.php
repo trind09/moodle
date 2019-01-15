@@ -23,7 +23,6 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-$string['downloadnotavailable'] = 'Unable to connect to the download server. It is not possible to install or update the language packs automatically. Please download the appropriate ZIP file(s) from <a href="{$a->src}">{$a->src}</a> and unzip them manually to your data directory <code>{$a->dest}</code>';
 $string['install'] = 'Install selected language pack(s)';
 $string['installedlangs'] = 'Installed language packs';
 $string['langimport'] = 'Language import utility';
@@ -31,7 +30,7 @@ $string['langimportdisabled'] = 'Language import feature has been disabled. You 
 $string['langpackinstalled'] = 'Language pack \'{$a}\' was successfully installed';
 $string['langpackinstalledevent'] = 'Language pack installed';
 $string['langpackremoved'] = 'Language pack \'{$a}\' was uninstalled';
-$string['langpacknotremoved'] = 'An error has occurred; language pack \'{$a}\' is not completely uninstalled. Please check file permissions.';
+$string['langpacknotremoved'] = 'An error has occurred, language pack \'{$a}\' is not completely uninstalled, please check file permissions';
 $string['langpackremovedevent'] = 'Language pack uninstalled';
 $string['langpackupdateskipped'] = 'Update of \'{$a}\' language pack skipped';
 $string['langpackuptodate'] = 'Language pack \'{$a}\' is up-to-date';
@@ -40,12 +39,12 @@ $string['langpackupdatedevent'] = 'Language pack updated';
 $string['langupdatecomplete'] = 'Language pack update completed';
 $string['missingcfglangotherroot'] = 'Missing configuration value $CFG->langotherroot';
 $string['missinglangparent'] = 'Missing parent language <em>{$a->parent}</em> of <em>{$a->lang}</em>.';
-$string['noenglishuninstall'] = 'The English language pack cannot be uninstalled.';
+$string['noenglishuninstall'] = 'English language pack can not be uninstalled';
 $string['nolangupdateneeded'] = 'All your language packs are up to date, no update is needed';
 $string['pluginname'] = 'Language packs';
 $string['purgestringcaches'] = 'Purge string caches';
-$string['selectlangs'] = 'Select languages to uninstall';
-$string['uninstall'] = 'Uninstall selected language pack(s)';
+$string['remotelangnotavailable'] = 'Because Moodle cannot connect to download.moodle.org, it is not possible for language packs to be installed automatically. Please download the appropriate ZIP file(s) from <a href="https://download.moodle.org/langpack/">download.moodle.org/langpack</a>, copy them to your {$a} directory and unzip them manually.';
+$string['selectlangs'] = 'Select languages to unistall!';
+$string['uninstall'] = 'Uninstall selected language packs';
 $string['uninstallconfirm'] = 'You are about to completely uninstall these language packs: <strong>{$a}</strong>. Are you sure?';
 $string['updatelangs'] = 'Update all installed language packs';
-$string['privacy:metadata'] = 'The Language packs plugin does not store any personal data.';

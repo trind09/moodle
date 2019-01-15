@@ -1,13 +1,14 @@
 default:
-  suites:
-    default:
-      paths: {  }
-      contexts: {  }
+  paths:
+    features: lib/behat/features
+    bootstrap: lib/behat/features/bootstrap
+  context:
+    class: behat_init_context
   extensions:
-    Behat\MinkExtension:
+    Behat\MinkExtension\Extension:
       base_url: 'http://localhost:8000'
       goutte: null
       selenium2: null
-    Moodle\BehatExtension:
-      moodledirroot: /Should/Change/To/Moodle/www/dir
+    Moodle\BehatExtension\Extension:
+      features: {  }
       steps_definitions: {  }

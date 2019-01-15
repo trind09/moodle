@@ -45,10 +45,6 @@ class user_edit_editor_form extends moodleform {
         $mform = $this->_form;
 
         $editors = editors_get_enabled();
-
-        $mform->addElement('hidden', 'id');
-        $mform->setType('id', PARAM_INT);
-
         if (count($editors) > 1) {
             $choices = array('' => get_string('defaulteditor'));
             $firsteditor = '';
@@ -59,7 +55,6 @@ class user_edit_editor_form extends moodleform {
                 $choices[$editor] = get_string('pluginname', 'editor_' . $editor);
             }
             $mform->addElement('select', 'preference_htmleditor', get_string('textediting'), $choices);
-            $mform->addHelpButton('preference_htmleditor', 'textediting');
             $mform->setDefault('preference_htmleditor', '');
         } else {
             // Empty string means use the first chosen text editor.

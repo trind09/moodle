@@ -56,7 +56,6 @@ $string['deletegroupsconfirm'] = 'Are you sure you want to delete the following 
 $string['deleteselectedgroup'] = 'Delete selected group';
 $string['editgroupingsettings'] = 'Edit grouping settings';
 $string['editgroupsettings'] = 'Edit group settings';
-$string['editusersgroupsa'] = 'Edit groups for "{$a}"';
 $string['enrolmentkey'] = 'Enrolment key';
 $string['enrolmentkey_help'] = 'An enrolment key enables access to the course to be restricted to only those who know the key. If a group enrolment key is specified, then not only will entering that key let the user into the course, but it will also automatically make them a member of this group.
 
@@ -77,8 +76,6 @@ $string['eventgroupmemberremoved'] = 'Group member removed';
 $string['eventgroupupdated'] = 'Group updated';
 $string['eventgroupingcreated'] = 'Grouping created';
 $string['eventgroupingdeleted'] = 'Grouping deleted';
-$string['eventgroupinggroupassigned'] = 'Group assigned to grouping';
-$string['eventgroupinggroupunassigned'] = 'Group unassigned from grouping';
 $string['eventgroupingupdated'] = 'Grouping updated';
 $string['existingmembers'] = 'Existing members: {$a}';
 $string['filtergroups'] = 'Filter groups by:';
@@ -108,7 +105,7 @@ $string['groupmembersselected'] = 'Members of selected group';
 $string['groupmode'] = 'Group mode';
 $string['groupmode_help'] = 'This setting has 3 options:
 
-* No groups
+* No groups - There are no sub groups, everyone is part of one big community
 * Separate groups - Each group member can only see their own group, others are invisible
 * Visible groups - Each group member works in their own group, but can also see other groups
 
@@ -140,8 +137,6 @@ $string['importgroups_help'] = 'Groups may be imported via text file. The format
 * Required fieldname is groupname
 * Optional fieldnames are description, enrolmentkey, picture, hidepicture';
 $string['importgroups_link'] = 'group/import';
-$string['includeonlyactiveenrol'] = 'Include only active enrolments';
-$string['includeonlyactiveenrol_help'] = 'If enabled, suspended users will not be included in groups.';
 $string['javascriptrequired'] = 'This page requires JavaScript to be enabled.';
 $string['members'] = 'Members per group';
 $string['membersofselectedgroup'] = 'Members of:';
@@ -154,15 +149,12 @@ $string['newpicture'] = 'New picture';
 $string['newpicture_help'] = 'Select an image in JPG or PNG format. The image will be cropped to a square and resized to 100x100 pixels.';
 $string['noallocation'] = 'No allocation';
 $string['nogrouping'] = 'No grouping';
-$string['nogroup'] = 'No group';
-$string['nogrouping'] = 'No grouping';
 $string['nogroups'] = 'There are no groups set up in this course yet';
 $string['nogroupsassigned'] = 'No groups assigned';
 $string['nopermissionforcreation'] = 'Can\'t create group "{$a}" as you don\'t have the required permissions';
 $string['nosmallgroups'] = 'Prevent last small group';
 $string['notingroup'] = 'Ignore users in groups';
 $string['notingrouping'] = '[Not in a grouping]';
-$string['notingrouplist'] = '[Not in a group]';
 $string['nousersinrole'] = 'There are no suitable users in the selected role';
 $string['number'] = 'Group/member count';
 $string['numgroups'] = 'Number of groups';
@@ -173,10 +165,6 @@ $string['overview'] = 'Overview';
 $string['potentialmembers'] = 'Potential members: {$a}';
 $string['potentialmembs'] = 'Potential members';
 $string['printerfriendly'] = 'Printer-friendly display';
-$string['privacy:metadata:groups'] = 'A record of group membership.';
-$string['privacy:metadata:groups:groupid'] = 'The ID of the group.';
-$string['privacy:metadata:groups:timeadded'] = 'The timestamp indicating when the user was added to the group.';
-$string['privacy:metadata:groups:userid'] = 'The ID of the user which is associated to the group.';
 $string['random'] = 'Randomly';
 $string['removegroupfromselectedgrouping'] = 'Remove group from grouping';
 $string['removefromgroup'] = 'Remove user from group {$a}';

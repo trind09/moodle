@@ -49,13 +49,8 @@ class award_criteria_course extends award_criteria {
         parent::__construct($record);
 
         $this->course = $DB->get_record_sql('SELECT c.id, c.enablecompletion, c.cacherev, c.startdate
-                        FROM {badge} b LEFT JOIN {course} c ON b.courseid = c.id
-                        WHERE b.id = :badgeid ', array('badgeid' => $this->badgeid), MUST_EXIST);
-
-        // If the course doesn't exist but we're sure the badge does (thanks to the LEFT JOIN), then use the site as the course.
-        if (empty($this->course->id)) {
-            $this->course = get_course(SITEID);
-        }
+                        FROM {badge} b INNER JOIN {course} c ON b.courseid = c.id
+                        WHERE b.id = :badgeid ', array('badgeid' => $this->badgeid));
         $this->courseid = $this->course->id;
     }
 
@@ -100,7 +95,7 @@ class award_criteria_course extends award_criteria {
      * @return string
      */
     public function get_details($short = '') {
-        global $DB, $OUTPUT;
+        global $DB;
         $param = reset($this->params);
 
         $course = $DB->get_record('course', array('id' => $param['course']));

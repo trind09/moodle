@@ -23,7 +23,7 @@
  */
 
 
-require_once(__DIR__ . '/../../config.php');
+require_once(dirname(__FILE__) . '/../../config.php');
 require_once($CFG->libdir . '/formslib.php');
 require_once($CFG->libdir .'/simplepie/moodle_simplepie.php');
 
@@ -36,7 +36,7 @@ class feed_edit_form extends moodleform {
     function __construct($actionurl, $isadding, $caneditshared) {
         $this->isadding = $isadding;
         $this->caneditshared = $caneditshared;
-        parent::__construct($actionurl);
+        parent::moodleform($actionurl);
     }
 
     function definition() {

@@ -71,8 +71,8 @@ $tasks = array(
     array(
         'classname' => 'core\task\tag_cron_task',
         'blocking' => 0,
-        'minute' => 'R',
-        'hour' => '3',
+        'minute' => '20',
+        'hour' => '*',
         'day' => '*',
         'dayofweek' => '*',
         'month' => '*'
@@ -159,19 +159,10 @@ $tasks = array(
         'month' => '*'
     ),
     array(
-        'classname' => 'core\task\completion_regular_task',
+        'classname' => 'core\task\completion_cron_task',
         'blocking' => 0,
         'minute' => '*',
         'hour' => '*',
-        'day' => '*',
-        'dayofweek' => '*',
-        'month' => '*'
-    ),
-    array(
-        'classname' => 'core\task\completion_daily_task',
-        'blocking' => 0,
-        'minute' => 'R',
-        'hour' => 'R',
         'day' => '*',
         'dayofweek' => '*',
         'month' => '*'
@@ -285,28 +276,10 @@ $tasks = array(
         'month' => '*'
     ),
     array(
-        'classname' => 'core\task\search_index_task',
-        'blocking' => 0,
-        'minute' => '*/30',
-        'hour' => '*',
-        'day' => '*',
-        'dayofweek' => '*',
-        'month' => '*'
-    ),
-    array(
-        'classname' => 'core\task\search_optimize_task',
-        'blocking' => 0,
-        'minute' => '15',
-        'hour' => '*/12',
-        'day' => '*',
-        'dayofweek' => '*',
-        'month' => '*'
-    ),
-    array(
         'classname' => 'core\task\stats_cron_task',
         'blocking' => 0,
         'minute' => '0',
-        'hour' => '0',
+        'hour' => '*',
         'day' => '*',
         'dayofweek' => '*',
         'month' => '*'
@@ -319,50 +292,5 @@ $tasks = array(
         'day' => '*',
         'dayofweek' => '*',
         'month' => '*'
-    ),
-    array(
-        'classname' => 'core\task\complete_plans_task',
-        'blocking' => 0,
-        'minute' => 'R',
-        'hour' => '*',
-        'day' => '*',
-        'dayofweek' => '*',
-        'month' => '*'
-    ),
-    array(
-        'classname' => 'core\task\sync_plans_from_template_cohorts_task',
-        'blocking' => 0,
-        'minute' => 'R',
-        'hour' => '*',
-        'day' => '*',
-        'dayofweek' => '*',
-        'month' => '*'
-    ),
-    array(
-        'classname' => 'core_files\task\conversion_cleanup_task',
-        'blocking' => 0,
-        'minute' => 'R',
-        'hour' => '2',
-        'day' => '*',
-        'dayofweek' => '*',
-        'month' => '*'
-    ),
-    array(
-        'classname' => 'core\oauth2\refresh_system_tokens_task',
-        'blocking' => 0,
-        'minute' => '30',
-        'hour' => '*',
-        'day' => '*',
-        'dayofweek' => '*',
-        'month' => '*'
-    ),
-    array(
-        'classname' => 'core\task\analytics_cleanup_task',
-        'blocking' => 0,
-        'minute' => '42',
-        'hour' => '*',
-        'day' => '*',
-        'dayofweek' => '*',
-        'month' => '*'
-    ),
+    )
 );

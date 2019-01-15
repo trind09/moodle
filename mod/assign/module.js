@@ -1,22 +1,19 @@
 M.mod_assign = {};
 
 M.mod_assign.init_tree = function(Y, expand_all, htmlid) {
-    var treeElement = Y.one('#'+htmlid);
-    if (treeElement) {
-        Y.use('yui2-treeview', function(Y) {
-            var tree = new Y.YUI2.widget.TreeView(htmlid);
+    Y.use('yui2-treeview', function(Y) {
+        var tree = new Y.YUI2.widget.TreeView(htmlid);
 
-            tree.subscribe("clickEvent", function(node, event) {
-                // We want normal clicking which redirects to url.
-                return false;
-            });
-
-            if (expand_all) {
-                tree.expandAll();
-            }
-            tree.render();
+        tree.subscribe("clickEvent", function(node, event) {
+            // We want normal clicking which redirects to url.
+            return false;
         });
-    }
+
+        if (expand_all) {
+            tree.expandAll();
+        }
+        tree.render();
+    });
 };
 
 M.mod_assign.init_grading_table = function(Y) {
@@ -147,13 +144,19 @@ M.mod_assign.init_grading_options = function(Y) {
             Y.one('form.gradingoptionsform').submit();
             });
         }
-        var downloadasfolderselement = Y.one('#id_downloadasfolders');
-        if (downloadasfolderselement) {
-            downloadasfolderselement.on('change', function(e) {
-                Y.one('form.gradingoptionsform').submit();
-            });
-        }
     });
+};
+
+M.mod_assign.init_grade_change = function(Y) {
+    var gradenode = Y.one('#id_grade');
+    if (gradenode) {
+        var originalvalue = gradenode.get('value');
+        gradenode.on('change', function() {
+            if (gradenode.get('value') != originalvalue) {
+                alert(M.util.get_string('changegradewarning', 'mod_assign'));
+            }
+        });
+    }
 };
 
 M.mod_assign.init_plugin_summary = function(Y, subtype, type, submissionid) {

@@ -24,4 +24,3 @@
 
 $string['pluginname'] = 'Examview';
 $string['pluginname_help'] = 'Examview format enables the import of questions from Examview 4 XML files. For newer versions of Examview, Blackboard format may be used.';
-$string['privacy:metadata'] = 'The Examview question format plugin does not store any personal data.';

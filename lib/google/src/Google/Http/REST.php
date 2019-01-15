@@ -15,37 +15,16 @@
  * limitations under the License.
  */
 
-if (!class_exists('Google_Client')) {
-  require_once dirname(__FILE__) . '/../autoload.php';
-}
+require_once realpath(dirname(__FILE__) . '/../../../autoload.php');
 
 /**
  * This class implements the RESTful transport of apiServiceRequest()'s
+ *
+ * @author Chris Chabot <chabotc@google.com>
+ * @author Chirag Shah <chirags@google.com>
  */
 class Google_Http_REST
 {
-  /**
-   * Executes a Google_Http_Request and (if applicable) automatically retries
-   * when errors occur.
-   *
-   * @param Google_Client $client
-   * @param Google_Http_Request $req
-   * @return array decoded result
-   * @throws Google_Service_Exception on server side error (ie: not authenticated,
-   *  invalid or malformed post body, invalid url)
-   */
-  public static function execute(Google_Client $client, Google_Http_Request $req)
-  {
-    $runner = new Google_Task_Runner(
-        $client,
-        sprintf('%s %s', $req->getRequestMethod(), $req->getUrl()),
-        array(get_class(), 'doExecute'),
-        array($client, $req)
-    );
-
-    return $runner->run();
-  }
-
   /**
    * Executes a Google_Http_Request
    *
@@ -55,7 +34,7 @@ class Google_Http_REST
    * @throws Google_Service_Exception on server side error (ie: not authenticated,
    *  invalid or malformed post body, invalid url)
    */
-  public static function doExecute(Google_Client $client, Google_Http_Request $req)
+  public static function execute(Google_Client $client, Google_Http_Request $req)
   {
     $httpRequest = $client->getIo()->makeRequest($req);
     $httpRequest->setExpectedClass($req->getExpectedClass());
@@ -95,27 +74,17 @@ class Google_Http_REST
         $errors = $decoded['error']['errors'];
       }
 
-      $map = null;
       if ($client) {
         $client->getLogger()->error(
             $err,
             array('code' => $code, 'errors' => $errors)
         );
-
-        $map = $client->getClassConfig(
-            'Google_Service_Exception',
-            'retry_map'
-        );
       }
-      throw new Google_Service_Exception($err, $code, null, $errors, $map);
+      throw new Google_Service_Exception($err, $code, null, $errors);
     }
 
     // Only attempt to decode the response, if the response code wasn't (204) 'no content'
     if ($code != '204') {
-      if ($response->getExpectedRaw()) {
-        return $body;
-      }
-      
       $decoded = json_decode($body, true);
       if ($decoded === null || $decoded === "") {
         $error = "Invalid json in service response: $body";
@@ -156,10 +125,10 @@ class Google_Http_REST
       } else if ($paramSpec['location'] == 'query') {
         if (isset($paramSpec['repeated']) && is_array($paramSpec['value'])) {
           foreach ($paramSpec['value'] as $value) {
-            $queryVars[] = $paramName . '=' . rawurlencode(rawurldecode($value));
+            $queryVars[] = $paramName . '=' . rawurlencode($value);
           }
         } else {
-          $queryVars[] = $paramName . '=' . rawurlencode(rawurldecode($paramSpec['value']));
+          $queryVars[] = $paramName . '=' . rawurlencode($paramSpec['value']);
         }
       }
     }

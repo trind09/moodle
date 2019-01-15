@@ -26,7 +26,6 @@
  */
 
 require_once('HTML/QuickForm/advcheckbox.php');
-require_once('templatable_form_element.php');
 
 /**
  * HTML class for an advcheckbox type element
@@ -39,12 +38,7 @@ require_once('templatable_form_element.php');
  * @copyright 2007 Jamie Pratt <me@jamiep.org>
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class MoodleQuickForm_advcheckbox extends HTML_QuickForm_advcheckbox implements templatable {
-
-    use templatable_form_element {
-        export_for_template as export_for_template_base;
-    }
-
+class MoodleQuickForm_advcheckbox extends HTML_QuickForm_advcheckbox{
     /** @var string html for help button, if empty then no help will icon will be dispalyed. */
     var $_helpbutton='';
 
@@ -61,13 +55,13 @@ class MoodleQuickForm_advcheckbox extends HTML_QuickForm_advcheckbox implements 
      *              or an associative array
      * @param mixed $values (optional) Values to pass if checked or not checked
      */
-    public function __construct($elementName=null, $elementLabel=null, $text=null, $attributes=null, $values=null)
+    function MoodleQuickForm_advcheckbox($elementName=null, $elementLabel=null, $text=null, $attributes=null, $values=null)
     {
         if ($values === null){
             $values = array(0, 1);
         }
 
-        if (!empty($attributes['group'])) {
+        if (!is_null($attributes['group'])) {
 
             $this->_group = 'checkboxgroup' . $attributes['group'];
             unset($attributes['group']);
@@ -87,18 +81,7 @@ class MoodleQuickForm_advcheckbox extends HTML_QuickForm_advcheckbox implements 
             }
         }
 
-        parent::__construct($elementName, $elementLabel, $text, $attributes, $values);
-        $this->_type = 'advcheckbox';
-    }
-
-    /**
-     * Old syntax of class constructor. Deprecated in PHP7.
-     *
-     * @deprecated since Moodle 3.1
-     */
-    public function MoodleQuickForm_advcheckbox($elementName=null, $elementLabel=null, $text=null, $attributes=null, $values=null) {
-        debugging('Use of class name as constructor is deprecated', DEBUG_DEVELOPER);
-        self::__construct($elementName, $elementLabel, $text, $attributes, $values);
+        parent::HTML_QuickForm_advcheckbox($elementName, $elementLabel, $text, $attributes, $values);
     }
 
     /**
@@ -136,15 +119,6 @@ class MoodleQuickForm_advcheckbox extends HTML_QuickForm_advcheckbox implements 
             $output .= '/>';
         }
         return $output;
-    }
-
-    public function export_for_template(renderer_base $output) {
-        $context = $this->export_for_template_base($output);
-
-        $context['selectedvalue'] = $this->_values[1];
-        $context['deselectedvalue'] = $this->_values[0];
-        $context['frozenvalue'] = $this->getValue();
-        return $context;
     }
 
 }

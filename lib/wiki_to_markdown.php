@@ -298,7 +298,8 @@ class WikiToMarkdown {
     $line = preg_replace("/ ([a-zA-Z]+):([0-9]+)\(([^)]+)\)/i",
        " [\\3](".$CFG->wwwroot."/mod/\\1/view.php?id=\\2) ", $line );
 
-    $coursefileurl = array(moodle_url::make_legacyfile_url($this->courseid, null));
+    require_once($CFG->libdir.'/filelib.php');
+    $coursefileurl = get_file_url($this->courseid);
 
     // Replace picture resource link
     $line = preg_replace("#/([a-zA-Z0-9./_-]+)(png|gif|jpg)\(([^)]+)\)#i",

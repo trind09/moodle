@@ -27,19 +27,19 @@
 defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->libdir . '/filelib.php');
-require_once(__DIR__ . '/questionusage.php');
-require_once(__DIR__ . '/questionattempt.php');
-require_once(__DIR__ . '/questionattemptstep.php');
-require_once(__DIR__ . '/states.php');
-require_once(__DIR__ . '/datalib.php');
-require_once(__DIR__ . '/renderer.php');
-require_once(__DIR__ . '/bank.php');
-require_once(__DIR__ . '/../type/questiontypebase.php');
-require_once(__DIR__ . '/../type/questionbase.php');
-require_once(__DIR__ . '/../type/rendererbase.php');
-require_once(__DIR__ . '/../behaviour/behaviourtypebase.php');
-require_once(__DIR__ . '/../behaviour/behaviourbase.php');
-require_once(__DIR__ . '/../behaviour/rendererbase.php');
+require_once(dirname(__FILE__) . '/questionusage.php');
+require_once(dirname(__FILE__) . '/questionattempt.php');
+require_once(dirname(__FILE__) . '/questionattemptstep.php');
+require_once(dirname(__FILE__) . '/states.php');
+require_once(dirname(__FILE__) . '/datalib.php');
+require_once(dirname(__FILE__) . '/renderer.php');
+require_once(dirname(__FILE__) . '/bank.php');
+require_once(dirname(__FILE__) . '/../type/questiontypebase.php');
+require_once(dirname(__FILE__) . '/../type/questionbase.php');
+require_once(dirname(__FILE__) . '/../type/rendererbase.php');
+require_once(dirname(__FILE__) . '/../behaviour/behaviourtypebase.php');
+require_once(dirname(__FILE__) . '/../behaviour/behaviourbase.php');
+require_once(dirname(__FILE__) . '/../behaviour/rendererbase.php');
 require_once($CFG->libdir . '/questionlib.php');
 
 
@@ -143,9 +143,7 @@ abstract class question_engine {
         $maxmark = optional_param($prefix . '-maxmark', null, PARAM_FLOAT);
         $minfraction = optional_param($prefix . ':minfraction', null, PARAM_FLOAT);
         $maxfraction = optional_param($prefix . ':maxfraction', null, PARAM_FLOAT);
-        return $mark === '' ||
-                ($mark !== null && $mark >= $minfraction * $maxmark && $mark <= $maxfraction * $maxmark) ||
-                ($mark === null && $maxmark === null);
+        return is_null($mark) || ($mark >= $minfraction * $maxmark && $mark <= $maxfraction * $maxmark);
     }
 
     /**
@@ -595,11 +593,9 @@ class question_display_options {
 
     /**
      * @since 2.9
-     * @var string extra HTML to include at the end of the outcome (feedback) box
-     * of the question display.
-     *
-     * This field is now badly named. The place it included is was changed
-     * (for the better) but the name was left unchanged for backwards compatibility.
+     * @var string extra HTML to include in the info box of the question display.
+     * This is normally shown after the information about the question, and before
+     * any controls like the flag or the edit icon.
      */
     public $extrainfocontent = '';
 
@@ -743,13 +739,13 @@ abstract class question_flags {
         );
         $flagattributes = array(
             0 => array(
-                'src' => $OUTPUT->image_url('i/unflagged') . '',
+                'src' => $OUTPUT->pix_url('i/unflagged') . '',
                 'title' => get_string('clicktoflag', 'question'),
                 'alt' => get_string('notflagged', 'question'),
               //  'text' => get_string('clickflag', 'question'),
             ),
             1 => array(
-                'src' => $OUTPUT->image_url('i/flagged') . '',
+                'src' => $OUTPUT->pix_url('i/flagged') . '',
                 'title' => get_string('clicktounflag', 'question'),
                 'alt' => get_string('flagged', 'question'),
                // 'text' => get_string('clickunflag', 'question'),
@@ -908,9 +904,8 @@ abstract class question_utils {
     /**
      * Typically, $mark will have come from optional_param($name, null, PARAM_RAW_TRIMMED).
      * This method copes with:
-     *  - keeping null or '' input unchanged - important to let teaches set a question back to requries grading.
-     *  - numbers that were typed as either 1.00 or 1,00 form.
-     *  - invalid things, which get turned into null.
+     *  - keeping null or '' input unchanged.
+     *  - nubmers that were typed as either 1.00 or 1,00 form.
      *
      * @param string|null $mark raw use input of a mark.
      * @return float|string|null cleaned mark as a float if possible. Otherwise '' or null.
@@ -920,13 +915,7 @@ abstract class question_utils {
             return $mark;
         }
 
-        $mark = str_replace(',', '.', $mark);
-        // This regexp should match the one in validate_param.
-        if (!preg_match('/^[\+-]?[0-9]*\.?[0-9]*(e[-+]?[0-9]+)?$/i', $mark)) {
-            return null;
-        }
-
-        return clean_param($mark, PARAM_FLOAT);
+        return clean_param(str_replace(',', '.', $mark), PARAM_FLOAT);
     }
 
     /**
@@ -953,65 +942,6 @@ abstract class question_utils {
         // matter what. We use http://example.com/.
         $text = str_replace('@@PLUGINFILE@@/', 'http://example.com/', $text);
         return html_to_text(format_text($text, $format, $options), 0, false);
-    }
-
-    /**
-     * Get the options required to configure the filepicker for one of the editor
-     * toolbar buttons.
-     * @param mixed $acceptedtypes array of types of '*'.
-     * @param int $draftitemid the draft area item id.
-     * @param object $context the context.
-     * @return object the required options.
-     */
-    protected static function specific_filepicker_options($acceptedtypes, $draftitemid, $context) {
-        $filepickeroptions = new stdClass();
-        $filepickeroptions->accepted_types = $acceptedtypes;
-        $filepickeroptions->return_types = FILE_INTERNAL | FILE_EXTERNAL;
-        $filepickeroptions->context = $context;
-        $filepickeroptions->env = 'filepicker';
-
-        $options = initialise_filepicker($filepickeroptions);
-        $options->context = $context;
-        $options->client_id = uniqid();
-        $options->env = 'editor';
-        $options->itemid = $draftitemid;
-
-        return $options;
-    }
-
-    /**
-     * Get filepicker options for question related text areas.
-     * @param object $context the context.
-     * @param int $draftitemid the draft area item id.
-     * @return array An array of options
-     */
-    public static function get_filepicker_options($context, $draftitemid) {
-        return [
-                'image' => self::specific_filepicker_options(['image'], $draftitemid, $context),
-                'media' => self::specific_filepicker_options(['video', 'audio'], $draftitemid, $context),
-                'link'  => self::specific_filepicker_options('*', $draftitemid, $context),
-            ];
-    }
-
-    /**
-     * Get editor options for question related text areas.
-     * @param object $context the context.
-     * @return array An array of options
-     */
-    public static function get_editor_options($context) {
-        global $CFG;
-
-        $editoroptions = [
-                'subdirs'  => 0,
-                'context'  => $context,
-                'maxfiles' => EDITOR_UNLIMITED_FILES,
-                'maxbytes' => $CFG->maxbytes,
-                'noclean' => 0,
-                'trusttext' => 0,
-                'autosave' => false
-        ];
-
-        return $editoroptions;
     }
 }
 

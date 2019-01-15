@@ -51,7 +51,8 @@ class MoodleQuickForm_passwordunmask extends MoodleQuickForm_password {
      * @param mixed $attributes (optional) Either a typical HTML attribute string
      *              or an associative array
      */
-    public function __construct($elementName=null, $elementLabel=null, $attributes=null) {
+    function MoodleQuickForm_passwordunmask($elementName=null, $elementLabel=null, $attributes=null) {
+        global $CFG;
         // no standard mform in moodle should allow autocomplete of passwords
         if (empty($attributes)) {
             $attributes = array('autocomplete'=>'off');
@@ -62,49 +63,30 @@ class MoodleQuickForm_passwordunmask extends MoodleQuickForm_password {
                 $attributes .= ' autocomplete="off" ';
             }
         }
-        $this->_persistantFreeze = true;
 
-        parent::__construct($elementName, $elementLabel, $attributes);
-        $this->setType('passwordunmask');
+        parent::MoodleQuickForm_password($elementName, $elementLabel, $attributes);
     }
 
     /**
-     * Old syntax of class constructor. Deprecated in PHP7.
+     * Returns HTML for password form element.
      *
-     * @deprecated since Moodle 3.1
+     * @return string
      */
-    public function MoodleQuickForm_passwordunmask($elementName=null, $elementLabel=null, $attributes=null) {
-        debugging('Use of class name as constructor is deprecated', DEBUG_DEVELOPER);
-        self::__construct($elementName, $elementLabel, $attributes);
-    }
+    function toHtml() {
+        global $PAGE;
 
-    /**
-     * Function to export the renderer data in a format that is suitable for a mustache template.
-     *
-     * @param renderer_base $output Used to do a final render of any components that need to be rendered for export.
-     * @return stdClass|array
-     */
-    public function export_for_template(renderer_base $output) {
-        $context = parent::export_for_template($output);
-        $context['valuechars'] = array_fill(0, strlen($context['value']), 'x');
-
-        return $context;
-    }
-
-    /**
-     * Check that there is no whitespace at the beginning and end of the password.
-     *
-     * It turned out that wrapping whitespace can easily be pasted by accident when copying the text from elsewhere.
-     * Such a mistake is very hard to debug as the whitespace is not displayed.
-     *
-     * @param array $value Submitted value.
-     * @return string|null Validation error message or null.
-     */
-    public function validateSubmitValue($value) {
-        if ($value !== null && $value !== trim($value)) {
-            return get_string('err_wrappingwhitespace', 'core_form');
+        if ($this->_flagFrozen) {
+            return $this->getFrozenHtml();
+        } else {
+            $unmask = get_string('unmaskpassword', 'form');
+            //Pass id of the element, so that unmask checkbox can be attached.
+            $attributes = array('formid' => $this->getAttribute('id'),
+                'checkboxlabel' => $unmask,
+                'checkboxname' => $this->getAttribute('name'));
+            $PAGE->requires->yui_module('moodle-form-passwordunmask', 'M.form.passwordunmask',
+                    array($attributes));
+            return $this->_getTabs() . '<input' . $this->_getAttrString($this->_attributes) . ' />';
         }
-
-        return;
     }
+
 }

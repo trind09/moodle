@@ -19,7 +19,8 @@ Feature: A teacher can control the subscription to a forum
       | student1 | C1     | student        |
       | student2 | C1     | student        |
     And I log in as "teacher"
-    And I am on "Course 1" course homepage with editing mode on
+    And I follow "Course 1"
+    And I turn editing mode on
     And I add a "Forum" to section "1" and I fill the form with:
       | Forum name        | Test forum name                |
       | Forum type        | Standard forum for general use |
@@ -30,16 +31,16 @@ Feature: A teacher can control the subscription to a forum
     Given I follow "Test forum name"
     And I follow "Show/edit current subscribers"
     Then ".userselector" "css_element" should not exist
-    And "Manage subscribers" "button" should exist
-    And I press "Manage subscribers"
+    And "Turn editing on" "button" should exist
+    And I press "Turn editing on"
     And ".userselector" "css_element" should exist
-    And "Finish managing subscriptions" "button" should exist
-    And I press "Finish managing subscriptions"
+    And "Turn editing off" "button" should exist
+    And I press "Turn editing off"
     And ".userselector" "css_element" should not exist
-    And "Manage subscribers" "button" should exist
-    And I press "Manage subscribers"
+    And "Turn editing on" "button" should exist
+    And I press "Turn editing on"
     And ".userselector" "css_element" should exist
-    And "Finish managing subscriptions" "button" should exist
-    And I press "Finish managing subscriptions"
+    And "Turn editing off" "button" should exist
+    And I press "Turn editing off"
     And ".userselector" "css_element" should not exist
-    And "Manage subscribers" "button" should exist
+    And "Turn editing on" "button" should exist

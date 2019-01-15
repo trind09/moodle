@@ -56,16 +56,10 @@ defined('MOODLE_INTERNAL') || die;
 $modltifolder = new admin_category('modltifolder', new lang_string('pluginname', 'mod_lti'), $module->is_enabled() === false);
 $ADMIN->add('modsettings', $modltifolder);
 $settings->visiblename = new lang_string('manage_tools', 'mod_lti');
-$settings->hidden = true;
 $ADMIN->add('modltifolder', $settings);
-$proxieslink = new admin_externalpage('ltitoolproxies',
+$ADMIN->add('modltifolder', new admin_externalpage('ltitoolproxies',
         get_string('manage_tool_proxies', 'lti'),
-        new moodle_url('/mod/lti/toolproxies.php'));
-$proxieslink->hidden = true;
-$ADMIN->add('modltifolder', $proxieslink);
-$ADMIN->add('modltifolder', new admin_externalpage('ltitoolconfigure',
-        get_string('manage_external_tools', 'lti'),
-        new moodle_url('/mod/lti/toolconfigure.php')));
+        new moodle_url('/mod/lti/toolproxies.php')));
 
 foreach (core_plugin_manager::instance()->get_plugins_of_type('ltisource') as $plugin) {
     /*

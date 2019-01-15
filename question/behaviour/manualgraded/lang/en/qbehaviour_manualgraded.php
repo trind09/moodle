@@ -24,4 +24,3 @@
  */
 
 $string['pluginname'] = 'Manually graded';
-$string['privacy:metadata'] = 'The Manually graded question behaviour plugin does not store any personal data.';

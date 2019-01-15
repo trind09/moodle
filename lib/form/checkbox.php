@@ -26,7 +26,6 @@
  */
 
 require_once('HTML/QuickForm/checkbox.php');
-require_once('templatable_form_element.php');
 
 /**
  * HTML class for a checkbox type element
@@ -40,12 +39,7 @@ require_once('templatable_form_element.php');
  * @copyright 2007 Jamie Pratt <me@jamiep.org>
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class MoodleQuickForm_checkbox extends HTML_QuickForm_checkbox implements templatable {
-
-    use templatable_form_element {
-        export_for_template as export_for_template_base;
-    }
-
+class MoodleQuickForm_checkbox extends HTML_QuickForm_checkbox{
     /** @var string html for help button, if empty then no help */
     var $_helpbutton='';
 
@@ -58,18 +52,8 @@ class MoodleQuickForm_checkbox extends HTML_QuickForm_checkbox implements templa
      * @param mixed $attributes (optional) Either a typical HTML attribute string
      *              or an associative array
      */
-    public function __construct($elementName=null, $elementLabel=null, $text='', $attributes=null) {
-        parent::__construct($elementName, $elementLabel, $text, $attributes);
-    }
-
-    /**
-     * Old syntax of class constructor. Deprecated in PHP7.
-     *
-     * @deprecated since Moodle 3.1
-     */
-    public function MoodleQuickForm_checkbox($elementName=null, $elementLabel=null, $text='', $attributes=null) {
-        debugging('Use of class name as constructor is deprecated', DEBUG_DEVELOPER);
-        self::__construct($elementName, $elementLabel, $text, $attributes);
+    function MoodleQuickForm_checkbox($elementName=null, $elementLabel=null, $text='', $attributes=null) {
+        parent::HTML_QuickForm_checkbox($elementName, $elementLabel, $text, $attributes);
     }
 
     /**
@@ -143,11 +127,5 @@ class MoodleQuickForm_checkbox extends HTML_QuickForm_checkbox implements templa
             $output .= '/>';
         }
         return $output;
-    }
-
-    public function export_for_template(renderer_base $output) {
-        $context = $this->export_for_template_base($output);
-        $context['frozenvalue'] = $this->getValue();
-        return $context;
     }
 }

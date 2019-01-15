@@ -25,105 +25,62 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-global $CFG;
-
-require_once("{$CFG->libdir}/filelib.php");
-require_once("{$CFG->dirroot}/iplookup/lib.php");
-
 
 /**
  * GeoIp data file parsing test.
  */
 class core_iplookup_geoip_testcase extends advanced_testcase {
-    public function setUp() {
+
+    public function test_geoip() {
+        global $CFG;
+        require_once("$CFG->libdir/filelib.php");
+        require_once("$CFG->dirroot/iplookup/lib.php");
+
         if (!PHPUNIT_LONGTEST) {
-            // These tests are intensive and required downloads.
-            $this->markTestSkipped('PHPUNIT_LONGTEST is not defined');
+            // this may take a long time
+            return;
         }
 
         $this->resetAfterTest();
-    }
 
-
-    /**
-     * Setup the GeoIP2File system.
-     */
-    public function setup_geoip2file() {
-        global $CFG;
-
-        // Store the file somewhere where it won't be wiped out..
-        $gzfile = "$CFG->dataroot/phpunit/geoip/GeoLite2-City.mmdb.gz";
+        // let's store the file somewhere
+        $gzfile = "$CFG->dataroot/phpunit/geoip/GeoLiteCity.dat.gz";
         check_dir_exists(dirname($gzfile));
         if (file_exists($gzfile) and (filemtime($gzfile) < time() - 60*60*24*30)) {
-            // Delete file if older than 1 month.
+            // delete file if older than 1 month
             unlink($gzfile);
         }
 
         if (!file_exists($gzfile)) {
-            download_file_content('http://geolite.maxmind.com/download/geoip/database/GeoLite2-City.mmdb.gz',
-                null, null, false, 300, 20, false, $gzfile);
+            download_file_content('http://geolite.maxmind.com/download/geoip/database/GeoLiteCity.dat.gz', null, null, false, 300, 20, false, $gzfile);
         }
 
         $this->assertTrue(file_exists($gzfile));
 
-        $geoipfile = str_replace('.gz', '', $gzfile);
+        $zd = gzopen($gzfile, "r");
+        $contents = gzread($zd, 50000000);
+        gzclose($zd);
 
-        // Open our files (in binary mode).
-        $file = gzopen($gzfile, 'rb');
-        $geoipfilebuf = fopen($geoipfile, 'wb');
-
-        // Keep repeating until the end of the input file.
-        while (!gzeof($file)) {
-            // Read buffer-size bytes.
-            // Both fwrite and gzread and binary-safe.
-            fwrite($geoipfilebuf, gzread($file, 4096));
-        }
-
-        // Files are done, close files.
-        fclose($geoipfilebuf);
-        gzclose($file);
+        $geoipfile = "$CFG->dataroot/geoip/GeoLiteCity.dat";
+        check_dir_exists(dirname($geoipfile));
+        $fp = fopen($geoipfile, 'w');
+        fwrite($fp, $contents);
+        fclose($fp);
 
         $this->assertTrue(file_exists($geoipfile));
 
-        $CFG->geoip2file = $geoipfile;
-    }
+        $CFG->geoipfile = $geoipfile;
 
-    /**
-     * Test the format of data returned in the iplookup_find_location function.
-     *
-     * @dataProvider ip_provider
-     * @param   string  $ip The IP to test
-     */
-    public function test_ip($ip) {
-        $this->setup_geoip2file();
+        $result = iplookup_find_location('147.230.16.1');
 
-        // Note: The results we get from the iplookup tests are beyond our control.
-        // We used to check a specific IP to a known location, but these have become less reliable and change too
-        // frequently to be used for testing.
-
-        $result = iplookup_find_location($ip);
-
-        $this->assertInternalType('array', $result);
-        $this->assertInternalType('float', $result['latitude']);
-        $this->assertInternalType('float', $result['longitude']);
-        $this->assertInternalType('string', $result['city']);
-        $this->assertInternalType('string', $result['country']);
-        $this->assertInternalType('array', $result['title']);
-        $this->assertInternalType('string', $result['title'][0]);
-        $this->assertInternalType('string', $result['title'][1]);
+        $this->assertEquals('array', gettype($result));
+        $this->assertEquals('Liberec', $result['city']);
+        $this->assertEquals(15.0653, $result['longitude'], '', 0.001);
+        $this->assertEquals(50.7639, $result['latitude'], '', 0.001);
         $this->assertNull($result['error']);
-    }
-
-    /**
-     * Data provider for IP lookup test.
-     *
-     * @return array
-     */
-    public function ip_provider() {
-        return [
-            'IPv4: Sample suggested by maxmind themselves' => ['24.24.24.24'],
-            'IPv4: github.com' => ['192.30.255.112'],
-            'IPv6: UCLA' => ['2607:f010:3fe:fff1::ff:fe00:25'],
-        ];
+        $this->assertEquals('array', gettype($result['title']));
+        $this->assertEquals('Liberec', $result['title'][0]);
+        $this->assertEquals('Czech Republic', $result['title'][1]);
     }
 }
+

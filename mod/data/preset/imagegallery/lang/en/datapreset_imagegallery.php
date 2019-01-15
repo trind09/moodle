@@ -25,4 +25,3 @@
 
 $string['modulename'] = 'Image gallery';
 $string['pluginname'] = 'Image gallery';
-$string['privacy:metadata'] = 'The Image gallery plugin does not store any personal data.';

@@ -428,7 +428,6 @@ abstract class gradingform_controller {
         foreach ($records as $record) {
             $rv[] = $this->get_instance($record);
         }
-        $records->close();
         return $rv;
     }
 

@@ -53,16 +53,7 @@ if ($id) {
         print_error('invalidcourseid');
     }
     require_login($course);
-    $context = context_course::instance($course->id);
-    if (!has_capability('moodle/course:update', $context)) {
-        // User is not allowed to modify course completion.
-        // Check if they can see default completion or edit bulk completion and redirect there.
-        if ($tabs = core_completion\manager::get_available_completion_tabs($course)) {
-            redirect($tabs[0]->link);
-        } else {
-            require_capability('moodle/course:update', $context);
-        }
-    }
+    require_capability('moodle/course:update', context_course::instance($course->id));
 
 } else {
     require_login();
@@ -157,13 +148,9 @@ if ($form->is_cancelled()){
     redirect($url);
 }
 
-$renderer = $PAGE->get_renderer('core_course', 'bulk_activity_completion');
-
 // Print the form.
 echo $OUTPUT->header();
 echo $OUTPUT->heading(get_string('editcoursecompletionsettings', 'core_completion'));
-
-echo $renderer->navigation($course, 'completion');
 
 $form->display();
 

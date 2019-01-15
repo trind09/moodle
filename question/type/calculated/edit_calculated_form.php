@@ -58,8 +58,10 @@ class qtype_calculated_edit_form extends qtype_numerical_edit_form {
             if (isset($this->question->id)) {
                 // Remove prefix #{..}# if exists.
                 $this->initialname = $question->name;
-                $question->name = question_bank::get_qtype($this->qtype())
-                        ->clean_technical_prefix_from_question_name($question->name);
+                $regs= array();
+                if (preg_match('~#\{([^[:space:]]*)#~', $question->name , $regs)) {
+                    $question->name = str_replace($regs[0], '', $question->name);
+                };
             }
         }
         parent::__construct($submiturl, $question, $category, $contexts, $formeditable);
@@ -136,7 +138,7 @@ class qtype_calculated_edit_form extends qtype_numerical_edit_form {
         if (isset($this->question->id)) {
             $mform->insertElementBefore($mform->createElement('static', 'initialname',
                     get_string('questionstoredname', 'qtype_calculated'),
-                    format_string($this->initialname, true, array('context' => $this->context))), 'name');
+                    $this->initialname), 'name');
         };
         $addfieldsname = 'updatecategory';
         $addstring = get_string('updatecategory', 'qtype_calculated');

@@ -50,8 +50,7 @@ class page_editor {
         if (!$draft) {
             $params['draft'] = 0;
         }
-        // Fetch comments ordered by position on the page.
-        $records = $DB->get_records('assignfeedback_editpdf_cmnt', $params, 'y, x');
+        $records = $DB->get_records('assignfeedback_editpdf_cmnt', $params);
         foreach ($records as $record) {
             array_push($comments, new comment($record));
         }

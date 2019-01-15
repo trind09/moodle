@@ -132,7 +132,21 @@ class core_blog_renderer extends plugin_renderer_base {
         }
 
         // Links to tags.
-        $o .= $this->output->tag_list(core_tag_tag::get_item_tags('core', 'post', $entry->id));
+        $officialtags = tag_get_tags_csv('post', $entry->id, TAG_RETURN_HTML, 'official');
+        $defaulttags = tag_get_tags_csv('post', $entry->id, TAG_RETURN_HTML, 'default');
+
+        if (!empty($CFG->usetags) && ($officialtags || $defaulttags) ) {
+            $o .= $this->output->container_start('tags');
+
+            if ($officialtags) {
+                $o .= get_string('tags', 'tag') .': '. $this->output->container($officialtags, 'officialblogtags');
+                if ($defaulttags) {
+                    $o .=  ', ';
+                }
+            }
+            $o .=  $defaulttags;
+            $o .= $this->output->container_end();
+        }
 
         // Add associations.
         if (!empty($CFG->useblogassociations) && !empty($entry->renderable->blogassociations)) {
@@ -141,7 +155,7 @@ class core_blog_renderer extends plugin_renderer_base {
             $assocstr = '';
             $coursesarray = array();
             foreach ($entry->renderable->blogassociations as $assocrec) {
-                if ($assocrec->contextlevel == CONTEXT_COURSE) {
+                if ($assocrec->contextlevel ==  CONTEXT_COURSE) {
                     $coursesarray[] = $this->output->action_icon($assocrec->url, $assocrec->icon, null, array(), true);
                 }
             }
@@ -152,7 +166,7 @@ class core_blog_renderer extends plugin_renderer_base {
             // Now show mod association.
             $modulesarray = array();
             foreach ($entry->renderable->blogassociations as $assocrec) {
-                if ($assocrec->contextlevel == CONTEXT_MODULE) {
+                if ($assocrec->contextlevel ==  CONTEXT_MODULE) {
                     $str = get_string('associated', 'blog', $assocrec->type) . ': ';
                     $str .= $this->output->action_icon($assocrec->url, $assocrec->icon, null, array(), true);
                     $modulesarray[] = $str;

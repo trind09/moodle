@@ -51,7 +51,6 @@ require_once($CFG->dirroot.'/mod/lti/lib.php');
 require_once($CFG->dirroot.'/mod/lti/locallib.php');
 
 $id = required_param('id', PARAM_INT); // Course Module ID.
-$triggerview = optional_param('triggerview', 1, PARAM_BOOL);
 
 $cm = get_coursemodule_from_id('lti', $id, 0, false, MUST_EXIST);
 $lti = $DB->get_record('lti', array('id' => $cm->instance), '*', MUST_EXIST);
@@ -62,11 +61,6 @@ $context = context_module::instance($cm->id);
 require_login($course, true, $cm);
 require_capability('mod/lti:view', $context);
 
-// Completion and trigger events.
-if ($triggerview) {
-    lti_view($lti, $course, $cm, $context);
-}
-
 $lti->cmid = $cm->id;
-lti_launch_tool($lti);
+lti_view($lti);
 

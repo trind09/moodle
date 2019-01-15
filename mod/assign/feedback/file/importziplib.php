@@ -59,7 +59,7 @@ class assignfeedback_file_zip_importer {
             return false;
         }
 
-        $info = explode('_', $fileinfo->get_filepath() . $fileinfo->get_filename(), 5);
+        $info = explode('_', $fileinfo->get_filename(), 5);
 
         if (count($info) < 5) {
             return false;
@@ -118,7 +118,7 @@ class assignfeedback_file_zip_importer {
                 $contenthash = '';
                 if (is_array($file)) {
                     $content = reset($file);
-                    $contenthash = file_storage::hash_from_string($content);
+                    $contenthash = sha1($content);
                 } else {
                     $contenthash = $file->get_contenthash();
                 }
@@ -192,9 +192,18 @@ class assignfeedback_file_zip_importer {
                                           'assignfeedback_file',
                                           ASSIGNFEEDBACK_FILE_IMPORT_FILEAREA,
                                           $USER->id,
-                                          '/import/', true); // Get files recursive (all levels).
+                                          '/import/');
 
         $keys = array_keys($files);
+        if (count($files) == 1 && $files[$keys[0]]->is_directory()) {
+            // An entire folder was zipped, rather than its contents.
+            // We need to return the contents of the folder instead, so the import can continue.
+            $files = $fs->get_directory_files($contextid,
+                                              'assignfeedback_file',
+                                              ASSIGNFEEDBACK_FILE_IMPORT_FILEAREA,
+                                              $USER->id,
+                                              $files[$keys[0]]->get_filepath());
+        }
 
         return $files;
     }
@@ -237,28 +246,12 @@ class assignfeedback_file_zip_importer {
                 if ($this->is_file_modified($assignment, $user, $plugin, $filename, $unzippedfile)) {
                     $grade = $assignment->get_user_grade($user->id, true);
 
-                    // In 3.1 the default download structure of the submission files changed so that each student had their own
-                    // separate folder, the files were not renamed and the folder structure was kept. It is possible that
-                    // a user downloaded the submission files in 3.0 (or earlier) and edited the zip to add feedback or
-                    // changed the behavior back to the previous format, the following code means that we will still support the
-                    // old file structure. For more information please see - MDL-52489 / MDL-56022.
-                    $path = pathinfo($filename);
-                    if ($path['dirname'] == '.') { // Student submissions are not in separate folders.
-                        $basename = $filename;
-                        $dirname = "/";
-                        $dirnamewslash = "/";
-                    } else {
-                        $basename = $path['basename'];
-                        $dirname = $path['dirname'];
-                        $dirnamewslash = $dirname . "/";
-                    }
-
                     if ($oldfile = $fs->get_file($contextid,
                                                  'assignfeedback_file',
                                                  ASSIGNFEEDBACK_FILE_FILEAREA,
                                                  $grade->id,
-                                                 $dirname,
-                                                 $basename)) {
+                                                 '/',
+                                                 $filename)) {
                         // Update existing feedback file.
                         $oldfile->replace_file_with($unzippedfile);
                         $feedbackfilesupdated++;
@@ -268,8 +261,8 @@ class assignfeedback_file_zip_importer {
                         $newfilerecord->contextid = $contextid;
                         $newfilerecord->component = 'assignfeedback_file';
                         $newfilerecord->filearea = ASSIGNFEEDBACK_FILE_FILEAREA;
-                        $newfilerecord->filename = $basename;
-                        $newfilerecord->filepath = $dirnamewslash;
+                        $newfilerecord->filename = $filename;
+                        $newfilerecord->filepath = '/';
                         $newfilerecord->itemid = $grade->id;
                         $fs->create_file_from_storedfile($newfilerecord, $unzippedfile);
                         $feedbackfilesadded++;

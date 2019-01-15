@@ -26,7 +26,6 @@
 defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot . '/lib/grade/constants.php');
-require_once($CFG->dirroot . '/course/lib.php');
 
 define('B_ACTIVITYRESULTS_NAME_FORMAT_FULL', 1);
 define('B_ACTIVITYRESULTS_NAME_FORMAT_ID',   2);
@@ -54,15 +53,6 @@ class block_activity_results extends block_base {
      */
     public function init() {
         $this->title = get_string('pluginname', 'block_activity_results');
-    }
-
-    /**
-     * Allow the block to have a configuration page
-     *
-     * @return boolean
-     */
-    public function has_config() {
-        return true;
     }
 
     /**
@@ -102,7 +92,7 @@ class block_activity_results extends block_base {
             return $result;
         }
         // See if it is a gradable activity.
-        if (($rec->gradetype != GRADE_TYPE_VALUE) && ($rec->gradetype != GRADE_TYPE_SCALE)) {
+        if (($rec->gradetype != GRADE_TYPE_VALUE) || ($rec->gradetype != GRADE_TYPE_SCALE)) {
             return $result;
         }
         return $rec;
@@ -289,12 +279,8 @@ class block_activity_results extends block_base {
                 }
 
                 // Sort groupgrades according to average grade, ascending.
-                uasort($groupgrades, function($a, $b) {
-                    if ($a["average"] == $b["average"]) {
-                        return 0;
-                    }
-                    return ($a["average"] > $b["average"] ? 1 : -1);
-                });
+                uasort($groupgrades, create_function('$a, $b',
+                        'if($a["average"] == $b["average"]) return 0; return ($a["average"] > $b["average"] ? 1 : -1);'));
 
                 // How many groups do we have with graded member submissions to show?
                 $numbest  = empty($this->config->showbest) ? 0 : min($this->config->showbest, count($groupgrades));
@@ -333,7 +319,7 @@ class block_activity_results extends block_base {
                 if ($nameformat == B_ACTIVITYRESULTS_NAME_FORMAT_FULL) {
                     if (has_capability('moodle/course:managegroups', $context)) {
                         $grouplink = $CFG->wwwroot.'/group/overview.php?id='.$courseid.'&amp;group=';
-                    } else if (course_can_view_participants($context)) {
+                    } else if (has_capability('moodle/course:viewparticipants', $context)) {
                         $grouplink = $CFG->wwwroot.'/user/index.php?id='.$courseid.'&amp;group=';
                     } else {
                         $grouplink = '';
@@ -687,7 +673,7 @@ class block_activity_results extends block_base {
 
         $o = html_writer::start_tag('h3');
         $o .= html_writer::link(new moodle_url('/mod/'.$activity->itemmodule.'/view.php',
-        array('id' => $cm->id)), format_string(($activity->itemname), true, ['context' => context_module::instance($cm->id)]));
+        array('id' => $cm->id)), $activity->itemname);
         $o .= html_writer::end_tag('h3');
         return $o;
     }

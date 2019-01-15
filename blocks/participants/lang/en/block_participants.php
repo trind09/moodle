@@ -24,4 +24,3 @@
 
 $string['participants:addinstance'] = 'Add a new people block';
 $string['pluginname'] = 'People';
-$string['privacy:metadata'] = 'The People block only shows data stored in other locations.';

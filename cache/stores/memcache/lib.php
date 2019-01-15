@@ -271,7 +271,7 @@ class cachestore_memcache extends cache_store implements cache_is_configurable {
      * @return int
      */
     public static function get_supported_features(array $configuration = array()) {
-        return self::SUPPORTS_NATIVE_TTL + self::DEREFERENCES_OBJECTS;
+        return self::SUPPORTS_NATIVE_TTL;
     }
 
     /**
@@ -576,24 +576,30 @@ class cachestore_memcache extends cache_store implements cache_is_configurable {
         }
 
         $store = new cachestore_memcache('Test memcache', $configuration);
-        if ($store->is_ready()) {
-            $store->initialise($definition);
-        }
+        $store->initialise($definition);
 
         return $store;
     }
 
     /**
-     * Generates the appropriate configuration required for unit testing.
-     *
-     * @return array Array of unit test configuration data to be used by initialise().
+     * Creates a test instance for unit tests if possible.
+     * @param cache_definition $definition
+     * @return bool|cachestore_memcache
      */
-    public static function unit_test_configuration() {
-        // If the configuration is not defined correctly, return only the configuration know about.
-        if (!defined('TEST_CACHESTORE_MEMCACHE_TESTSERVERS')) {
-            return [];
+    public static function initialise_unit_test_instance(cache_definition $definition) {
+        if (!self::are_requirements_met()) {
+            return false;
         }
-        return ['servers' => explode("\n", TEST_CACHESTORE_MEMCACHE_TESTSERVERS)];
+        if (!defined('TEST_CACHESTORE_MEMCACHE_TESTSERVERS')) {
+            return false;
+        }
+        $configuration = array();
+        $configuration['servers'] = explode("\n", TEST_CACHESTORE_MEMCACHE_TESTSERVERS);
+
+        $store = new cachestore_memcache('Test memcache', $configuration);
+        $store->initialise($definition);
+
+        return $store;
     }
 
     /**

@@ -199,30 +199,30 @@ class lesson_page_type_shortanswer extends lesson_page {
             $cells = array();
             if ($this->lesson->custom && $answer->score > 0) {
                 // if the score is > 0, then it is correct
-                $cells[] = '<label class="correct">' . get_string('answer', 'lesson') . ' ' . $i . '</label>:';
+                $cells[] = '<span class="labelcorrect">'.get_string("answer", "lesson")." $i</span>: \n";
             } else if ($this->lesson->custom) {
-                $cells[] = '<label>' . get_string('answer', 'lesson') . ' ' . $i . '</label>:';
+                $cells[] = '<span class="label">'.get_string("answer", "lesson")." $i</span>: \n";
             } else if ($this->lesson->jumpto_is_correct($this->properties->id, $answer->jumpto)) {
                 // underline correct answers
-                $cells[] = '<span class="correct">' . get_string('answer', 'lesson') . ' ' . $i . '</span>:' . "\n";
+                $cells[] = '<span class="correct">'.get_string("answer", "lesson")." $i</span>: \n";
             } else {
-                $cells[] = '<label class="correct">' . get_string('answer', 'lesson') . ' ' . $i . '</label>:';
+                $cells[] = '<span class="labelcorrect">'.get_string("answer", "lesson")." $i</span>: \n";
             }
             $cells[] = format_text($answer->answer, $answer->answerformat, $options);
             $table->data[] = new html_table_row($cells);
 
             $cells = array();
-            $cells[] = '<label>' . get_string('response', 'lesson') . ' ' . $i . '</label>:';
+            $cells[] = "<span class=\"label\">".get_string("response", "lesson")." $i</span>";
             $cells[] = format_text($answer->response, $answer->responseformat, $options);
             $table->data[] = new html_table_row($cells);
 
             $cells = array();
-            $cells[] = '<label>' . get_string('score', 'lesson') . '</label>:';
+            $cells[] = "<span class=\"label\">".get_string("score", "lesson").'</span>';
             $cells[] = $answer->score;
             $table->data[] = new html_table_row($cells);
 
             $cells = array();
-            $cells[] = '<label>' . get_string('jump', 'lesson') . '</label>:';
+            $cells[] = "<span class=\"label\">".get_string("jump", "lesson").'</span>';
             $cells[] = $this->get_jump_name($answer->jumpto);
             $table->data[] = new html_table_row($cells);
             if ($i === 1){
@@ -267,8 +267,7 @@ class lesson_page_type_shortanswer extends lesson_page {
                     $total = $stats["total"];
                     unset($stats["total"]);
                     foreach ($stats as $valentered => $ntimes) {
-                        $data = '<input type="text" size="50" disabled="disabled" class="form-control" ' .
-                                'readonly="readonly" value="'.s($valentered).'" />';
+                        $data = '<input type="text" size="50" disabled="disabled" readonly="readonly" value="'.s($valentered).'" />';
                         $percent = $ntimes / $total * 100;
                         $percent = round($percent, 2);
                         $percent .= "% ".get_string("enteredthis", "lesson");
@@ -280,8 +279,7 @@ class lesson_page_type_shortanswer extends lesson_page {
                 $i++;
             } else if ($useranswer != null && ($answer->id == $useranswer->answerid || $answer == end($answers))) {
                  // get in here when what the user entered is not one of the answers
-                $data = '<input type="text" size="50" disabled="disabled" class="form-control" ' .
-                        'readonly="readonly" value="'.s($useranswer->useranswer).'">';
+                $data = '<input type="text" size="50" disabled="disabled" readonly="readonly" value="'.s($useranswer->useranswer).'">';
                 if (isset($pagestats[$this->properties->id][$useranswer->useranswer])) {
                     $percent = $pagestats[$this->properties->id][$useranswer->useranswer] / $pagestats[$this->properties->id]["total"] * 100;
                     $percent = round($percent, 2);

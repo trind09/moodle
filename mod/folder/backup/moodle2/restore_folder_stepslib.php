@@ -46,9 +46,7 @@ class restore_folder_activity_structure_step extends restore_activity_structure_
         $data = (object)$data;
         $oldid = $data->id;
         $data->course = $this->get_courseid();
-
-        // Any changes to the list of dates that needs to be rolled should be same during course restore and course reset.
-        // See MDL-9367.
+        $data->timemodified = $this->apply_date_offset($data->timemodified);
 
         // If showexpanded is not set, apply site default.
         if (!isset($data->showexpanded)) {

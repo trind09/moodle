@@ -26,23 +26,16 @@
 define('NO_DEBUG_DISPLAY', true);
 define('NO_MOODLE_COOKIES', true);
 
-require_once(__DIR__ . "/../../config.php");
+require_once(dirname(__FILE__) . "/../../config.php");
 require_once($CFG->dirroot.'/mod/lti/locallib.php');
 require_once($CFG->dirroot.'/mod/lti/servicelib.php');
 
 // TODO: Switch to core oauthlib once implemented - MDL-30149.
-use mod_lti\service_exception_handler;
 use moodle\mod\lti as lti;
 
 $rawbody = file_get_contents("php://input");
 
-$logrequests  = lti_should_log_request($rawbody);
-$errorhandler = new service_exception_handler($logrequests);
-
-// Register our own error handler so we can always send valid XML response.
-set_exception_handler(array($errorhandler, 'handle'));
-
-if ($logrequests) {
+if (lti_should_log_request($rawbody)) {
     lti_log_request($rawbody);
 }
 
@@ -80,13 +73,20 @@ foreach ($body->children() as $child) {
     $messagetype = $child->getName();
 }
 
-// We know more about the message, update error handler to send better errors.
-$errorhandler->set_message_id(lti_parse_message_id($xml));
-$errorhandler->set_message_type($messagetype);
-
 switch ($messagetype) {
     case 'replaceResultRequest':
-        $parsed = lti_parse_grade_replace_message($xml);
+        try {
+            $parsed = lti_parse_grade_replace_message($xml);
+        } catch (Exception $e) {
+            $responsexml = lti_get_response_xml(
+                'failure',
+                $e->getMessage(),
+                uniqid(),
+                'replaceResultResponse');
+
+            echo $responsexml->asXML();
+            break;
+        }
 
         $ltiinstance = $DB->get_record('lti', array('id' => $parsed->instanceid));
 
@@ -99,12 +99,8 @@ switch ($messagetype) {
 
         $gradestatus = lti_update_grade($ltiinstance, $parsed->userid, $parsed->launchid, $parsed->gradeval);
 
-        if (!$gradestatus) {
-            throw new Exception('Grade replace response');
-        }
-
         $responsexml = lti_get_response_xml(
-                'success',
+                $gradestatus ? 'success' : 'failure',
                 'Grade replace response',
                 $parsed->messageid,
                 'replaceResultResponse'
@@ -161,12 +157,8 @@ switch ($messagetype) {
 
         $gradestatus = lti_delete_grade($ltiinstance, $parsed->userid);
 
-        if (!$gradestatus) {
-            throw new Exception('Grade delete request');
-        }
-
         $responsexml = lti_get_response_xml(
-                'success',
+                $gradestatus ? 'success' : 'failure',
                 'Grade delete request',
                 $parsed->messageid,
                 'deleteResultResponse'

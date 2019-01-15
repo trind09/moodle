@@ -22,9 +22,7 @@
  */
 use google\appengine\api\app_identity\AppIdentityService;
 
-if (!class_exists('Google_Client')) {
-  require_once dirname(__FILE__) . '/../autoload.php';
-}
+require_once realpath(dirname(__FILE__) . '/../../../autoload.php');
 
 /**
  * Authentication via the Google App Engine App Identity service.
@@ -32,6 +30,7 @@ if (!class_exists('Google_Client')) {
 class Google_Auth_AppIdentity extends Google_Auth_Abstract
 {
   const CACHE_PREFIX = "Google_Auth_AppIdentity::";
+  private $key = null;
   private $client;
   private $token = false;
   private $tokenScopes = false;
@@ -59,30 +58,16 @@ class Google_Auth_AppIdentity extends Google_Auth_Abstract
 
     $this->token = $this->client->getCache()->get($cacheKey);
     if (!$this->token) {
-      $this->retrieveToken($scopes, $cacheKey);
-    } else if ($this->token['expiration_time'] < time()) {
-      $this->client->getCache()->delete($cacheKey);
-      $this->retrieveToken($scopes, $cacheKey);
+      $this->token = AppIdentityService::getAccessToken($scopes);
+      if ($this->token) {
+        $this->client->getCache()->set(
+            $cacheKey,
+            $this->token
+        );
+      }
     }
-
     $this->tokenScopes = $scopes;
     return $this->token;
-  }
-
-  /**
-   * Retrieve a new access token and store it in cache
-   * @param mixed $scopes
-   * @param string $cacheKey
-   */
-  private function retrieveToken($scopes, $cacheKey)
-  {
-    $this->token = AppIdentityService::getAccessToken($scopes);
-    if ($this->token) {
-      $this->client->getCache()->set(
-          $cacheKey,
-          $this->token
-      );
-    }
   }
 
   /**

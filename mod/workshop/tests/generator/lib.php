@@ -48,13 +48,11 @@ class mod_workshop_generator extends testing_module_generator {
             'gradinggrade' => $workshopconfig->gradinggrade,
             'gradedecimals' => $workshopconfig->gradedecimals,
             'nattachments' => 1,
-            'submissionfiletypes' => null,
             'maxbytes' => $workshopconfig->maxbytes,
             'latesubmissions' => 0,
             'useselfassessment' => 0,
             'overallfeedbackmode' => 1,
             'overallfeedbackfiles' => 0,
-            'overallfeedbackfiletypes' => null,
             'overallfeedbackmaxbytes' => $workshopconfig->maxbytes,
             'useexamples' => 0,
             'examplesmode' => $workshopconfig->examplesmode,
@@ -152,8 +150,6 @@ class mod_workshop_generator extends testing_module_generator {
             'timecreated' => $timenow,
             'timemodified' => $timenow,
             'grade' => null,
-            'feedbackauthor' => '',
-            'feedbackreviewer' => '',
         );
 
         $id = $DB->insert_record('workshop_assessments', $record);

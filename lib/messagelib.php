@@ -24,7 +24,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once(__DIR__ . '/../message/lib.php');
+require_once(dirname(dirname(__FILE__)) . '/message/lib.php');
 
 /**
  * Called when a message provider wants to send a message.
@@ -50,22 +50,12 @@ require_once(__DIR__ . '/../message/lib.php');
  * Note: processor failure is is not reported as false return value,
  *       earlier versions did not do it consistently either.
  *
- * @todo MDL-55449 Drop support for stdClass in Moodle 3.6
  * @category message
- * @param \core\message\message $eventdata information about the message (component, userfrom, userto, ...)
+ * @param stdClass|\core\message\message $eventdata information about the message (component, userfrom, userto, ...)
  * @return mixed the integer ID of the new message or false if there was a problem with submitted data
  */
 function message_send($eventdata) {
     global $CFG, $DB;
-
-    // TODO MDL-55449 Drop support for stdClass in Moodle 3.6.
-    if ($eventdata instanceof \stdClass) {
-        if (!isset($eventdata->courseid)) {
-            $eventdata->courseid = null;
-        }
-
-        debugging('eventdata as \stdClass is deprecated. Please use core\message\message instead.', DEBUG_DEVELOPER);
-    }
 
     //new message ID to return
     $messageid = false;
@@ -127,53 +117,30 @@ function message_send($eventdata) {
         $userstate = 'loggedoff';
     }
 
-    // Check if we are creating a notification or message.
-    if ($eventdata->notification) {
-        $table = 'notifications';
+    // Create the message object
+    $savemessage = new stdClass();
+    $savemessage->useridfrom        = $eventdata->userfrom->id;
+    $savemessage->useridto          = $eventdata->userto->id;
+    $savemessage->subject           = $eventdata->subject;
+    $savemessage->fullmessage       = $eventdata->fullmessage;
+    $savemessage->fullmessageformat = $eventdata->fullmessageformat;
+    $savemessage->fullmessagehtml   = $eventdata->fullmessagehtml;
+    $savemessage->smallmessage      = $eventdata->smallmessage;
+    $savemessage->notification      = $eventdata->notification;
 
-        $tabledata = new stdClass();
-        $tabledata->useridfrom = $eventdata->userfrom->id;
-        $tabledata->useridto = $eventdata->userto->id;
-        $tabledata->subject = $eventdata->subject;
-        $tabledata->fullmessage = $eventdata->fullmessage;
-        $tabledata->fullmessageformat = $eventdata->fullmessageformat;
-        $tabledata->fullmessagehtml = $eventdata->fullmessagehtml;
-        $tabledata->smallmessage = $eventdata->smallmessage;
-        $tabledata->eventtype = $eventdata->name;
-        $tabledata->component = $eventdata->component;
-
-        if (!empty($eventdata->contexturl)) {
-            $tabledata->contexturl = (string)$eventdata->contexturl;
-        } else {
-            $tabledata->contexturl = null;
-        }
-
-        if (!empty($eventdata->contexturlname)) {
-            $tabledata->contexturlname = (string)$eventdata->contexturlname;
-        } else {
-            $tabledata->contexturlname = null;
-        }
+    if (!empty($eventdata->contexturl)) {
+        $savemessage->contexturl = (string)$eventdata->contexturl;
     } else {
-        $table = 'messages';
-
-        if (!$conversationid = \core_message\api::get_conversation_between_users([$eventdata->userfrom->id,
-                $eventdata->userto->id])) {
-            $conversationid = \core_message\api::create_conversation_between_users([$eventdata->userfrom->id,
-                $eventdata->userto->id]);
-        }
-
-        $tabledata = new stdClass();
-        $tabledata->courseid = $eventdata->courseid;
-        $tabledata->useridfrom = $eventdata->userfrom->id;
-        $tabledata->conversationid = $conversationid;
-        $tabledata->subject = $eventdata->subject;
-        $tabledata->fullmessage = $eventdata->fullmessage;
-        $tabledata->fullmessageformat = $eventdata->fullmessageformat;
-        $tabledata->fullmessagehtml = $eventdata->fullmessagehtml;
-        $tabledata->smallmessage = $eventdata->smallmessage;
+        $savemessage->contexturl = null;
     }
 
-    $tabledata->timecreated = time();
+    if (!empty($eventdata->contexturlname)) {
+        $savemessage->contexturlname = (string)$eventdata->contexturlname;
+    } else {
+        $savemessage->contexturlname = null;
+    }
+
+    $savemessage->timecreated = time();
 
     if (PHPUNIT_TEST and class_exists('phpunit_util')) {
         // Add some more tests to make sure the normal code can actually work.
@@ -193,39 +160,16 @@ function message_send($eventdata) {
         unset($messageproviders);
         // Now ask phpunit if it wants to catch this message.
         if (phpunit_util::is_redirecting_messages()) {
-            $messageid = $DB->insert_record($table, $tabledata);
-            $message = $DB->get_record($table, array('id' => $messageid));
-
-            // Add the useridto attribute for BC.
-            $message->useridto = $eventdata->userto->id;
-
-            // Mark the message/notification as read.
-            if ($eventdata->notification) {
-                \core_message\api::mark_notification_as_read($message);
-            } else {
-                \core_message\api::mark_message_as_read($eventdata->userto->id, $message);
-            }
-
-            // Unit tests need this detail.
-            $message->notification = $eventdata->notification;
+            $savemessage->timeread = time();
+            $messageid = $DB->insert_record('message_read', $savemessage);
+            $message = $DB->get_record('message_read', array('id'=>$messageid));
             phpunit_util::message_sent($message);
             return $messageid;
         }
     }
 
-    // Fetch enabled processors.
-    // If we are dealing with a message some processors may want to handle it regardless of user and site settings.
-    if (!$eventdata->notification) {
-        $processors = array_filter(get_message_processors(false), function($processor) {
-            if ($processor->object->force_process_messages()) {
-                return true;
-            }
-
-            return ($processor->enabled && $processor->configured);
-        });
-    } else {
-        $processors = get_message_processors(true);
-    }
+    // Fetch enabled processors
+    $processors = get_message_processors(true);
 
     // Preset variables
     $processorlist = array();
@@ -258,9 +202,7 @@ function message_send($eventdata) {
         }
 
         // Populate the list of processors we will be using
-        if (!$eventdata->notification && $processor->object->force_process_messages()) {
-            $processorlist[] = $processor->name;
-        } else if ($permitted == 'forced' && $userisconfigured) {
+        if ($permitted == 'forced' && $userisconfigured) {
             // An admin is forcing users to use this message processor. Use this processor unconditionally.
             $processorlist[] = $processor->name;
         } else if ($permitted == 'permitted' && $userisconfigured && !$eventdata->userto->emailstop) {
@@ -279,21 +221,12 @@ function message_send($eventdata) {
         }
     }
 
-    // Only cache messages, not notifications.
-    if (!$eventdata->notification) {
-        // Cache the timecreated value of the last message between these two users.
-        $cache = cache::make('core', 'message_time_last_message_between_users');
-        $key = \core_message\helper::get_last_message_time_created_cache_key($eventdata->userfrom->id,
-            $eventdata->userto->id);
-        $cache->set($key, $tabledata->timecreated);
-    }
-
     // Store unread message just in case we get a fatal error any time later.
-    $tabledata->id = $DB->insert_record($table, $tabledata);
-    $eventdata->savedmessageid = $tabledata->id;
+    $savemessage->id = $DB->insert_record('message', $savemessage);
+    $eventdata->savedmessageid = $savemessage->id;
 
     // Let the manager do the sending or buffering when db transaction in progress.
-    return \core\message\manager::send_message($eventdata, $tabledata, $processorlist);
+    return \core\message\manager::send_message($eventdata, $savemessage, $processorlist);
 }
 
 

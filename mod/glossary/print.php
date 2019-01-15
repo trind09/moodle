@@ -8,7 +8,6 @@ require_once("lib.php");
 $id            = required_param('id', PARAM_INT);                     // Course Module ID
 $sortorder     = optional_param('sortorder', 'asc', PARAM_ALPHA);     // Sorting order
 $offset        = optional_param('offset', 0, PARAM_INT);              // number of entries to bypass
-$pagelimit     = optional_param('pagelimit', 0, PARAM_INT);           // Number of entries per page, 0 if unlimited.
 $displayformat = optional_param('displayformat',-1, PARAM_INT);
 
 $mode    = required_param('mode', PARAM_ALPHA);             // mode to show the entries
@@ -48,8 +47,8 @@ if (! $glossary = $DB->get_record("glossary", array("id"=>$cm->instance))) {
     print_error('invalidid', 'glossary');
 }
 
-if ($pagelimit < 0) {
-    $pagelimit = 0;
+if ( !$entriesbypage = $glossary->entbypage ) {
+    $entriesbypage = $CFG->glossary_entbypage;
 }
 
 require_course_login($course, true, $cm);
@@ -188,26 +187,26 @@ echo html_writer::tag('div', $modname, array('class' => 'modname'));
 if ( $allentries ) {
     foreach ($allentries as $entry) {
 
-        // Setting the pivot for the current entry.
-        if ($printpivot) {
+        // Setting the pivot for the current entry
+        $pivot = $entry->glossarypivot;
+        $upperpivot = core_text::strtoupper($pivot);
+        $pivottoshow = core_text::strtoupper(format_string($pivot, true, $fmtoptions));
+        // Reduce pivot to 1cc if necessary
+        if ( !$fullpivot ) {
+            $upperpivot = core_text::substr($upperpivot, 0, 1);
+            $pivottoshow = core_text::substr($pivottoshow, 0, 1);
+        }
 
-            $pivot = $entry->{$pivotkey};
-            $upperpivot = core_text::strtoupper($pivot);
-            $pivottoshow = core_text::strtoupper(format_string($pivot, true, $fmtoptions));
+        // If there's  group break
+        if ( $currentpivot != $upperpivot ) {
 
-            // Reduce pivot to 1cc if necessary.
-            if (!$fullpivot) {
-                $upperpivot = core_text::substr($upperpivot, 0, 1);
-                $pivottoshow = core_text::substr($pivottoshow, 0, 1);
-            }
-
-            // If there's a group break.
-            if ($currentpivot != $upperpivot) {
+            // print the group break if apply
+            if ( $printpivot )  {
                 $currentpivot = $upperpivot;
 
-                if ($userispivot) {
-                    // Printing the user icon if defined (only when browsing authors).
-                    $user = mod_glossary_entry_query_builder::get_user_from_record($entry);
+                if ( isset($entry->userispivot) ) {
+                    // printing the user icon if defined (only when browsing authors)
+                    $user = $DB->get_record("user", array("id"=>$entry->userid));
                     $pivottoshow = fullname($user);
                 }
                 echo html_writer::tag('div', clean_text($pivottoshow), array('class' => 'mdl-align strong'));
@@ -215,10 +214,6 @@ if ( $allentries ) {
         }
 
         glossary_print_entry($course, $cm, $glossary, $entry, $mode, $hook, 1, $displayformat, true);
-    }
-    // The all entries value may be a recordset or an array.
-    if ($allentries instanceof moodle_recordset) {
-        $allentries->close();
     }
 }
 

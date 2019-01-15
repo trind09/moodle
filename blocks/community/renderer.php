@@ -86,42 +86,13 @@ class block_community_renderer extends plugin_renderer_base {
     }
 
     /**
-     * Displays information about moodle.net above course search form
-     *
-     * @return string
-     */
-    public function moodlenet_info() {
-        if (!$info = \core\hub\registration::get_moodlenet_info()) {
-            return '';
-        }
-
-        $image = html_writer::div(html_writer::img($info['imgurl'], $info['name']), 'hubimage');
-
-        $namelink = html_writer::link($info['url'], html_writer::tag('h2', $info['name']), array('class' => 'hubtitlelink'));
-        $description = clean_param($info['description'], PARAM_TEXT);
-        $descriptiontext = html_writer::div(format_text($description, FORMAT_PLAIN), 'hubdescription');
-
-        $additionaldesc = get_string('enrollablecourses', 'block_community') . ': ' . $info['enrollablecourses'] . ' - ' .
-            get_string('downloadablecourses', 'block_community') . ': ' . $info['downloadablecourses'];
-        $stats = html_writer::div(html_writer::tag('div', $additionaldesc), 'hubstats');
-
-        $text = html_writer::div($descriptiontext . $stats, 'hubtext');
-
-        $imgandtext = html_writer::div($image . $text, 'hubimgandtext');
-
-        $fulldesc = html_writer::div($namelink . $imgandtext, 'hubmainhmtl clearfix');
-
-        return html_writer::div($fulldesc, 'formlisting');
-    }
-
-    /**
      * Display a list of courses
      * @param array $courses
-     * @param mixed $unused parameter is not used
+     * @param boolean $withwriteaccess
      * @param int $contextcourseid context course id
      * @return string
      */
-    public function course_list($courses, $unused, $contextcourseid) {
+    public function course_list($courses, $huburl, $contextcourseid) {
         global $CFG;
 
         $renderedhtml = '';
@@ -157,9 +128,12 @@ class block_community_renderer extends plugin_renderer_base {
 
                 // create screenshots html
                 $screenshothtml = '';
-                if (!empty($course->screenshotbaseurl)) {
+                if (!empty($course->screenshots)) {
+                    $baseurl = new moodle_url($huburl . '/local/hub/webservice/download.php',
+                                    array('courseid' => $course->id,
+                                        'filetype' => HUB_SCREENSHOT_FILE_TYPE));
                     $screenshothtml = html_writer::empty_tag('img',
-                        array('src' => $course->screenshotbaseurl, 'alt' => $course->fullname));
+                        array('src' => $baseurl, 'alt' => $course->fullname));
                 }
                 $coursescreenshot = html_writer::tag('div', $screenshothtml,
                                 array('class' => 'coursescreenshot',
@@ -179,8 +153,7 @@ class block_community_renderer extends plugin_renderer_base {
                                 array('class' => 'hubcourseuserinfo'));
 
                 //create course content related information html
-                $course->subject = (get_string_manager()->string_exists($course->subject, 'edufields')) ?
-                        get_string($course->subject, 'edufields') : get_string('none');
+                $course->subject = get_string($course->subject, 'edufields');
                 $course->audience = get_string('audience' . $course->audience, 'hub');
                 $course->educationallevel = get_string('edulevel' . $course->educationallevel, 'hub');
                 $coursecontentinfo = '';
@@ -295,7 +268,7 @@ class block_community_renderer extends plugin_renderer_base {
                 if (!$course->enrollable) {
                     $params = array('sesskey' => sesskey(), 'download' => 1, 'confirmed' => 1,
                         'remotemoodleurl' => $CFG->wwwroot, 'courseid' => $contextcourseid,
-                        'downloadcourseid' => $course->id,
+                        'downloadcourseid' => $course->id, 'huburl' => $huburl,
                         'coursefullname' => $course->fullname, 'backupsize' => $course->backupsize);
                     $downloadurl = new moodle_url("/blocks/community/communitycourse.php", $params);
                     $downloadbuttonhtml = html_writer::tag('a', get_string('install', 'block_community'),
@@ -365,8 +338,10 @@ class block_community_renderer extends plugin_renderer_base {
 
                 //link rate and comment
                 $rateandcomment = html_writer::tag('div',
-                                html_writer::link($course->commenturl, get_string('rateandcomment', 'block_community'),
-                                            ['onclick' => 'this.target="_blank"']),
+                                html_writer::tag('a', get_string('rateandcomment', 'block_community'),
+                                        array('href' => new moodle_url($huburl,
+                                                    array('courseid' => $course->id, 'mustbelogged' => true)),
+                                            'onclick' => 'this.target="_blank"')),
                                 array('class' => 'hubrateandcomment'));
 
                 //the main DIV tags

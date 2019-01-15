@@ -30,7 +30,7 @@ $PAGE->set_url('/grade/report/index.php', array('id'=>$courseid));
 
 /// basic access checks
 if (!$course = $DB->get_record('course', array('id' => $courseid))) {
-    print_error('invalidcourseid');
+    print_error('nocourseid');
 }
 require_login($course);
 $context = context_course::instance($course->id);

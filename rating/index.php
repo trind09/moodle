@@ -55,13 +55,7 @@ if ($popup) {
     $PAGE->set_pagelayout('popup');
 }
 
-$params = array('contextid' => $contextid,
-                'component' => $component,
-                'ratingarea' => $ratingarea,
-                'itemid' => $itemid,
-                'scaleid' => $scaleid);
-if (!has_capability('moodle/rating:view', $context) ||
-        !component_callback($component, 'rating_can_see_item_ratings', array($params), true)) {
+if (!has_capability('moodle/rating:view', $context)) {
     print_error('noviewrate', 'rating');
 }
 

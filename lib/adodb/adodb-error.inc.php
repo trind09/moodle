@@ -1,8 +1,6 @@
 <?php
 /**
- * @version   v5.20.9  21-Dec-2016
- * @copyright (c) 2000-2013 John Lim (jlim#natsoft.com). All rights reserved.
- * @copyright (c) 2014      Damien Regad, Mark Newnham and the ADOdb community
+ * @version V5.19  23-Apr-2014  (c) 2000-2014 John Lim (jlim#natsoft.com). All rights reserved.
  * Released under both BSD license and Lesser GPL library license.
  * Whenever there is any discrepancy between the two licenses,
  * the BSD license will take precedence.
@@ -111,7 +109,7 @@ function adodb_error_pg($errormsg)
 			'could not serialize access due to'   => DB_ERROR_SERIALIZATION_FAILURE
 		);
 	reset($error_regexps);
-	foreach ($error_regexps as $regexp => $code) {
+	while (list($regexp,$code) = each($error_regexps)) {
 		if (preg_match("/$regexp/mi", $errormsg)) {
 			return $code;
 		}

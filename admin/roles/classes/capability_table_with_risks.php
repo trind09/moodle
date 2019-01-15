@@ -35,6 +35,7 @@ abstract class core_role_capability_table_with_risks extends core_role_capabilit
     protected $allpermissions; // We don't need perms ourselves, but all our subclasses do.
     protected $strperms; // Language string cache.
     protected $risksurl; // URL in moodledocs about risks.
+    protected $riskicons = array(); // Cache to avoid regenerating the HTML for each risk icon.
     /** @var array The capabilities to highlight as default/inherited. */
     protected $parentpermissions;
     protected $displaypermissions;
@@ -162,16 +163,15 @@ abstract class core_role_capability_table_with_risks extends core_role_capabilit
     protected abstract function add_permission_cells($capability);
 
     protected function add_row_cells($capability) {
-        $cells = $this->add_permission_cells($capability);
+        $this->add_permission_cells($capability);
         // One cell for each possible risk.
         foreach ($this->allrisks as $riskname => $risk) {
-            $cells .= '<td class="risk ' . str_replace('risk', '', $riskname) . '">';
+            echo '<td class="risk ' . str_replace('risk', '', $riskname) . '">';
             if ($risk & (int)$capability->riskbitmask) {
-                $cells .= $this->get_risk_icon($riskname);
+                echo $this->get_risk_icon($riskname);
             }
-            $cells .= '</td>';
+            echo '</td>';
         }
-        return $cells;
     }
 
     /**
@@ -182,16 +182,12 @@ abstract class core_role_capability_table_with_risks extends core_role_capabilit
      */
     public function get_risk_icon($type) {
         global $OUTPUT;
-
-        $alt = get_string("{$type}short", "admin");
-        $title = get_string($type, "admin");
-
-        $text = $OUTPUT->pix_icon('i/' . str_replace('risk', 'risk_', $type), $alt, 'moodle', [
-                'title' => $title,
-            ]);
-        $action = new popup_action('click', $this->risksurl, 'docspopup');
-        $riskicon = $OUTPUT->action_link($this->risksurl, $text, $action);
-
-        return $riskicon;
+        if (!isset($this->riskicons[$type])) {
+            $iconurl = $OUTPUT->pix_url('i/' . str_replace('risk', 'risk_', $type));
+            $text = '<img src="' . $iconurl . '" alt="' . get_string($type . 'short', 'admin') . '" />';
+            $action = new popup_action('click', $this->risksurl, 'docspopup');
+            $this->riskicons[$type] = $OUTPUT->action_link($this->risksurl, $text, $action, array('title'=>get_string($type, 'admin')));
+        }
+        return $this->riskicons[$type];
     }
 }

@@ -23,15 +23,14 @@
  */
 
 
-require_once(__DIR__ . '/../../config.php');
+require_once(dirname(__FILE__) . '/../../config.php');
 require_once($CFG->dirroot . '/mod/quiz/locallib.php');
 
 $attemptid = required_param('attempt', PARAM_INT); // The attempt to summarise.
-$cmid = optional_param('cmid', null, PARAM_INT);
 
 $PAGE->set_url('/mod/quiz/summary.php', array('attempt' => $attemptid));
 
-$attemptobj = quiz_create_attempt_handling_errors($attemptid, $cmid);
+$attemptobj = quiz_attempt::create($attemptid);
 
 // Check login.
 require_login($attemptobj->get_course(), false, $attemptobj->get_cm());
@@ -94,4 +93,15 @@ $PAGE->set_heading($attemptobj->get_course()->fullname);
 echo $output->summary_page($attemptobj, $displayoptions);
 
 // Log this page view.
-$attemptobj->fire_attempt_summary_viewed_event();
+$params = array(
+    'objectid' => $attemptobj->get_attemptid(),
+    'relateduserid' => $attemptobj->get_userid(),
+    'courseid' => $attemptobj->get_courseid(),
+    'context' => context_module::instance($attemptobj->get_cmid()),
+    'other' => array(
+        'quizid' => $attemptobj->get_quizid()
+    )
+);
+$event = \mod_quiz\event\attempt_summary_viewed::create($params);
+$event->add_record_snapshot('quiz_attempts', $attemptobj->get_attempt());
+$event->trigger();

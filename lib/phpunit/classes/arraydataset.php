@@ -33,7 +33,7 @@
  * @copyright  2012 Petr Skoda {@link http://skodak.org}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class phpunit_ArrayDataSet extends PHPUnit\DbUnit\DataSet\AbstractDataSet {
+class phpunit_ArrayDataSet extends PHPUnit_Extensions_Database_DataSet_AbstractDataSet {
     /**
      * @var array
      */
@@ -58,8 +58,8 @@ class phpunit_ArrayDataSet extends PHPUnit\DbUnit\DataSet\AbstractDataSet {
                 $columns = array_keys($firstrow);
             }
 
-            $metaData = new PHPUnit\DbUnit\DataSet\DefaultTableMetaData($tableName, $columns);
-            $table = new PHPUnit\DbUnit\DataSet\DefaultTable($metaData);
+            $metaData = new PHPUnit_Extensions_Database_DataSet_DefaultTableMetaData($tableName, $columns);
+            $table = new PHPUnit_Extensions_Database_DataSet_DefaultTable($metaData);
 
             foreach ($rows AS $row) {
                 if ($columnsInFirstRow) {
@@ -72,7 +72,7 @@ class phpunit_ArrayDataSet extends PHPUnit\DbUnit\DataSet\AbstractDataSet {
     }
 
     protected function createIterator($reverse = FALSE) {
-        return new PHPUnit\DbUnit\DataSet\DefaultTableIterator($this->tables, $reverse);
+        return new PHPUnit_Extensions_Database_DataSet_DefaultTableIterator($this->tables, $reverse);
     }
 
     public function getTable($tableName) {

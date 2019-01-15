@@ -107,12 +107,25 @@ class block_navigation extends block_base {
      * Gets Javascript that may be required for navigation
      */
     function get_required_javascript() {
+        global $CFG;
         parent::get_required_javascript();
+        $limit = 20;
+        if (!empty($CFG->navcourselimit)) {
+            $limit = $CFG->navcourselimit;
+        }
+        $expansionlimit = 0;
+        if (!empty($this->config->expansionlimit)) {
+            $expansionlimit = $this->config->expansionlimit;
+        }
         $arguments = array(
-            'instanceid' => $this->instance->id
+            'id'             => $this->instance->id,
+            'instance'       => $this->instance->id,
+            'candock'        => $this->instance_can_be_docked(),
+            'courselimit'    => $limit,
+            'expansionlimit' => $expansionlimit
         );
         $this->page->requires->string_for_js('viewallcourses', 'moodle');
-        $this->page->requires->js_call_amd('block_navigation/navblock', 'init', $arguments);
+        $this->page->requires->yui_module('moodle-block_navigation-navigation', 'M.block_navigation.init_add_tree', array($arguments));
     }
 
     /**
@@ -121,7 +134,6 @@ class block_navigation extends block_base {
      * @return object $this->content
      */
     function get_content() {
-        global $CFG;
         // First check if we have already generated, don't waste cycles
         if ($this->contentgenerated === true) {
             return $this->content;
@@ -184,21 +196,7 @@ class block_navigation extends block_base {
             }
         }
 
-        $limit = 20;
-        if (!empty($CFG->navcourselimit)) {
-            $limit = $CFG->navcourselimit;
-        }
-        $expansionlimit = 0;
-        if (!empty($this->config->expansionlimit)) {
-            $expansionlimit = $this->config->expansionlimit;
-        }
-        $arguments = array(
-            'id'             => $this->instance->id,
-            'instance'       => $this->instance->id,
-            'candock'        => $this->instance_can_be_docked(),
-            'courselimit'    => $limit,
-            'expansionlimit' => $expansionlimit
-        );
+        $this->page->requires->data_for_js('navtreeexpansions'.$this->instance->id, $expandable);
 
         $options = array();
         $options['linkcategories'] = (!empty($this->config->linkcategories) && $this->config->linkcategories == 'yes');

@@ -256,11 +256,7 @@ function install_generate_configphp($database, $cfg) {
     }
     $configphp .= '$CFG->directorypermissions = ' . $chmod . ';' . PHP_EOL . PHP_EOL;
 
-    if (isset($cfg->upgradekey) and $cfg->upgradekey !== '') {
-        $configphp .= '$CFG->upgradekey = ' . var_export($cfg->upgradekey, true) . ';' . PHP_EOL . PHP_EOL;
-    }
-
-    $configphp .= 'require_once(__DIR__ . \'/lib/setup.php\');' . PHP_EOL . PHP_EOL;
+    $configphp .= 'require_once(dirname(__FILE__) . \'/lib/setup.php\');' . PHP_EOL . PHP_EOL;
     $configphp .= '// There is no php closing tag in this file,' . PHP_EOL;
     $configphp .= '// it is intentional because it prevents trailing whitespace problems!' . PHP_EOL;
 
@@ -337,7 +333,6 @@ function install_print_header($config, $stagename, $heading, $stagetext, $stagec
 
     echo '<link rel="stylesheet" type="text/css" href="'.$CFG->wwwroot.'/install/css.php" />
           <title>'.get_string('installation','install').' - Moodle '.$CFG->target_release.'</title>
-          <meta name="robots" content="noindex">
           <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
           <meta http-equiv="pragma" content="no-cache" />
           <meta http-equiv="expires" content="0" />';
@@ -407,7 +402,7 @@ function install_print_footer($config, $reload=false) {
 
     $homelink  = '<div class="sitelink">'.
        '<a title="Moodle '. $CFG->target_release .'" href="http://docs.moodle.org/en/Administrator_documentation" onclick="this.target=\'_blank\'">'.
-       '<img src="pix/moodlelogo.png" alt="'.get_string('moodlelogo').'" /></a></div>';
+       '<img src="pix/moodlelogo.png" alt="moodlelogo" /></a></div>';
 
     echo '</form></div>';
     echo '<div id="page-footer">'.$homelink.'</div>';
@@ -525,7 +520,4 @@ function install_cli_database(array $options, $interactive) {
     if (isset($options['summary'])) {
         $DB->set_field('course', 'summary', $options['summary'], array('format' => 'site'));
     }
-
-    // Redirect to site registration on first login.
-    set_config('registrationpending', 1);
 }

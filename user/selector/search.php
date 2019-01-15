@@ -24,7 +24,7 @@
 
 define('AJAX_SCRIPT', true);
 
-require_once(__DIR__ . '/../../config.php');
+require_once(dirname(__FILE__) . '/../../config.php');
 require_once($CFG->dirroot . '/user/selector/lib.php');
 
 $PAGE->set_context(context_system::instance());
@@ -61,7 +61,7 @@ $userselector = new $classname($name, $options);
 
 // Do the search and output the results.
 $results = $userselector->find_users($search);
-$jsonresults = array();
+$json = array();
 foreach ($results as $groupname => $users) {
     $groupdata = array('name' => $groupname, 'users' => array());
     foreach ($users as $user) {
@@ -76,14 +76,7 @@ foreach ($results as $groupname => $users) {
         }
         $groupdata['users'][] = $output;
     }
-    $jsonresults[] = $groupdata;
+    $json[] = $groupdata;
 }
 
-$json = array('results' => $jsonresults);
-
-// Also add users' group membership summaries, if possible.
-if (is_callable(array($userselector, 'get_user_summaries')) && isset($options['courseid'])) {
-    $json['userSummaries'] = $userselector->get_user_summaries($options['courseid']);
-}
-
-echo json_encode($json);
+echo json_encode(array('results' => $json));

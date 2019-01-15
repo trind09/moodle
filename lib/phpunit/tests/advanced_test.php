@@ -71,20 +71,8 @@ class core_phpunit_advanced_testcase extends advanced_testcase {
         set_debugging(DEBUG_DEVELOPER);
     }
 
-    /**
-     * @test
-     *
-     * Annotations are a valid PHPUnit method for running tests.  Debugging needs to support them.
-     */
-    public function debugging_called_with_annotation() {
-        debugging('pokus', DEBUG_MINIMAL);
-        $this->assertDebuggingCalled('pokus', DEBUG_MINIMAL);
-    }
-
     public function test_set_user() {
-        global $USER, $DB, $SESSION;
-
-        $this->resetAfterTest();
+        global $USER, $DB;
 
         $this->assertEquals(0, $USER->id);
         $this->assertSame($_SESSION['USER'], $USER);
@@ -121,11 +109,6 @@ class core_phpunit_advanced_testcase extends advanced_testcase {
         $this->assertEquals(0, $USER->id);
         $this->assertSame($_SESSION['USER'], $USER);
         $this->assertSame($GLOBALS['USER'], $USER);
-
-        // Ensure session is reset after setUser, as it may contain extra info.
-        $SESSION->sometestvalue = true;
-        $this->setUser($user);
-        $this->assertObjectNotHasAttribute('sometestvalue', $SESSION);
     }
 
     public function test_set_admin_user() {
@@ -215,15 +198,15 @@ class core_phpunit_advanced_testcase extends advanced_testcase {
         global $DB, $CFG, $COURSE, $SITE, $USER;
 
         $this->preventResetByRollback();
-        self::resetAllData(true);
+        phpunit_util::reset_all_data(true);
 
         // Database change.
         $this->assertEquals(1, $DB->get_field('user', 'confirmed', array('id'=>2)));
         $DB->set_field('user', 'confirmed', 0, array('id'=>2));
         try {
-            self::resetAllData(true);
+            phpunit_util::reset_all_data(true);
         } catch (Exception $e) {
-            $this->assertInstanceOf('PHPUnit\Framework\Error\Warning', $e);
+            $this->assertInstanceOf('PHPUnit_Framework_Error_Warning', $e);
         }
         $this->assertEquals(1, $DB->get_field('user', 'confirmed', array('id'=>2)));
 
@@ -232,9 +215,9 @@ class core_phpunit_advanced_testcase extends advanced_testcase {
         unset($CFG->admin);
         $CFG->rolesactive = 0;
         try {
-            self::resetAllData(true);
+            phpunit_util::reset_all_data(true);
         } catch (Exception $e) {
-            $this->assertInstanceOf('PHPUnit\Framework\Error\Warning', $e);
+            $this->assertInstanceOf('PHPUnit_Framework_Error_Warning', $e);
             $this->assertContains('xx', $e->getMessage());
             $this->assertContains('admin', $e->getMessage());
             $this->assertContains('rolesactive', $e->getMessage());
@@ -245,28 +228,28 @@ class core_phpunit_advanced_testcase extends advanced_testcase {
 
         // _GET change.
         $_GET['__somethingthatwillnotnormallybepresent__'] = 'yy';
-        self::resetAllData(true);
+        phpunit_util::reset_all_data(true);
 
         $this->assertEquals(array(), $_GET);
 
         // _POST change.
         $_POST['__somethingthatwillnotnormallybepresent2__'] = 'yy';
-        self::resetAllData(true);
+        phpunit_util::reset_all_data(true);
         $this->assertEquals(array(), $_POST);
 
         // _FILES change.
         $_FILES['__somethingthatwillnotnormallybepresent3__'] = 'yy';
-        self::resetAllData(true);
+        phpunit_util::reset_all_data(true);
         $this->assertEquals(array(), $_FILES);
 
         // _REQUEST change.
         $_REQUEST['__somethingthatwillnotnormallybepresent4__'] = 'yy';
-        self::resetAllData(true);
+        phpunit_util::reset_all_data(true);
         $this->assertEquals(array(), $_REQUEST);
 
         // Silent changes.
         $_SERVER['xx'] = 'yy';
-        self::resetAllData(true);
+        phpunit_util::reset_all_data(true);
         $this->assertFalse(isset($_SERVER['xx']));
 
         // COURSE change.
@@ -274,9 +257,9 @@ class core_phpunit_advanced_testcase extends advanced_testcase {
         $COURSE = new stdClass();
         $COURSE->id = 7;
         try {
-            self::resetAllData(true);
+            phpunit_util::reset_all_data(true);
         } catch (Exception $e) {
-            $this->assertInstanceOf('PHPUnit\Framework\Error\Warning', $e);
+            $this->assertInstanceOf('PHPUnit_Framework_Error_Warning', $e);
             $this->assertEquals(1, $SITE->id);
             $this->assertSame($SITE, $COURSE);
             $this->assertSame($SITE, $COURSE);
@@ -285,9 +268,9 @@ class core_phpunit_advanced_testcase extends advanced_testcase {
         // USER change.
         $this->setUser(2);
         try {
-            self::resetAllData(true);
+            phpunit_util::reset_all_data(true);
         } catch (Exception $e) {
-            $this->assertInstanceOf('PHPUnit\Framework\Error\Warning', $e);
+            $this->assertInstanceOf('PHPUnit_Framework_Error_Warning', $e);
             $this->assertEquals(0, $USER->id);
         }
     }
@@ -306,7 +289,7 @@ class core_phpunit_advanced_testcase extends advanced_testcase {
         } catch (moodle_exception $e) {
             $this->assertInstanceOf('dml_exception', $e);
         }
-        $DB = $this->createMock(get_class($DB));
+        $DB = $this->getMock(get_class($DB));
         $this->assertNull($DB->get_record('pokus', array()));
         // Rest continues after reset.
     }
@@ -368,7 +351,7 @@ class core_phpunit_advanced_testcase extends advanced_testcase {
 
         $this->setCurrentTimeStart();
         $this->assertTimeCurrent(time());
-        $this->waitForSecond();
+        sleep(2);
         $this->assertTimeCurrent(time());
         $this->assertTimeCurrent(time()-1);
 
@@ -377,7 +360,7 @@ class core_phpunit_advanced_testcase extends advanced_testcase {
             $this->assertTimeCurrent(time()+10);
             $this->fail('Failed assert expected');
         } catch (Exception $e) {
-            $this->assertInstanceOf('PHPUnit\Framework\ExpectationFailedException', $e);
+            $this->assertInstanceOf('PHPUnit_Framework_ExpectationFailedException', $e);
         }
 
         try {
@@ -385,7 +368,7 @@ class core_phpunit_advanced_testcase extends advanced_testcase {
             $this->assertTimeCurrent(time()-10);
             $this->fail('Failed assert expected');
         } catch (Exception $e) {
-            $this->assertInstanceOf('PHPUnit\Framework\ExpectationFailedException', $e);
+            $this->assertInstanceOf('PHPUnit_Framework_ExpectationFailedException', $e);
         }
     }
 
@@ -424,8 +407,7 @@ class core_phpunit_advanced_testcase extends advanced_testcase {
         $user2 = $this->getDataGenerator()->create_user();
 
         // Any core message will do here.
-        $message1 = new \core\message\message();
-        $message1->courseid          = 1;
+        $message1 = new stdClass();
         $message1->component         = 'moodle';
         $message1->name              = 'instantmessage';
         $message1->userfrom          = $user1;
@@ -437,8 +419,7 @@ class core_phpunit_advanced_testcase extends advanced_testcase {
         $message1->smallmessage      = 'small message';
         $message1->notification      = 0;
 
-        $message2 = new \core\message\message();
-        $message2->courseid          = 1;
+        $message2 = new stdClass();
         $message2->component         = 'moodle';
         $message2->name              = 'instantmessage';
         $message2->userfrom          = $user2;
@@ -503,8 +484,7 @@ class core_phpunit_advanced_testcase extends advanced_testcase {
 
         $sink = $this->redirectMessages();
 
-        $message3 = new \core\message\message();
-        $message3->courseid          = 1;
+        $message3 = new stdClass();
         $message3->component         = 'xxxx_yyyyy';
         $message3->name              = 'instantmessage';
         $message3->userfrom          = $user2;
@@ -550,8 +530,7 @@ class core_phpunit_advanced_testcase extends advanced_testcase {
         $this->assertTrue(phpunit_util::is_redirecting_messages());
         $this->assertEquals(1, $sink->count());
 
-        $message = new \core\message\message();
-        $message->courseid          = 1;
+        $message = new stdClass();
         $message->component         = 'moodle';
         $message->name              = 'instantmessage';
         $message->userfrom          = get_admin();
@@ -600,19 +579,19 @@ class core_phpunit_advanced_testcase extends advanced_testcase {
         try {
             $this->setTimezone('Pacific/Auckland', '');
         } catch (Exception $e) {
-            $this->assertInstanceOf('PHPUnit\Framework\Error\Warning', $e);
+            $this->assertInstanceOf('PHPUnit_Framework_Error_Warning', $e);
         }
 
         try {
             $this->setTimezone('Pacific/Auckland', 'xxxx');
         } catch (Exception $e) {
-            $this->assertInstanceOf('PHPUnit\Framework\Error\Warning', $e);
+            $this->assertInstanceOf('PHPUnit_Framework_Error_Warning', $e);
         }
 
         try {
             $this->setTimezone('Pacific/Auckland', null);
         } catch (Exception $e) {
-            $this->assertInstanceOf('PHPUnit\Framework\Error\Warning', $e);
+            $this->assertInstanceOf('PHPUnit_Framework_Error_Warning', $e);
         }
 
     }
@@ -622,7 +601,7 @@ class core_phpunit_advanced_testcase extends advanced_testcase {
 
         $this->resetAfterTest();
 
-        // If this fails self::resetAllData(); must be updated.
+        // If this fails \phpunit_util::reset_all_data() must be updated.
         $this->assertSame('en_AU.UTF-8', get_string('locale', 'langconfig'));
         $this->assertSame('English_Australia.1252', get_string('localewin', 'langconfig'));
 
@@ -635,9 +614,9 @@ class core_phpunit_advanced_testcase extends advanced_testcase {
         }
 
         try {
-            self::resetAllData(true);
+            phpunit_util::reset_all_data(true);
         } catch (Exception $e) {
-            $this->assertInstanceOf('PHPUnit\Framework\Error\Warning', $e);
+            $this->assertInstanceOf('PHPUnit_Framework_Error_Warning', $e);
         }
 
         if ($CFG->ostype === 'WINDOWS') {
@@ -654,31 +633,12 @@ class core_phpunit_advanced_testcase extends advanced_testcase {
             setlocale(LC_TIME, 'en_US.UTF-8');
         }
 
-        self::resetAllData(false);
+        phpunit_util::reset_all_data(false);
 
         if ($CFG->ostype === 'WINDOWS') {
             $this->assertSame('English_Australia.1252', setlocale(LC_TIME, 0));
         } else {
             $this->assertSame('en_AU.UTF-8', setlocale(LC_TIME, 0));
         }
-    }
-
-    /**
-     * This test sets a user agent and makes sure that it is cleared when the test is reset.
-     */
-    public function test_it_resets_useragent_after_test() {
-        $this->resetAfterTest();
-        $fakeagent = 'New user agent set.';
-
-        // Sanity check: it should not be set when test begins.
-        self::assertFalse(core_useragent::get_user_agent_string(), 'It should not be set at first.');
-
-        // Set a fake useragent and check it was set properly.
-        core_useragent::instance(true, $fakeagent);
-        self::assertSame($fakeagent, core_useragent::get_user_agent_string(), 'It should be the forced agent.');
-
-        // Reset test data and ansure the useragent was cleaned.
-        self::resetAllData(false);
-        self::assertFalse(core_useragent::get_user_agent_string(), 'It should not be set again, data was reset.');
     }
 }

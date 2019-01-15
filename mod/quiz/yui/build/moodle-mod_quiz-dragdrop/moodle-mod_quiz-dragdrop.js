@@ -1,6 +1,5 @@
 YUI.add('moodle-mod_quiz-dragdrop', function (Y, NAME) {
 
-/* eslint-disable no-unused-vars */
 /**
  * Drag and Drop for Quiz sections and slots.
  *
@@ -20,7 +19,7 @@ var CSS = {
     LIGHTBOX: 'lightbox',
     MOVEDOWN: 'movedown',
     MOVEUP: 'moveup',
-    PAGE: 'page',
+    PAGE : 'page',
     PAGECONTENT: 'page-content',
     RIGHT: 'right',
     SECTION: 'slots',
@@ -50,7 +49,7 @@ Y.extend(DRAGSECTION, M.core.dragdrop, {
 
     initializer: function() {
         // Set group for parent class
-        this.groups = [CSS.SECTIONDRAGGABLE];
+        this.groups = [ CSS.SECTIONDRAGGABLE ];
         this.samenodeclass = 'section';
         this.parentnodeclass = 'slots';
 
@@ -226,9 +225,7 @@ Y.extend(DRAGSECTION, M.core.dragdrop, {
                             new M.core.ajaxException(responsetext);
                         }
                         M.mod_quiz.edit.process_sections(Y, sectionlist, responsetext, loopstart, loopend);
-                    } catch (e) {
-                        // Ignore.
-                    }
+                    } catch (e) {}
 
                     // Update all of the section IDs - first unset them, then set them
                     // to avoid duplicates in the DOM.
@@ -267,7 +264,7 @@ Y.extend(DRAGSECTION, M.core.dragdrop, {
                     lightbox.hide();
                 }
             },
-            context: this
+            context:this
         });
     }
 
@@ -293,7 +290,6 @@ M.mod_quiz = M.mod_quiz || {};
 M.mod_quiz.init_section_dragdrop = function(params) {
     new DRAGSECTION(params);
 };
-/* global SELECTOR */
 /**
  * Resource drag and drop.
  *
@@ -310,6 +306,7 @@ Y.extend(DRAGRESOURCE, M.core.dragdrop, {
         this.groups = ['resource'];
         this.samenodeclass = CSS.ACTIVITY;
         this.parentnodeclass = CSS.SECTION;
+        this.resourcedraghandle = this.get_drag_handle(M.util.get_string('move', 'moodle'), CSS.EDITINGMOVE, CSS.ICONCLASS, true);
 
         this.samenodelabel = {
             identifier: 'dragtoafter',
@@ -379,9 +376,7 @@ Y.extend(DRAGRESOURCE, M.core.dragdrop, {
             // Replace move icons
             var move = resourcesnode.one('a.' + CSS.EDITINGMOVE);
             if (move) {
-                var resourcedraghandle = this.get_drag_handle(M.util.get_string('move', 'moodle'),
-                                                              CSS.EDITINGMOVE, CSS.ICONCLASS, true);
-                move.replace(resourcedraghandle);
+                move.replace(this.resourcedraghandle.cloneNode(true));
             }
         }, this);
     },
@@ -390,7 +385,7 @@ Y.extend(DRAGRESOURCE, M.core.dragdrop, {
         // Get our drag object
         var drag = e.target;
         drag.get('dragNode').setContent(drag.get('node').get('innerHTML'));
-        drag.get('dragNode').all('.icon').setStyle('vertical-align', 'baseline');
+        drag.get('dragNode').all('img.iconsmall').setStyle('vertical-align', 'baseline');
     },
 
     drag_dropmiss: function(e) {
@@ -404,6 +399,7 @@ Y.extend(DRAGRESOURCE, M.core.dragdrop, {
         var drag = e.drag;
         // Get a reference to our drag node
         var dragnode = drag.get('node');
+        var dropnode = e.drop.get('node');
 
         // Add spinner if it not there
         var actionarea = dragnode.one(CSS.ACTIONAREA);
@@ -425,7 +421,7 @@ Y.extend(DRAGRESOURCE, M.core.dragdrop, {
         params['class'] = 'resource';
         params.field = 'move';
         params.id = Number(Y.Moodle.mod_quiz.util.slot.getId(dragnode));
-        params.sectionId = Y.Moodle.core_course.util.section.getId(dragnode.ancestor('li.section', true));
+        params.sectionId = Y.Moodle.core_course.util.section.getId(dropnode.ancestor('li.section', true));
 
         var previousslot = dragnode.previous(SELECTOR.SLOT);
         if (previousslot) {
@@ -465,12 +461,12 @@ Y.extend(DRAGRESOURCE, M.core.dragdrop, {
                     window.location.reload(true);
                 }
             },
-            context: this
+            context:this
         });
     },
 
     global_drop_over: function(e) {
-        // Overriding parent method so we can stop the slots being dragged before the first page node.
+        //Overriding parent method so we can stop the slots being dragged before the first page node.
 
         // Check that drop object belong to correct group.
         if (!e.drop || !e.drop.inGroup(this.groups)) {

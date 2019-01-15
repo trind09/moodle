@@ -45,7 +45,7 @@
  * @copyright  2012 Petr Skoda {@link http://skodak.org}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-abstract class database_driver_testcase extends base_testcase {
+abstract class database_driver_testcase extends PHPUnit_Framework_TestCase {
     /** @var moodle_database connection to extra database */
     private static $extradb = null;
 
@@ -142,14 +142,7 @@ abstract class database_driver_testcase extends base_testcase {
         try {
             parent::runBare();
 
-        } catch (Exception $ex) {
-            $e = $ex;
-        } catch (Throwable $ex) {
-            // Engine errors in PHP7 throw exceptions of type Throwable (this "catch" will be ignored in PHP5).
-            $e = $ex;
-        }
-
-        if (isset($e)) {
+        } catch (Exception $e) {
             if ($this->tdb->is_transaction_started()) {
                 $this->tdb->force_transaction_rollback();
             }
@@ -183,7 +176,7 @@ abstract class database_driver_testcase extends base_testcase {
      * @param string $message
      */
     public function assertDebuggingCalled($debugmessage = null, $debuglevel = null, $message = '') {
-        $debugging = $this->getDebuggingMessages();
+        $debugging = phpunit_util::get_debugging_messages();
         $count = count($debugging);
 
         if ($count == 0) {
@@ -208,7 +201,7 @@ abstract class database_driver_testcase extends base_testcase {
             $this->assertSame($debuglevel, $debug->level, $message);
         }
 
-        $this->resetDebugging();
+        phpunit_util::reset_debugging();
     }
 
     /**
@@ -216,7 +209,7 @@ abstract class database_driver_testcase extends base_testcase {
      * @param string $message
      */
     public function assertDebuggingNotCalled($message = '') {
-        $debugging = $this->getDebuggingMessages();
+        $debugging = phpunit_util::get_debugging_messages();
         $count = count($debugging);
 
         if ($message === '') {

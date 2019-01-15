@@ -21,9 +21,7 @@
  * @author Stuart Langley <slangley@google.com>
  */
 
-if (!class_exists('Google_Client')) {
-  require_once dirname(__FILE__) . '/../autoload.php';
-}
+require_once realpath(dirname(__FILE__) . '/../../../autoload.php');
 
 class Google_IO_Stream extends Google_IO_Abstract
 {
@@ -42,23 +40,12 @@ class Google_IO_Stream extends Google_IO_Abstract
     "verify_peer" => true,
   );
 
-  public function __construct(Google_Client $client)
-  {
-    if (!ini_get('allow_url_fopen')) {
-      $error = 'The stream IO handler requires the allow_url_fopen runtime ' .
-               'configuration to be enabled';
-      $client->getLogger()->critical($error);
-      throw new Google_IO_Exception($error);
-    }
-
-    parent::__construct($client);
-  }
-
   /**
    * Execute an HTTP Request
    *
-   * @param Google_Http_Request $request the http request to be executed
-   * @return array containing response headers, body, and http code
+   * @param Google_HttpRequest $request the http request to be executed
+   * @return Google_HttpRequest http request with the response http code,
+   * response headers and response body filled in
    * @throws Google_IO_Exception on curl or IO error
    */
   public function executeRequest(Google_Http_Request $request)
@@ -87,7 +74,7 @@ class Google_IO_Stream extends Google_IO_Abstract
     $requestSslContext = array_key_exists('ssl', $default_options) ?
         $default_options['ssl'] : array();
 
-    if (!$this->client->isAppEngine() && !array_key_exists("cafile", $requestSslContext)) {
+    if (!array_key_exists("cafile", $requestSslContext)) {
       $requestSslContext["cafile"] = dirname(__FILE__) . '/cacerts.pem';
     }
 

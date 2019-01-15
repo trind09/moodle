@@ -51,7 +51,6 @@ class block_site_main_menu extends block_list {
         require_once($CFG->dirroot.'/course/lib.php');
         $context = context_course::instance($course->id);
         $isediting = $this->page->user_is_editing() && has_capability('moodle/course:manageactivities', $context);
-        $courserenderer = $this->page->get_renderer('core', 'course');
 
 /// extra fast view mode
         if (!$isediting) {
@@ -59,7 +58,7 @@ class block_site_main_menu extends block_list {
             if (!empty($modinfo->sections[0])) {
                 foreach($modinfo->sections[0] as $cmid) {
                     $cm = $modinfo->cms[$cmid];
-                    if (!$cm->uservisible || !$cm->is_visible_on_course_page()) {
+                    if (!$cm->uservisible) {
                         continue;
                     }
 
@@ -70,18 +69,32 @@ class block_site_main_menu extends block_list {
                     }
 
                     if (!empty($cm->url)) {
-                        $content = html_writer::div($courserenderer->course_section_cm_name($cm), 'activity');
+                        $attrs = array();
+                        $attrs['title'] = $cm->modfullname;
+                        $attrs['class'] = $cm->extraclasses . ' activity-action';
+                        if ($cm->onclick) {
+                            // Get on-click attribute value if specified and decode the onclick - it
+                            // has already been encoded for display.
+                            $attrs['onclick'] = htmlspecialchars_decode($cm->onclick);
+                        }
+                        if (!$cm->visible) {
+                            $attrs['class'] .= ' dimmed';
+                        }
+                        $icon = '<img src="' . $cm->get_icon_url() . '" class="icon" alt="" />';
+                        $content = html_writer::link($cm->url, $icon . $cm->get_formatted_name(), $attrs);
                     } else {
-                        $content = $courserenderer->course_section_cm_text($cm);
+                        $content = $cm->get_formatted_content(array('overflowdiv' => true, 'noclean' => true));
                     }
 
-                    $this->content->items[] = $indent . html_writer::div($content, 'main-menu-content');
+                    $this->content->items[] = $indent.html_writer::div($content, 'main-menu-content');
                 }
             }
             return $this->content;
         }
 
         // Slow & hacky editing mode.
+        /** @var core_course_renderer $courserenderer */
+        $courserenderer = $this->page->get_renderer('core', 'course');
         $ismoving = ismoving($course->id);
         course_create_sections_if_missing($course, 0);
         $modinfo = get_fast_modinfo($course);
@@ -91,19 +104,22 @@ class block_site_main_menu extends block_list {
             $strmovehere = get_string('movehere');
             $strmovefull = strip_tags(get_string('movefull', '', "'$USER->activitycopyname'"));
             $strcancel= get_string('cancel');
+            $stractivityclipboard = $USER->activitycopyname;
         } else {
             $strmove = get_string('move');
         }
+        $editbuttons = '';
 
         if ($ismoving) {
-            $this->content->icons[] = $OUTPUT->pix_icon('t/move', get_string('move'));
+            $this->content->icons[] = '<img src="'.$OUTPUT->pix_url('t/move') . '" class="iconsmall" alt="" />';
             $this->content->items[] = $USER->activitycopyname.'&nbsp;(<a href="'.$CFG->wwwroot.'/course/mod.php?cancelcopy=true&amp;sesskey='.sesskey().'">'.$strcancel.'</a>)';
         }
 
         if (!empty($modinfo->sections[0])) {
+            $options = array('overflowdiv'=>true);
             foreach ($modinfo->sections[0] as $modnumber) {
                 $mod = $modinfo->cms[$modnumber];
-                if (!$mod->uservisible || !$mod->is_visible_on_course_page()) {
+                if (!$mod->uservisible) {
                     continue;
                 }
                 if (!$ismoving) {
@@ -129,7 +145,7 @@ class block_site_main_menu extends block_list {
                             continue;
                         }
                         $this->content->items[] = '<a title="'.$strmovefull.'" href="'.$CFG->wwwroot.'/course/mod.php?moveto='.$mod->id.'&amp;sesskey='.sesskey().'">'.
-                            '<img style="height:16px; width:80px; border:0px" src="'.$OUTPUT->image_url('movehere') . '" alt="'.$strmovehere.'" /></a>';
+                            '<img style="height:16px; width:80px; border:0px" src="'.$OUTPUT->pix_url('movehere') . '" alt="'.$strmovehere.'" /></a>';
                         $this->content->icons[] = '';
                     }
                     if ($mod->indent > 0) {
@@ -137,19 +153,34 @@ class block_site_main_menu extends block_list {
                     } else {
                         $indent = '';
                     }
-                    if (!$mod->url) {
-                        $content = $courserenderer->course_section_cm_text($mod);
+                    $url = $mod->url;
+                    if (!$url) {
+                        $content = $mod->get_formatted_content(array('overflowdiv' => true, 'noclean' => true));
                     } else {
-                        $content = html_writer::div($courserenderer->course_section_cm_name($mod), ' activity');
+                        //Accessibility: incidental image - should be empty Alt text
+                        $attrs = array();
+                        $attrs['title'] = $mod->modfullname;
+                        $attrs['class'] = $mod->extraclasses . ' activity-action';
+                        if ($mod->onclick) {
+                            // Get on-click attribute value if specified and decode the onclick - it
+                            // has already been encoded for display.
+                            $attrs['onclick'] = htmlspecialchars_decode($mod->onclick);
+                        }
+                        if (!$mod->visible) {
+                            $attrs['class'] .= ' dimmed';
+                        }
+
+                        $icon = '<img src="' . $mod->get_icon_url() . '" class="icon" alt="" />';
+                        $content = html_writer::link($url, $icon . $mod->get_formatted_name(), $attrs);
                     }
-                    $this->content->items[] = $indent . html_writer::div($content . $editbuttons, 'main-menu-content');
+                    $this->content->items[] = $indent.html_writer::div($content . $editbuttons, 'main-menu-content');
                 }
             }
         }
 
         if ($ismoving) {
             $this->content->items[] = '<a title="'.$strmovefull.'" href="'.$CFG->wwwroot.'/course/mod.php?movetosection='.$section->id.'&amp;sesskey='.sesskey().'">'.
-                                      '<img style="height:16px; width:80px; border:0px" src="'.$OUTPUT->image_url('movehere') . '" alt="'.$strmovehere.'" /></a>';
+                                      '<img style="height:16px; width:80px; border:0px" src="'.$OUTPUT->pix_url('movehere') . '" alt="'.$strmovehere.'" /></a>';
             $this->content->icons[] = '';
         }
 

@@ -118,7 +118,7 @@ class dbObject {
 	/**
 	* NOP
 	*/
-	function __construct( &$parent, $attributes = NULL ) {
+	function dbObject( &$parent, $attributes = NULL ) {
 		$this->parent = $parent;
 	}
 
@@ -157,6 +157,7 @@ class dbObject {
 	* Destroys the object
 	*/
 	function destroy() {
+		unset( $this );
 	}
 
 	/**
@@ -247,7 +248,7 @@ class dbTable extends dbObject {
 	* @param string $prefix DB Object prefix
 	* @param array $attributes Array of table attributes.
 	*/
-	function __construct( &$parent, $attributes = NULL ) {
+	function dbTable( &$parent, $attributes = NULL ) {
 		$this->parent = $parent;
 		$this->name = $this->prefix($attributes['NAME']);
 	}
@@ -264,14 +265,12 @@ class dbTable extends dbObject {
 		switch( $this->currentElement ) {
 			case 'INDEX':
 				if( !isset( $attributes['PLATFORM'] ) OR $this->supportedPlatform( $attributes['PLATFORM'] ) ) {
-					$index = $this->addIndex( $attributes );
-					xml_set_object( $parser,  $index );
+					xml_set_object( $parser, $this->addIndex( $attributes ) );
 				}
 				break;
 			case 'DATA':
 				if( !isset( $attributes['PLATFORM'] ) OR $this->supportedPlatform( $attributes['PLATFORM'] ) ) {
-					$data = $this->addData( $attributes );
-					xml_set_object( $parser, $data );
+					xml_set_object( $parser, $this->addData( $attributes ) );
 				}
 				break;
 			case 'DROP':
@@ -643,7 +642,7 @@ class dbIndex extends dbObject {
 	*
 	* @internal
 	*/
-	function __construct( &$parent, $attributes = NULL ) {
+	function dbIndex( &$parent, $attributes = NULL ) {
 		$this->parent = $parent;
 
 		$this->name = $this->prefix ($attributes['NAME']);
@@ -787,7 +786,7 @@ class dbData extends dbObject {
 	*
 	* @internal
 	*/
-	function __construct( &$parent, $attributes = NULL ) {
+	function dbData( &$parent, $attributes = NULL ) {
 		$this->parent = $parent;
 	}
 
@@ -986,7 +985,7 @@ class dbQuerySet extends dbObject {
 	* @param object $parent Parent object
 	* @param array $attributes Attributes
 	*/
-	function __construct( &$parent, $attributes = NULL ) {
+	function dbQuerySet( &$parent, $attributes = NULL ) {
 		$this->parent = $parent;
 
 		// Overrides the manual prefix key
@@ -1302,7 +1301,7 @@ class adoSchema {
 	*
 	* @param object $db ADOdb database connection object.
 	*/
-	function __construct( $db ) {
+	function adoSchema( $db ) {
 		// Initialize the environment
 		$this->mgq = get_magic_quotes_runtime();
 		ini_set("magic_quotes_runtime", 0);
@@ -2197,6 +2196,7 @@ class adoSchema {
 	function Destroy() {
 		ini_set("magic_quotes_runtime", $this->mgq );
 		#set_magic_quotes_runtime( $this->mgq );
+		unset( $this );
 	}
 }
 

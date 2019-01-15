@@ -95,7 +95,8 @@ class XHProfRuns_Default implements iXHProfRuns {
       $dir = ini_get("xhprof.output_dir");
       if (empty($dir)) {
 
-        $dir = sys_get_temp_dir();
+        // some default that at least works on unix...
+        $dir = "/tmp";
 
         xhprof_error("Warning: Must specify directory location for XHProf runs. ".
                      "Trying {$dir} as default. You can either pass the " .
@@ -149,9 +150,7 @@ class XHProfRuns_Default implements iXHProfRuns {
     if (is_dir($this->dir)) {
         echo "<hr/>Existing runs:\n<ul>\n";
         $files = glob("{$this->dir}/*.{$this->suffix}");
-        usort($files, function($a, $b) {
-            return filemtime($b) - filemtime($a);
-        });
+        usort($files, create_function('$a,$b', 'return filemtime($b) - filemtime($a);'));
         foreach ($files as $file) {
             list($run,$source) = explode('.', basename($file));
             echo '<li><a href="' . htmlentities($_SERVER['SCRIPT_NAME'])

@@ -44,13 +44,13 @@ class feedback_numeric_form extends feedback_item_form {
                             'rangefrom',
                             get_string('numeric_range_from', 'feedback'),
                             array('size'=>10, 'maxlength'=>10));
-        $mform->setType('rangefrom', PARAM_RAW);
+        $mform->setType('rangefrom', PARAM_INT);
 
         $mform->addElement('text',
                             'rangeto',
                             get_string('numeric_range_to', 'feedback'),
                             array('size'=>10, 'maxlength'=>10));
-        $mform->setType('rangeto', PARAM_RAW);
+        $mform->setType('rangeto', PARAM_INT);
 
         parent::definition();
         $this->set_data($item);
@@ -62,13 +62,19 @@ class feedback_numeric_form extends feedback_item_form {
             return false;
         }
 
-        $num1 = unformat_float($item->rangefrom, true);
-        if ($num1 === false || $num1 === null) {
+        $itemobj = new feedback_item_numeric();
+
+        $num1 = str_replace($itemobj->sep_dec, FEEDBACK_DECIMAL, $item->rangefrom);
+        if (is_numeric($num1)) {
+            $num1 = floatval($num1);
+        } else {
             $num1 = '-';
         }
 
-        $num2 = unformat_float($item->rangeto, true);
-        if ($num2 === false || $num2 === null) {
+        $num2 = str_replace($itemobj->sep_dec, FEEDBACK_DECIMAL, $item->rangeto);
+        if (is_numeric($num2)) {
+            $num2 = floatval($num2);
+        } else {
             $num2 = '-';
         }
 

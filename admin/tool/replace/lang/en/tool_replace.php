@@ -39,4 +39,3 @@ $string['replacewithhelp'] = 'usually new server URL';
 $string['searchwholedb'] = 'Search whole database for';
 $string['searchwholedbhelp'] = 'usually previous server URL';
 $string['shortenoversized'] = 'Shorten result if necessary';
-$string['privacy:metadata'] = 'The DB search and replace plugin does not store any personal data.';

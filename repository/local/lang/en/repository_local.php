@@ -31,4 +31,3 @@ $string['notitle'] = 'notitle';
 $string['remember'] = 'Remember me';
 $string['pluginname_help'] = 'Files previously uploaded to the Moodle server';
 $string['pluginname'] = 'Server files';
-$string['privacy:metadata'] = 'The Server files repository plugin does not store or transmit any personal data.';

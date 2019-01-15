@@ -27,7 +27,8 @@
 
 require_once(__DIR__ . '/../../../../lib/behat/behat_base.php');
 
-use Behat\Gherkin\Node\TableNode as TableNode;
+use Behat\Behat\Context\Step\Given as Given,
+    Behat\Gherkin\Node\TableNode as TableNode;
 /**
  * Forum-related steps definitions.
  *
@@ -39,14 +40,14 @@ use Behat\Gherkin\Node\TableNode as TableNode;
 class behat_mod_forum extends behat_base {
 
     /**
-     * Adds a topic to the forum specified by it's name. Useful for the Announcements and blog-style forums.
+     * Adds a topic to the forum specified by it's name. Useful for the News forum and blog-style forums.
      *
      * @Given /^I add a new topic to "(?P<forum_name_string>(?:[^"]|\\")*)" forum with:$/
      * @param string $forumname
      * @param TableNode $table
      */
     public function i_add_a_new_topic_to_forum_with($forumname, TableNode $table) {
-        $this->add_new_discussion($forumname, $table, get_string('addanewtopic', 'forum'));
+        return $this->add_new_discussion($forumname, $table, get_string('addanewtopic', 'forum'));
     }
 
     /**
@@ -57,7 +58,7 @@ class behat_mod_forum extends behat_base {
      * @param TableNode $table
      */
     public function i_add_a_forum_discussion_to_forum_with($forumname, TableNode $table) {
-        $this->add_new_discussion($forumname, $table, get_string('addanewdiscussion', 'forum'));
+        return $this->add_new_discussion($forumname, $table, get_string('addanewdiscussion', 'forum'));
     }
 
     /**
@@ -70,16 +71,15 @@ class behat_mod_forum extends behat_base {
      */
     public function i_reply_post_from_forum_with($postsubject, $forumname, TableNode $table) {
 
-        // Navigate to forum.
-        $this->execute('behat_general::click_link', $this->escape($forumname));
-        $this->execute('behat_general::click_link', $this->escape($postsubject));
-        $this->execute('behat_general::click_link', get_string('reply', 'forum'));
+        return array(
+            new Given('I follow "' . $this->escape($forumname) . '"'),
+            new Given('I follow "' . $this->escape($postsubject) . '"'),
+            new Given('I follow "' . get_string('reply', 'forum') . '"'),
+            new Given('I set the following fields to these values:', $table),
+            new Given('I press "' . get_string('posttoforum', 'forum') . '"'),
+            new Given('I wait to be redirected')
+        );
 
-        // Fill form and post.
-        $this->execute('behat_forms::i_set_the_following_fields_to_these_values', $table);
-
-        $this->execute('behat_forms::press_button', get_string('posttoforum', 'forum'));
-        $this->execute('behat_general::i_wait_to_be_redirected');
     }
 
     /**
@@ -91,17 +91,19 @@ class behat_mod_forum extends behat_base {
      * @param string $forumname
      * @param TableNode $table
      * @param string $buttonstr
+     * @return Given[]
      */
     protected function add_new_discussion($forumname, TableNode $table, $buttonstr) {
 
-        // Navigate to forum.
-        $this->execute('behat_general::click_link', $this->escape($forumname));
-        $this->execute('behat_forms::press_button', $buttonstr);
+        // Escaping $forumname as it has been stripped automatically by the transformer.
+        return array(
+            new Given('I follow "' . $this->escape($forumname) . '"'),
+            new Given('I press "' . $buttonstr . '"'),
+            new Given('I set the following fields to these values:', $table),
+            new Given('I press "' . get_string('posttoforum', 'forum') . '"'),
+            new Given('I wait to be redirected')
+        );
 
-        // Fill form and post.
-        $this->execute('behat_forms::i_set_the_following_fields_to_these_values', $table);
-        $this->execute('behat_forms::press_button', get_string('posttoforum', 'forum'));
-        $this->execute('behat_general::i_wait_to_be_redirected');
     }
 
 }

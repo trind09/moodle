@@ -56,7 +56,6 @@ class Google_Service_Prediction extends Google_Service
   public function __construct(Google_Client $client)
   {
     parent::__construct($client);
-    $this->rootUrl = 'https://www.googleapis.com/';
     $this->servicePath = 'prediction/v1.6/projects/';
     $this->version = 'v1.6';
     $this->serviceName = 'prediction';

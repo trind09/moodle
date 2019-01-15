@@ -18,7 +18,8 @@ branch table contents
       | teacher1 | C1 | editingteacher |
       | student1 | C1 | student |
     And I log in as "teacher1"
-    And I am on "Course 1" course homepage with editing mode on
+    And I follow "Course 1"
+    And I turn editing mode on
     And I add a "Lesson" to section "1" and I fill the form with:
       | Name | Test lesson name |
       | Description | Test lesson description |
@@ -32,7 +33,7 @@ branch table contents
       | id_answer_editor_1 | Previous page |
       | id_jumpto_1 | Previous page |
     And I press "Save page"
-    And I select "Add a question page" from the "qtype" singleselect
+    And I set the field "qtype" to "Question"
     And I set the field "Select a question type" to "Numerical"
     And I press "Add a question page"
     And I set the following fields to these values:
@@ -49,15 +50,16 @@ branch table contents
     And I press "Save page"
     And I follow "Expanded"
 
+  @javascript
   Scenario: Edit lesson content page
-    Given I click on "//th[normalize-space(.)='First page name']/descendant::a[3]" "xpath_element"
+    Given I click on "//th[normalize-space(.)='First page name']/descendant::a[2]" "xpath_element"
     When I set the following fields to these values:
       | id_answer_editor_1 | |
     And I press "Save page"
     And I should not see "Previous page"
     And I log out
     And I log in as "student1"
-    And I am on "Course 1" course homepage
+    And I follow "Course 1"
     And I follow "Test lesson name"
     And I should see "First page contents"
     And I should not see "Previous page"
@@ -72,15 +74,16 @@ branch table contents
     And I should see "Congratulations - end of lesson reached"
     And I should see "Your score is 1 (out of 1)."
 
+  @javascript
   Scenario: Edit lesson question page
-    Given I click on "//th[normalize-space(.)='Hardest question ever']/descendant::a[3]" "xpath_element"
+    Given I click on "//th[normalize-space(.)='Hardest question ever']/descendant::a[2]" "xpath_element"
     When I set the following fields to these values:
       | id_answer_editor_1 | |
     And I press "Save page"
     And I should not see "Incorrect answer"
     And I log out
     And I log in as "student1"
-    And I am on "Course 1" course homepage
+    And I follow "Course 1"
     And I follow "Test lesson name"
     And I should see "First page contents"
     And I press "Next page"

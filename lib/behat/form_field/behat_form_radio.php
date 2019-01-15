@@ -59,7 +59,7 @@ class behat_form_radio extends behat_form_checkbox {
      * @return string The value attribute
      */
     public function get_value() {
-        return $this->field->isSelected();
+        return (bool)$this->field->getAttribute('checked');
     }
 
     /**
@@ -75,17 +75,20 @@ class behat_form_radio extends behat_form_checkbox {
     public function set_value($value) {
 
         if ($this->running_javascript()) {
-            // Check on radio button.
-            $this->field->click();
-
-            // Trigger the onchange event as triggered when 'selecting' the radio.
-            if (!empty($value) && !$this->field->isSelected()) {
-                $this->trigger_on_change();
-            }
+            parent::set_value($value);
         } else {
             // Goutte does not accept a check nor a click in an input[type=radio].
             $this->field->setValue($this->field->getAttribute('value'));
         }
     }
 
+    /**
+     * Returns whether the provided value matches the current value or not.
+     *
+     * @param string $expectedvalue
+     * @return bool
+     */
+    public function matches($expectedvalue = false) {
+        return $this->text_matches($expectedvalue);
+    }
 }

@@ -19,9 +19,7 @@
  * Abstract IO base class
  */
 
-if (!class_exists('Google_Client')) {
-  require_once dirname(__FILE__) . '/../autoload.php';
-}
+require_once realpath(dirname(__FILE__) . '/../../../autoload.php');
 
 abstract class Google_IO_Abstract
 {
@@ -32,17 +30,6 @@ abstract class Google_IO_Abstract
     "HTTP/1.1 200 Connection established\r\n\r\n",
   );
   private static $ENTITY_HTTP_METHODS = array("POST" => null, "PUT" => null);
-  private static $HOP_BY_HOP = array(
-    'connection' => true,
-    'keep-alive' => true,
-    'proxy-authenticate' => true,
-    'proxy-authorization' => true,
-    'te' => true,
-    'trailers' => true,
-    'transfer-encoding' => true,
-    'upgrade' => true
-  );
-
 
   /** @var Google_Client */
   protected $client;
@@ -57,10 +44,9 @@ abstract class Google_IO_Abstract
   }
 
   /**
-   * Executes a Google_Http_Request
-   * @param Google_Http_Request $request the http request to be executed
-   * @return array containing response headers, body, and http code
-   * @throws Google_IO_Exception on curl or IO error
+   * Executes a Google_Http_Request and returns the resulting populated Google_Http_Request
+   * @param Google_Http_Request $request
+   * @return Google_Http_Request $request
    */
   abstract public function executeRequest(Google_Http_Request $request);
 
@@ -69,13 +55,13 @@ abstract class Google_IO_Abstract
    * @param $options
    */
   abstract public function setOptions($options);
-
+  
   /**
    * Set the maximum request time in seconds.
    * @param $timeout in seconds
    */
   abstract public function setTimeout($timeout);
-
+  
   /**
    * Get the maximum request time in seconds.
    * @return timeout in seconds
@@ -110,12 +96,12 @@ abstract class Google_IO_Abstract
 
     return false;
   }
-
+  
   /**
    * Execute an HTTP Request
    *
-   * @param Google_Http_Request $request the http request to be executed
-   * @return Google_Http_Request http request with the response http code,
+   * @param Google_HttpRequest $request the http request to be executed
+   * @return Google_HttpRequest http request with the response http code,
    * response headers and response body filled in
    * @throws Google_IO_Exception on curl or IO error
    */
@@ -142,7 +128,7 @@ abstract class Google_IO_Abstract
     }
 
     if (!isset($responseHeaders['Date']) && !isset($responseHeaders['date'])) {
-      $responseHeaders['date'] = date("r");
+      $responseHeaders['Date'] = date("r");
     }
 
     $request->setResponseHttpCode($respHttpCode);
@@ -230,24 +216,28 @@ abstract class Google_IO_Abstract
 
   /**
    * Update a cached request, using the headers from the last response.
-   * @param Google_Http_Request $cached A previously cached response.
+   * @param Google_HttpRequest $cached A previously cached response.
    * @param mixed Associative array of response headers from the last request.
    */
   protected function updateCachedRequest($cached, $responseHeaders)
   {
-    $hopByHop = self::$HOP_BY_HOP;
-    if (!empty($responseHeaders['connection'])) {
-      $connectionHeaders = array_map(
-          'strtolower',
-          array_filter(
-              array_map('trim', explode(',', $responseHeaders['connection']))
+    if (isset($responseHeaders['connection'])) {
+      $hopByHop = array_merge(
+          self::$HOP_BY_HOP,
+          explode(
+              ',',
+              $responseHeaders['connection']
           )
       );
-      $hopByHop += array_fill_keys($connectionHeaders, true);
-    }
 
-    $endToEnd = array_diff_key($responseHeaders, $hopByHop);
-    $cached->setResponseHeaders($endToEnd);
+      $endToEnd = array();
+      foreach ($hopByHop as $key) {
+        if (isset($responseHeaders[$key])) {
+          $endToEnd[$key] = $responseHeaders[$key];
+        }
+      }
+      $cached->setResponseHeaders($endToEnd);
+    }
   }
 
   /**
@@ -330,7 +320,7 @@ abstract class Google_IO_Abstract
       // Times will have colons in - so we just want the first match.
       $header_parts = explode(': ', $header, 2);
       if (count($header_parts) == 2) {
-        $headers[strtolower($header_parts[0])] = $header_parts[1];
+        $headers[$header_parts[0]] = $header_parts[1];
       }
     }
 

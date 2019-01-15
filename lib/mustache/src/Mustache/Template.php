@@ -3,7 +3,7 @@
 /*
  * This file is part of Mustache.php.
  *
- * (c) 2010-2017 Justin Hileman
+ * (c) 2010-2014 Justin Hileman
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -22,7 +22,7 @@ abstract class Mustache_Template
     protected $mustache;
 
     /**
-     * @var bool
+     * @var boolean
      */
     protected $strictCallables = false;
 
@@ -37,7 +37,7 @@ abstract class Mustache_Template
     }
 
     /**
-     * Mustache Template instances can be treated as a function and rendered by simply calling them.
+     * Mustache Template instances can be treated as a function and rendered by simply calling them:
      *
      *     $m = new Mustache_Engine;
      *     $tpl = $m->loadTemplate('Hello, {{ name }}!');
@@ -109,7 +109,7 @@ abstract class Mustache_Template
      *
      * @param mixed $value
      *
-     * @return bool True if the value is 'iterable'
+     * @return boolean True if the value is 'iterable'
      */
     protected function isIterable($value)
     {
@@ -164,15 +164,16 @@ abstract class Mustache_Template
      *
      * @param mixed            $value
      * @param Mustache_Context $context
+     * @param string           $indent
      *
      * @return string
      */
-    protected function resolveValue($value, Mustache_Context $context)
+    protected function resolveValue($value, Mustache_Context $context, $indent = '')
     {
         if (($this->strictCallables ? is_object($value) : !is_string($value)) && is_callable($value)) {
             return $this->mustache
                 ->loadLambda((string) call_user_func($value))
-                ->renderInternal($context);
+                ->renderInternal($context, $indent);
         }
 
         return $value;

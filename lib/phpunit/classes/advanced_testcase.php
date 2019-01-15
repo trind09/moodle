@@ -82,22 +82,15 @@ abstract class advanced_testcase extends base_testcase {
             $DB = phpunit_util::get_global_backup('DB');
 
             // Deal with any debugging messages.
-            $debugerror = phpunit_util::display_debugging_messages(true);
-            $this->resetDebugging();
-            if (!empty($debugerror)) {
-                trigger_error('Unexpected debugging() call detected.'."\n".$debugerror, E_USER_NOTICE);
+            $debugerror = phpunit_util::display_debugging_messages();
+            phpunit_util::reset_debugging();
+            if ($debugerror) {
+                trigger_error('Unenxpected debugging() call detected.', E_USER_NOTICE);
             }
 
-        } catch (Exception $ex) {
-            $e = $ex;
-        } catch (Throwable $ex) {
-            // Engine errors in PHP7 throw exceptions of type Throwable (this "catch" will be ignored in PHP5).
-            $e = $ex;
-        }
-
-        if (isset($e)) {
+        } catch (Exception $e) {
             // cleanup after failed expectation
-            self::resetAllData();
+            phpunit_util::reset_all_data();
             throw $e;
         }
 
@@ -111,7 +104,7 @@ abstract class advanced_testcase extends base_testcase {
                 phpunit_util::reset_all_database_sequences();
                 phpunit_util::$lastdbwrites = $DB->perf_get_writes(); // no db reset necessary
             }
-            self::resetAllData(null);
+            phpunit_util::reset_all_data(null);
 
         } else if ($this->resetAfterTest === false) {
             if ($this->testdbtransaction) {
@@ -125,19 +118,19 @@ abstract class advanced_testcase extends base_testcase {
                 try {
                     $this->testdbtransaction->allow_commit();
                 } catch (dml_transaction_exception $e) {
-                    self::resetAllData();
+                    phpunit_util::reset_all_data();
                     throw new coding_exception('Invalid transaction state detected in test '.$this->getName());
                 }
             }
-            self::resetAllData(true);
+            phpunit_util::reset_all_data(true);
         }
 
         // make sure test did not forget to close transaction
         if ($DB->is_transaction_started()) {
-            self::resetAllData();
-            if ($this->getStatus() == PHPUnit\Runner\BaseTestRunner::STATUS_PASSED
-                or $this->getStatus() == PHPUnit\Runner\BaseTestRunner::STATUS_SKIPPED
-                or $this->getStatus() == PHPUnit\Runner\BaseTestRunner::STATUS_INCOMPLETE) {
+            phpunit_util::reset_all_data();
+            if ($this->getStatus() == PHPUnit_Runner_BaseTestRunner::STATUS_PASSED
+                or $this->getStatus() == PHPUnit_Runner_BaseTestRunner::STATUS_SKIPPED
+                or $this->getStatus() == PHPUnit_Runner_BaseTestRunner::STATUS_INCOMPLETE) {
                 throw new coding_exception('Test '.$this->getName().' did not close database transaction');
             }
         }
@@ -147,20 +140,20 @@ abstract class advanced_testcase extends base_testcase {
      * Creates a new FlatXmlDataSet with the given $xmlFile. (absolute path.)
      *
      * @param string $xmlFile
-     * @return PHPUnit\DbUnit\DataSet\FlatXmlDataSet
+     * @return PHPUnit_Extensions_Database_DataSet_FlatXmlDataSet
      */
     protected function createFlatXMLDataSet($xmlFile) {
-        return new PHPUnit\DbUnit\DataSet\FlatXmlDataSet($xmlFile);
+        return new PHPUnit_Extensions_Database_DataSet_FlatXmlDataSet($xmlFile);
     }
 
     /**
      * Creates a new XMLDataSet with the given $xmlFile. (absolute path.)
      *
      * @param string $xmlFile
-     * @return PHPUnit\DbUnit\DataSet\XmlDataSet
+     * @return PHPUnit_Extensions_Database_DataSet_XmlDataSet
      */
     protected function createXMLDataSet($xmlFile) {
-        return new PHPUnit\DbUnit\DataSet\XmlDataSet($xmlFile);
+        return new PHPUnit_Extensions_Database_DataSet_XmlDataSet($xmlFile);
     }
 
     /**
@@ -170,10 +163,10 @@ abstract class advanced_testcase extends base_testcase {
      * @param string $delimiter
      * @param string $enclosure
      * @param string $escape
-     * @return PHPUnit\DbUnit\DataSet\CsvDataSet
+     * @return PHPUnit_Extensions_Database_DataSet_CsvDataSet
      */
     protected function createCsvDataSet($files, $delimiter = ',', $enclosure = '"', $escape = '"') {
-        $dataSet = new PHPUnit\DbUnit\DataSet\CsvDataSet($delimiter, $enclosure, $escape);
+        $dataSet = new PHPUnit_Extensions_Database_DataSet_CsvDataSet($delimiter, $enclosure, $escape);
         foreach($files as $table=>$file) {
             $dataSet->addTable($table, $file);
         }
@@ -195,10 +188,10 @@ abstract class advanced_testcase extends base_testcase {
      *
      * Note: it is usually better to use data generators
      *
-     * @param PHPUnit\DbUnit\DataSet\IDataSet $dataset
+     * @param PHPUnit_Extensions_Database_DataSet_IDataSet $dataset
      * @return void
      */
-    protected function loadDataSet(PHPUnit\DbUnit\DataSet\IDataSet $dataset) {
+    protected function loadDataSet(PHPUnit_Extensions_Database_DataSet_IDataSet $dataset) {
         global $DB;
 
         $structure = phpunit_util::get_tablestructure();
@@ -279,10 +272,7 @@ abstract class advanced_testcase extends base_testcase {
      * @param string $message
      */
     public function assertDebuggingCalled($debugmessage = null, $debuglevel = null, $message = '') {
-        $debugging = $this->getDebuggingMessages();
-        $debugdisplaymessage = "\n".phpunit_util::display_debugging_messages(true);
-        $this->resetDebugging();
-
+        $debugging = phpunit_util::get_debugging_messages();
         $count = count($debugging);
 
         if ($count == 0) {
@@ -293,13 +283,12 @@ abstract class advanced_testcase extends base_testcase {
         }
         if ($count > 1) {
             if ($message === '') {
-                $message = 'Expectation failed, debugging() triggered '.$count.' times.'.$debugdisplaymessage;
+                $message = 'Expectation failed, debugging() triggered '.$count.' times.';
             }
             $this->fail($message);
         }
         $this->assertEquals(1, $count);
 
-        $message .= $debugdisplaymessage;
         $debug = reset($debugging);
         if ($debugmessage !== null) {
             $this->assertSame($debugmessage, $debug->message, $message);
@@ -307,45 +296,8 @@ abstract class advanced_testcase extends base_testcase {
         if ($debuglevel !== null) {
             $this->assertSame($debuglevel, $debug->level, $message);
         }
-    }
 
-    /**
-     * Asserts how many times debugging has been called.
-     *
-     * @param int $expectedcount The expected number of times
-     * @param array $debugmessages Expected debugging messages, one for each expected message.
-     * @param array $debuglevels Expected debugging levels, one for each expected message.
-     * @param string $message
-     * @return void
-     */
-    public function assertDebuggingCalledCount($expectedcount, $debugmessages = array(), $debuglevels = array(), $message = '') {
-        if (!is_int($expectedcount)) {
-            throw new coding_exception('assertDebuggingCalledCount $expectedcount argument should be an integer.');
-        }
-
-        $debugging = $this->getDebuggingMessages();
-        $message .= "\n".phpunit_util::display_debugging_messages(true);
-        $this->resetDebugging();
-
-        $this->assertEquals($expectedcount, count($debugging), $message);
-
-        if ($debugmessages) {
-            if (!is_array($debugmessages) || count($debugmessages) != $expectedcount) {
-                throw new coding_exception('assertDebuggingCalledCount $debugmessages should contain ' . $expectedcount . ' messages');
-            }
-            foreach ($debugmessages as $key => $debugmessage) {
-                $this->assertSame($debugmessage, $debugging[$key]->message, $message);
-            }
-        }
-
-        if ($debuglevels) {
-            if (!is_array($debuglevels) || count($debuglevels) != $expectedcount) {
-                throw new coding_exception('assertDebuggingCalledCount $debuglevels should contain ' . $expectedcount . ' messages');
-            }
-            foreach ($debuglevels as $key => $debuglevel) {
-                $this->assertSame($debuglevel, $debugging[$key]->level, $message);
-            }
-        }
+        phpunit_util::reset_debugging();
     }
 
     /**
@@ -353,14 +305,12 @@ abstract class advanced_testcase extends base_testcase {
      * @param string $message
      */
     public function assertDebuggingNotCalled($message = '') {
-        $debugging = $this->getDebuggingMessages();
+        $debugging = phpunit_util::get_debugging_messages();
         $count = count($debugging);
 
         if ($message === '') {
             $message = 'Expectation failed, debugging() was triggered.';
         }
-        $message .= "\n".phpunit_util::display_debugging_messages(true);
-        $this->resetDebugging();
         $this->assertEquals(0, $count, $message);
     }
 
@@ -496,21 +446,16 @@ abstract class advanced_testcase extends base_testcase {
      * @return void
      */
     public static function tearDownAfterClass() {
-        self::resetAllData();
+        phpunit_util::reset_all_data();
     }
-
 
     /**
      * Reset all database tables, restore global state and clear caches and optionally purge dataroot dir.
-     *
-     * @param bool $detectchanges
-     *      true  - changes in global state and database are reported as errors
-     *      false - no errors reported
-     *      null  - only critical problems are reported as errors
+     * @static
      * @return void
      */
-    public static function resetAllData($detectchanges = false) {
-        phpunit_util::reset_all_data($detectchanges);
+    public static function resetAllData() {
+        phpunit_util::reset_all_data();
     }
 
     /**
@@ -534,9 +479,6 @@ abstract class advanced_testcase extends base_testcase {
         unset($user->description);
         unset($user->access);
         unset($user->preference);
-
-        // Enusre session is empty, as it may contain caches and user specific info.
-        \core\session\manager::init_empty_session();
 
         \core\session\manager::set_user($user);
     }
@@ -649,76 +591,5 @@ abstract class advanced_testcase extends base_testcase {
                 $this->$callback($filepath);
             }
         }
-    }
-
-    /**
-     * Wait for a second to roll over, ensures future calls to time() return a different result.
-     *
-     * This is implemented instead of sleep() as we do not need to wait a full second. In some cases
-     * due to calls we may wait more than sleep() would have, on average it will be less.
-     */
-    public function waitForSecond() {
-        $starttime = time();
-        while (time() == $starttime) {
-            usleep(50000);
-        }
-    }
-
-    /**
-     * Run adhoc tasks, optionally matching the specified classname.
-     *
-     * @param   string  $matchclass The name of the class to match on.
-     * @param   int     $matchuserid The userid to match.
-     */
-    protected function runAdhocTasks($matchclass = '', $matchuserid = null) {
-        global $CFG, $DB;
-        require_once($CFG->libdir.'/cronlib.php');
-
-        $params = [];
-        if (!empty($matchclass)) {
-            if (strpos($matchclass, '\\') !== 0) {
-                $matchclass = '\\' . $matchclass;
-            }
-            $params['classname'] = $matchclass;
-        }
-
-        if (!empty($matchuserid)) {
-            $params['userid'] = $matchuserid;
-        }
-
-        $lock = $this->createMock(\core\lock\lock::class);
-        $cronlock = $this->createMock(\core\lock\lock::class);
-
-        $tasks = $DB->get_recordset('task_adhoc', $params);
-        foreach ($tasks as $record) {
-            // Note: This is for cron only.
-            // We do not lock the tasks.
-            $task = \core\task\manager::adhoc_task_from_record($record);
-
-            $user = null;
-            if ($userid = $task->get_userid()) {
-                // This task has a userid specified.
-                $user = \core_user::get_user($userid);
-
-                // User found. Check that they are suitable.
-                \core_user::require_active_user($user, true, true);
-            }
-
-            $task->set_lock($lock);
-            if (!$task->is_blocking()) {
-                $cronlock->release();
-            } else {
-                $task->set_cron_lock($cronlock);
-            }
-
-            cron_prepare_core_renderer();
-            $this->setUser($user);
-
-            $task->execute();
-            \core\task\manager::adhoc_task_complete($task);
-
-            unset($task);
-        }
-        $tasks->close();
     }
 }

@@ -22,7 +22,6 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 namespace tool_templatelibrary;
-defined('MOODLE_INTERNAL') || die();
 
 require_once("$CFG->libdir/externallib.php");
 
@@ -60,32 +59,32 @@ class external extends external_api {
             VALUE_DEFAULT,
             ''
         );
-        $themename = new external_value(
-            PARAM_COMPONENT,
-            'The current theme',
-            VALUE_DEFAULT,
-            ''
-        );
-        $params = array('component' => $component, 'search' => $search, 'themename' => $themename);
+        $params = array('component' => $component, 'search' => $search);
         return new external_function_parameters($params);
+    }
+
+    /**
+     * Expose to AJAX
+     * @return boolean
+     */
+    public static function list_templates_is_allowed_from_ajax() {
+        return true;
     }
 
     /**
      * Loads the list of templates.
      * @param string $component Limit the search to a component.
      * @param string $search The search string.
-     * @param string $themename The name of theme
      * @return array[string]
      */
-    public static function list_templates($component, $search, $themename = '') {
+    public static function list_templates($component, $search) {
         $params = self::validate_parameters(self::list_templates_parameters(),
                                             array(
                                                 'component' => $component,
                                                 'search' => $search,
-                                                'themename' => $themename,
                                             ));
 
-        return api::list_templates($component, $search, $themename);
+        return api::list_templates($component, $search);
     }
 
     /**
@@ -110,13 +109,23 @@ class external extends external_api {
     }
 
     /**
+     * Can this function be called directly from ajax?
+     *
+     * @return boolean
+     * @since Moodle 2.9
+     */
+    public static function load_canonical_template_is_allowed_from_ajax() {
+        return true;
+    }
+
+    /**
      * Return a mustache template.
      * Note - this function differs from the function core_output_load_template
      * because it will never return a theme overridden version of a template.
      *
      * @param string $component The component that holds the template.
      * @param string $template The name of the template.
-     * @return string the template, false if template doesn't exist.
+     * @return string the template
      */
     public static function load_canonical_template($component, $template) {
         $params = self::validate_parameters(self::load_canonical_template_parameters(),

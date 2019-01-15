@@ -16,8 +16,12 @@ Feature: Restrict activity availability through date conditions
       | user | course | role |
       | teacher1 | C1 | editingteacher |
       | student1 | C1 | student |
+    And the following config values are set as admin:
+      | enableavailability | 1 |
     And I log in as "teacher1"
-    And I am on "Course 1" course homepage with editing mode on
+    And I am on site homepage
+    And I follow "Course 1"
+    And I turn editing mode on
     # Adding the page like this because id_available*_enabled needs to be clicked to trigger the action.
     And I add a "Assignment" to section "1"
     And I expand all fieldsets
@@ -37,10 +41,10 @@ Feature: Restrict activity availability through date conditions
     And I press "Save and return to course"
     And I log out
     When I log in as "student1"
-    And I am on "Course 1" course homepage
+    And I am on site homepage
+    And I follow "Course 1"
     Then I should see "Available from 31 December 2037"
-    And "Test assignment 1" activity should be dimmed
-    And "Test assignment 1" "link" should not exist
+    And "Test assignment 1" activity should be hidden
     And I log out
 
   @javascript
@@ -61,5 +65,6 @@ Feature: Restrict activity availability through date conditions
     And I press "Save and return to course"
     And I log out
     When I log in as "student1"
-    And I am on "Course 1" course homepage
+    And I am on site homepage
+    And I follow "Course 1"
     Then I should not see "Test assignment 2"

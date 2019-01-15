@@ -141,12 +141,6 @@ abstract class tablelike extends screen {
                 $html .= $this->structure->get_grade_analysis_icon($grade);
             }
 
-            // Singleview users without proper permissions should be presented
-            // disabled checkboxes for the Exclude grade attribute.
-            if ($field == 'exclude' && !has_capability('moodle/grade:manage', $this->context)){
-                $html->disabled = true;
-            }
-
             $line[] = $html;
         }
         return $line;
@@ -230,12 +224,10 @@ abstract class tablelike extends screen {
      * @return array
      */
     public function buttons() {
-        global $OUTPUT;
-
-        $save = $OUTPUT->render_from_template('gradereport_singleview/button', [
+        $save = html_writer::empty_tag('input', array(
             'type' => 'submit',
             'value' => get_string('save', 'gradereport_singleview'),
-        ]);
+        ));
 
         return array($save);
     }

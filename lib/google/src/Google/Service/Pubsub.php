@@ -49,7 +49,6 @@ class Google_Service_Pubsub extends Google_Service
   public function __construct(Google_Client $client)
   {
     parent::__construct($client);
-    $this->rootUrl = 'https://www.googleapis.com/';
     $this->servicePath = 'pubsub/v1beta1/';
     $this->version = 'v1beta1';
     $this->serviceName = 'pubsub';
@@ -300,7 +299,7 @@ class Google_Service_Pubsub_Subscriptions_Resource extends Google_Service_Resour
 
   /**
    * Modifies the PushConfig for a specified subscription. This method can be used
-   * to suspend the flow of messages to an endpoint by clearing the PushConfig
+   * to suspend the flow of messages to an end point by clearing the PushConfig
    * field in the request. Messages will be accumulated for delivery even if no
    * push configuration is defined or while the configuration is modified.
    * (subscriptions.modifyPushConfig)
@@ -336,7 +335,7 @@ class Google_Service_Pubsub_Subscriptions_Resource extends Google_Service_Resour
   /**
    * Pulls messages from the server. Returns an empty list if there are no
    * messages available in the backlog. The system is free to return UNAVAILABLE
-   * if there are too many pull requests outstanding for the given subscription.
+   * if there too many pull requests outstanding for a given subscription.
    * (subscriptions.pullBatch)
    *
    * @param Google_PullBatchRequest $postBody
@@ -377,9 +376,9 @@ class Google_Service_Pubsub_Topics_Resource extends Google_Service_Resource
   }
 
   /**
-   * Deletes the topic with the given name. Returns NOT_FOUND if the topic does
-   * not exist. After a topic is deleted, a new topic may be created with the same
-   * name. (topics.delete)
+   * Deletes the topic with the given name. All subscriptions to this topic are
+   * also deleted. Returns NOT_FOUND if the topic does not exist. After a topic is
+   * deleted, a new topic may be created with the same name. (topics.delete)
    *
    * @param string $topic Name of the topic to delete.
    * @param array $optParams Optional parameters.
@@ -577,14 +576,12 @@ class Google_Service_Pubsub_ListTopicsResponse extends Google_Collection
   }
 }
 
-class Google_Service_Pubsub_ModifyAckDeadlineRequest extends Google_Collection
+class Google_Service_Pubsub_ModifyAckDeadlineRequest extends Google_Model
 {
-  protected $collection_key = 'ackIds';
   protected $internal_gapi_mappings = array(
   );
   public $ackDeadlineSeconds;
   public $ackId;
-  public $ackIds;
   public $subscription;
 
 
@@ -603,14 +600,6 @@ class Google_Service_Pubsub_ModifyAckDeadlineRequest extends Google_Collection
   public function getAckId()
   {
     return $this->ackId;
-  }
-  public function setAckIds($ackIds)
-  {
-    $this->ackIds = $ackIds;
-  }
-  public function getAckIds()
-  {
-    return $this->ackIds;
   }
   public function setSubscription($subscription)
   {

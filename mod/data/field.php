@@ -241,7 +241,6 @@ foreach ($plugins as $plugin=>$fulldir){
 asort($menufield);    //sort in alphabetical order
 $PAGE->set_title(get_string('course') . ': ' . $course->fullname);
 $PAGE->set_heading($course->fullname);
-$PAGE->force_settings_menu(true);
 
 $PAGE->set_pagetype('mod-data-field-' . $newtype);
 if (($mode == 'new') && (!empty($newtype)) && confirm_sesskey()) {          ///  Adding a new field
@@ -297,7 +296,7 @@ if (($mode == 'new') && (!empty($newtype)) && confirm_sesskey()) {          /// 
 
                 $table->data[] = array(
                     html_writer::link($displayurl, $field->field->name),
-                    $field->image() . '&nbsp;' . $field->name(),
+                    $field->image() . '&nbsp;' . get_string($field->type, 'data'),
                     $field->field->required ? get_string('yes') : get_string('no'),
                     shorten_text($field->field->description, 30),
                     html_writer::link($displayurl, $OUTPUT->pix_icon('t/edit', get_string('edit'))) .
@@ -313,8 +312,7 @@ if (($mode == 'new') && (!empty($newtype)) && confirm_sesskey()) {          /// 
     echo '<div class="fieldadd">';
     $popupurl = $CFG->wwwroot.'/mod/data/field.php?d='.$data->id.'&mode=new&sesskey='.  sesskey();
     echo $OUTPUT->single_select(new moodle_url($popupurl), 'newtype', $menufield, null, array('' => 'choosedots'),
-        'fieldform', array('label' => get_string('newfield', 'data')));
-    echo $OUTPUT->help_icon('newfield', 'data');
+        'fieldform', array('label' => get_string('newfield', 'data') . $OUTPUT->help_icon('newfield', 'data')));
     echo '</div>';
 
     echo '<div class="sortdefault">';
@@ -324,7 +322,7 @@ if (($mode == 'new') && (!empty($newtype)) && confirm_sesskey()) {          /// 
     echo '<input type="hidden" name="mode" value="sort" />';
     echo '<input type="hidden" name="sesskey" value="'.sesskey().'" />';
     echo '<label for="defaultsort">'.get_string('defaultsortfield','data').'</label>';
-    echo '<select id="defaultsort" name="defaultsort" class="custom-select">';
+    echo '<select id="defaultsort" name="defaultsort">';
     if ($fields = $DB->get_records('data_fields', array('dataid'=>$data->id))) {
         echo '<optgroup label="'.get_string('fields', 'data').'">';
         foreach ($fields as $field) {
@@ -359,8 +357,8 @@ if (($mode == 'new') && (!empty($newtype)) && confirm_sesskey()) {          /// 
     $options = array(0 => get_string('ascending', 'data'),
                      1 => get_string('descending', 'data'));
     echo html_writer::label(get_string('sortby'), 'menudefaultsortdir', false, array('class' => 'accesshide'));
-    echo html_writer::select($options, 'defaultsortdir', $data->defaultsortdir, false, array('class' => 'custom-select'));
-    echo '<input type="submit" class="btn btn-secondary m-l-1" value="'.get_string('save', 'data').'" />';
+    echo html_writer::select($options, 'defaultsortdir', $data->defaultsortdir, false);
+    echo '<input type="submit" value="'.get_string('save', 'data').'" />';
     echo '</div>';
     echo '</form>';
     echo '</div>';

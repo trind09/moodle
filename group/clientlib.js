@@ -208,9 +208,7 @@ var removeLoaderImgs = function (elClass, parentId) {
     var parentEl = document.getElementById(parentId);
     if (parentEl) {
         var loader = document.getElementById("loaderImg");
-        if (loader) {
-            parentEl.removeChild(loader);
-        }
+        parentEl.removeChild(loader);
     }
 };
 

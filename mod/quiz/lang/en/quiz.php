@@ -80,7 +80,6 @@ $string['answers'] = 'Answers';
 $string['answersingleno'] = 'Multiple answers allowed';
 $string['answersingleyes'] = 'One answer only';
 $string['answertoolong'] = 'Answer too long after line {$a} (255 char. max)';
-$string['anytags'] = 'Any tags';
 $string['aon'] = 'AON format';
 $string['areyousureremoveselected'] = 'Are you sure you want to remove all the selected questions?';
 $string['asshownoneditscreen'] = 'As shown on the edit screen';
@@ -90,16 +89,12 @@ $string['attemptclosed'] = 'Attempt has not closed yet';
 $string['attemptduration'] = 'Time taken';
 $string['attemptedon'] = 'Attempted on';
 $string['attempterror'] = 'You are not allowed to attempt this quiz at this time because: {$a}';
-$string['attempterrorinvalid'] = 'Invalid quiz attempt ID';
-$string['attempterrorcontentchange'] = 'This quiz preview no longer exists. (When a quiz is edited, any in-progress previews are automatically deleted.)';
-$string['attempterrorcontentchangeforuser'] = 'This quiz attempt no longer exists.';
 $string['attemptfirst'] = 'First attempt';
 $string['attemptincomplete'] = 'That attempt (by {$a}) is not yet completed.';
 $string['attemptlast'] = 'Last attempt';
 $string['attemptnumber'] = 'Attempt';
 $string['attemptquiznow'] = 'Attempt quiz now';
 $string['attempts'] = 'Attempts';
-$string['attempts_help'] = 'The total number of attempts allowed (not the number of extra attempts).';
 $string['attemptsallowed'] = 'Attempts allowed';
 $string['attemptsdeleted'] = 'Quiz attempts deleted';
 $string['attemptselection'] = 'Select which attempts to analyze per user:';
@@ -173,10 +168,8 @@ $string['commentorgrade'] = 'Make comment or override grade';
 $string['comments'] = 'Comments';
 $string['completedon'] = 'Completed on';
 $string['completionpass'] = 'Require passing grade';
-$string['completionpassdesc'] = 'Student must achieve a passing grade to complete this activity';
-$string['completionpass_help'] = 'If enabled, this activity is considered complete when the student receives a pass grade (as specified in the Grade section of the quiz settings) or higher.';
+$string['completionpass_help'] = 'If enabled, this activity is considered complete when the student receives a passing grade, with the pass grade set in the gradebook.';
 $string['completionattemptsexhausted'] = 'Or all available attempts completed';
-$string['completionattemptsexhausteddesc'] = 'Complete if all available attempts are exhausted';
 $string['completionattemptsexhausted_help'] = 'Mark quiz complete when the student has exhausted the maximum number of attempts.';
 $string['configadaptive'] = 'If you choose Yes for this option then the student will be allowed multiple responses to a question even within the same attempt at the quiz.';
 $string['configattemptsallowed'] = 'Restriction on the number of attempts students are allowed at the quiz.';
@@ -209,6 +202,9 @@ $string['confirmclose'] = 'Once you submit, you will no longer be able to change
 $string['confirmremovequestion'] = 'Are you sure you want to remove this {$a} question?';
 $string['confirmremovesectionheading'] = 'Are you sure you want to remove the \'{$a}\' section heading?';
 $string['confirmserverdelete'] = 'Are you sure you want to remove the server <b>{$a}</b> from the list?';
+$string['confirmstartattemptlimit'] = 'Number of attempts allowed:  {$a}. You are about to start a new attempt.  Do you wish to proceed?';
+$string['confirmstartattempttimelimit'] = 'This quiz has a time limit and is limited to {$a} attempt(s). You are about to start a new attempt.  Do you wish to proceed?';
+$string['confirmstarttimelimit'] = 'The quiz has a time limit. Are you sure that you wish to start?';
 $string['connectionok'] = 'Network connection restored. You may continue safely.';
 $string['connectionerror'] = 'Network connection lost. (Autosave failed).
 
@@ -290,27 +286,37 @@ $string['editquestion'] = 'Edit question';
 $string['editquestions'] = 'Edit questions';
 $string['editquiz'] = 'Edit quiz';
 $string['editquizquestions'] = 'Edit quiz questions';
-$string['emailconfirmbody'] = 'Hi {$a->username},
+$string['emailconfirmbody'] = 'Dear {$a->username},
 
-Thank you for submitting your answers to \'{$a->quizname}\' in course \'{$a->coursename}\' at {$a->submissiontime}.
+Thank you for submitting your answers to
+\'{$a->quizname}\'
+in course \'{$a->coursename}\'
+at {$a->submissiontime}.
 
-This message confirms that your answers have been saved.
+This message confirms that we have safely received your answers.
 
 You can access this quiz at {$a->quizurl}.';
 $string['emailconfirmsmall'] = 'Thank you for submitting your answers to \'{$a->quizname}\'';
 $string['emailconfirmsubject'] = 'Submission confirmation: {$a->quizname}';
-$string['emailnotifybody'] = 'Hi {$a->username},
+$string['emailnotifybody'] = 'Dear {$a->username},
 
-{$a->studentname} has completed \'{$a->quizname}\' ({$a->quizurl}) in course \'{$a->coursename}\'.
+{$a->studentname} has completed
+\'{$a->quizname}\' ({$a->quizurl})
+in course \'{$a->coursename}\'
 
 You can review this attempt at {$a->quizreviewurl}.';
 $string['emailnotifysmall'] = '{$a->studentname} has completed {$a->quizname}. See {$a->quizreviewurl}';
 $string['emailnotifysubject'] = '{$a->studentname} has completed {$a->quizname}';
-$string['emailoverduebody'] = 'Hi {$a->studentname},
+$string['emailoverduebody'] = 'Dear {$a->studentname},
 
-You started an attempt at \'{$a->quizname}\' in course \'{$a->coursename}\', but you never submitted it. It should have been submitted by {$a->attemptduedate}.
+You started an attempt at \'{$a->quizname}\'
+in course \'{$a->coursename}\', but you never submitted it. It should have been
+submitted by {$a->attemptduedate}.
 
-If you would still like to submit this attempt, please go to {$a->attemptsummaryurl} and click the submit button. You must do this before {$a->attemptgraceend} otherwise your attempt will not be counted.';
+If you would still like to submit this attempt, please go to
+{$a->attemptsummaryurl} and click the submit button.
+You must do this before {$a->attemptgraceend}
+otherwise your attempt will not be counted.';
 $string['emailoverduesmall'] = 'You did not submit your attempt at {$a->quizname}. Please go to {$a->attemptsummaryurl} before {$a->attemptgraceend} if you would still like to submit.';
 $string['emailoverduesubject'] = 'Attempt now overdue: {$a->quizname}';
 $string['empty'] = 'Empty';
@@ -341,7 +347,6 @@ $string['eventreportviewed'] = 'Quiz report viewed';
 $string['everynquestions'] = 'Every {$a} questions';
 $string['everyquestion'] = 'Every question';
 $string['everythingon'] = 'Everything on';
-$string['existingcategory'] = 'Existing category';
 $string['exportcategory'] = 'export category';
 $string['exporterror'] = 'An error occurred during export processing';
 $string['exportingquestions'] = 'Questions are being exported to file';
@@ -394,8 +399,6 @@ $string['grademethod_help'] = 'When multiple attempts are allowed, the following
 * Last attempt (all other attempts are ignored)';
 $string['gradesdeleted'] = 'Quiz grades deleted';
 $string['gradesofar'] = '{$a->method}: {$a->mygrade} / {$a->quizgrade}.';
-$string['gradetopassnotset'] = 'This quiz does not yet have a grade to pass set. It may be set in the Grade section of the quiz settings.';
-$string['gradetopassmustbeset'] = 'Grade to pass cannot be zero as this quiz has its completion method set to require passing grade. Please set a non-zero value.';
 $string['gradingdetails'] = 'Marks for this submission: {$a->raw}/{$a->max}.';
 $string['gradingdetailsadjustment'] = 'With previous penalties this gives <strong>{$a->cur}/{$a->max}</strong>.';
 $string['gradingdetailspenalty'] = 'This submission attracted a penalty of {$a}.';
@@ -427,10 +430,6 @@ $string['importmax10error'] = 'There is an error in the question. You may not ha
 $string['importquestions'] = 'Import questions from file';
 $string['inactiveoverridehelp'] = '* Student does not have the correct group or role to attempt the quiz';
 $string['incorrect'] = 'Incorrect';
-$string['indicator:cognitivedepth'] = 'Quiz cognitive';
-$string['indicator:cognitivedepth_help'] = 'This indicator is based on the cognitive depth reached by the student in a Quiz activity.';
-$string['indicator:socialbreadth'] = 'Quiz social';
-$string['indicator:socialbreadth_help'] = 'This indicator is based on the social breadth reached by the student in a Quiz activity.';
 $string['indivresp'] = 'Responses of individuals to each item';
 $string['info'] = 'Info';
 $string['infoshort'] = 'i';
@@ -443,7 +442,6 @@ $string['invalidcategory'] = 'Category ID is invalid';
 $string['invalidoverrideid'] = 'Invalid override id';
 $string['invalidquestionid'] = 'Invalid question id';
 $string['invalidquizid'] = 'Invalid quiz ID';
-$string['invalidrandomslot'] = 'Invalid random question slot id.';
 $string['invalidsource'] = 'The source is not accepted as valid.';
 $string['invalidsourcetype'] = 'Invalid source type.';
 $string['invalidstateid'] = 'Invalid state id';
@@ -460,7 +458,6 @@ $string['loadingquestionsfailed'] = 'Loading questions failed: {$a}';
 $string['makecopy'] = 'Save as new question';
 $string['managetypes'] = 'Manage question types and servers';
 $string['manualgrading'] = 'Grading';
-$string['manualgradequestion'] = 'Manually grade question {$a->question} in {$a->quiz} by {$a->user}';
 $string['mark'] = 'Submit';
 $string['markall'] = 'Submit page';
 $string['marks'] = 'Marks';
@@ -501,8 +498,6 @@ $string['multichoice'] = 'Multiple choice';
 $string['multipleanswers'] = 'Choose at least one answer.';
 $string['mustbesubmittedby'] = 'This attempt must be submitted by {$a}.';
 $string['name'] = 'Name';
-$string['navigatenext'] = 'Next page';
-$string['navigateprevious'] = 'Previous page';
 $string['navmethod'] = 'Navigation method';
 $string['navmethod_free'] = 'Free';
 $string['navmethod_help'] = 'When sequential navigation is enabled a student must progress through the quiz in order and may not return to previous pages nor skip ahead.';
@@ -510,11 +505,9 @@ $string['navmethod_seq'] = 'Sequential';
 $string['navnojswarning'] = 'Warning: these links will not save your answers. Use the next button at the bottom of the page.';
 $string['neverallononepage'] = 'Never, all questions on one page';
 $string['newattemptfail'] = 'Error: Could not start a new attempt at the quiz';
-$string['newcategory'] = 'New category';
 $string['newpage'] = 'New page';
 $string['newpage_help'] = 'For longer quizzes it makes sense to stretch the quiz over several pages by limiting the number of questions per page. When adding questions to the quiz, page breaks will automatically be inserted according to this setting. However page breaks may later be moved manually on the editing page.';
 $string['newpageevery'] = 'Automatically start a new page';
-$string['newsectionheading'] = 'New heading';
 $string['noanswers'] = 'No answers were selected!';
 $string['noattempts'] = 'No attempts have been made on this quiz';
 $string['noattemptsfound'] = 'No attempts found.';
@@ -563,7 +556,6 @@ $string['onlyteachersexport'] = 'Only teachers can export questions';
 $string['onlyteachersimport'] = 'Only teachers with editing rights can import questions';
 $string['onthispage'] = 'This page';
 $string['open'] = 'Not answered';
-$string['openafterclose'] = 'Could not update the quiz. You have specified an open date after the close date.';
 $string['openclosedatesupdated'] = 'Quiz open and close dates updated';
 $string['optional'] = 'optional';
 $string['orderandpaging'] = 'Order and paging';
@@ -626,31 +618,6 @@ $string['previewquestion'] = 'Preview question';
 $string['previewquiz'] = 'Preview {$a}';
 $string['previewquiznow'] = 'Preview quiz now';
 $string['previous'] = 'Previous state';
-$string['privacy:metadata:core_question'] = 'The quiz activity stores question usage information in the core_question subsystem.';
-$string['privacy:metadata:quiz'] = 'The quiz activity makes use of quiz reports.';
-$string['privacy:metadata:quiz_attempts'] = 'Details about each attempt on a quiz.';
-$string['privacy:metadata:quiz_attempts:attempt'] = 'The attempt number.';
-$string['privacy:metadata:quiz_attempts:currentpage'] = 'The current page that the user is on.';
-$string['privacy:metadata:quiz_attempts:preview'] = 'Whether this is a preview of the quiz.';
-$string['privacy:metadata:quiz_attempts:state'] = 'The current state of the attempt.';
-$string['privacy:metadata:quiz_attempts:sumgrades'] = 'The sum of grades in the attempt.';
-$string['privacy:metadata:quiz_attempts:timecheckstate'] = 'The time that the state was checked.';
-$string['privacy:metadata:quiz_attempts:timefinish'] = 'The time that the attempt was completed.';
-$string['privacy:metadata:quiz_attempts:timemodified'] = 'The time that the attempt was updated.';
-$string['privacy:metadata:quiz_attempts:timemodifiedoffline'] = 'The time that the attempt was updated via an offline update.';
-$string['privacy:metadata:quiz_attempts:timestart'] = 'The time that the attempt was started.';
-$string['privacy:metadata:quiz_grades'] = 'Details about the overall grade for this quiz.';
-$string['privacy:metadata:quiz_grades:grade'] = 'The overall grade for this quiz.';
-$string['privacy:metadata:quiz_grades:quiz'] = 'The quiz that was graded.';
-$string['privacy:metadata:quiz_grades:timemodified'] = 'The time that the grade was modified.';
-$string['privacy:metadata:quiz_grades:userid'] = 'The user who was graded.';
-$string['privacy:metadata:quiz_overrides'] = 'Details about overrides for this quiz';
-$string['privacy:metadata:quiz_overrides:quiz'] = 'The quiz with override information';
-$string['privacy:metadata:quiz_overrides:timeclose'] = 'The new close time for the quiz.';
-$string['privacy:metadata:quiz_overrides:timelimit'] = 'The new time limit for the quiz.';
-$string['privacy:metadata:quiz_overrides:timeopen'] = 'The new open time for the quiz.';
-$string['privacy:metadata:quiz_overrides:userid'] = 'The user being overridden';
-$string['privacy:metadata:quizaccess'] = 'The quiz activity makes use of quiz access rules.';
 $string['publish'] = 'Publish';
 $string['publishedit'] = 'You must have permission in the publishing course to add or edit questions in this category';
 $string['qname'] = 'name';
@@ -676,10 +643,8 @@ $string['questionnotloaded'] = 'Question {$a} has not been loaded from the datab
 $string['questionorder'] = 'Question order';
 $string['questionposition'] = 'New position in order for question {$a}';
 $string['questions'] = 'Questions';
-$string['questionsetpreview'] = 'Question set preview';
 $string['questionsinclhidden'] = 'Questions (including hidden)';
 $string['questionsinthisquiz'] = 'Questions in this quiz';
-$string['questionsmatchingfilter'] = 'Questions matching this filter: {$a}';
 $string['questionsperpage'] = 'Questions per page';
 $string['questionsperpageselected'] = 'Questions per page has been set so the paging is currently fixed. As a result, the paging controls have been disabled. You can change this in {$a}.';
 $string['questionsperpagex'] = 'Questions per page: {$a}';
@@ -693,7 +658,6 @@ $string['quizavailable'] = 'The quiz is available until: {$a}';
 $string['quizclose'] = 'Close the quiz';
 $string['quizclosed'] = 'This quiz closed on {$a}';
 $string['quizcloses'] = 'Quiz closes';
-$string['quizeventcloses'] = '{$a} closes';
 $string['quizcloseson'] = 'This quiz will close at {$a}';
 $string['quiz:deleteattempts'] = 'Delete quiz attempts';
 $string['quiz:emailconfirmsubmission'] = 'Get a confirmation message when submitting';
@@ -709,7 +673,6 @@ $string['quiz:manage'] = 'Manage quizzes';
 $string['quiz:manageoverrides'] = 'Manage quiz overrides';
 $string['quiznavigation'] = 'Quiz navigation';
 $string['quizopen'] = 'Open the quiz';
-$string['quizeventopens'] = '{$a} opens';
 $string['quizopenclose'] = 'Open and close dates';
 $string['quizopenclose_help'] = 'Students can only start their attempt(s) after the open time and they must complete their attempts before the close time.';
 $string['quizopenclose_link'] = 'mod/quiz/timing';
@@ -729,25 +692,17 @@ $string['quiztimer'] = 'Quiz Timer';
 $string['quizwillopen'] = 'This quiz will open {$a}';
 $string['random'] = 'Random question';
 $string['randomcreate'] = 'Create random questions';
-$string['randomediting'] = 'Editing a random question';
 $string['randomfromcategory'] = 'Random question from category:';
 $string['randomfromexistingcategory'] = 'Random question from an existing category';
-$string['randomfromunavailabletag'] = '{$a} (unavailable)';
 $string['randomnumber'] = 'Number of random questions';
 $string['randomnosubcat'] = 'Questions from this category only, not its subcategories.';
-$string['randomquestion'] = 'Random question';
-$string['randomquestion_help'] = 'A random question is a way of inserting a randomly-chosen question from a specified category or by a specified tag into an activity.';
-$string['randomquestiontags'] = 'Tags';
-$string['randomquestiontags_help'] = 'You can restrict the selection criteria further by specifying some question tags here.
-
-The "random" questions will be selected from the questions that have all these tags.';
 $string['randomquestionusinganewcategory'] = 'Random question using a new category';
 $string['randomwithsubcat'] = 'Questions from this category and its subcategories.';
 $string['readytosend'] = 'You are about to send your whole quiz to be graded.  Are you sure you want to continue?';
 $string['reattemptquiz'] = 'Re-attempt quiz';
 $string['recentlyaddedquestion'] = 'Recently added question!';
 $string['recurse'] = 'Include questions from subcategories too';
-$string['redoquestion'] = 'Try another question like this one';
+$string['redoquestion'] = 'Redo question';
 $string['redoesofthisquestion'] = 'Other questions attempted here: {$a}';
 $string['regrade'] = 'Regrade all attempts';
 $string['regradecomplete'] = 'All attempts have been regraded';
@@ -816,7 +771,6 @@ $string['reviewimmediately'] = 'Immediately after the attempt';
 $string['reviewnever'] = 'Never allow review';
 $string['reviewofattempt'] = 'Review of attempt {$a}';
 $string['reviewofpreview'] = 'Review of preview';
-$string['reviewofquestion'] = 'Review of question {$a->question} in {$a->quiz} by {$a->user}';
 $string['reviewopen'] = 'Later, while the quiz is still open';
 $string['reviewoptions'] = 'Students may review';
 $string['reviewoptionsheading'] = 'Review options';
@@ -851,7 +805,6 @@ $string['savingnewgradeforquestion'] = 'Saving new grade for question id {$a}.';
 $string['savingnewmaximumgrade'] = 'Saving new maximum grade.';
 $string['score'] = 'Raw score';
 $string['scores'] = 'Scores';
-$string['search:activity'] = 'Quiz - activity information';
 $string['sectionheadingedit'] = 'Edit heading \'{$a}\'';
 $string['sectionheadingremove'] = 'Remove heading \'{$a}\'';
 $string['seequestions'] = '(See questions)';
@@ -859,8 +812,6 @@ $string['select'] = 'Select';
 $string['selectall'] = 'Select all';
 $string['selectcategory'] = 'Select category';
 $string['selectedattempts'] = 'Selected attempts...';
-$string['selectmultipleitems'] = 'Select multiple items';
-$string['selectmultipletoolbar'] = 'Select multiple toolbar';
 $string['selectnone'] = 'Deselect all';
 $string['selectquestiontype'] = '-- Select question type --';
 $string['serveradded'] = 'Server added';
@@ -959,7 +910,6 @@ $string['ungraded'] = 'Ungraded';
 $string['unit'] = 'Unit';
 $string['unknowntype'] = 'Question type not supported at line {$a}. The question will be ignored';
 $string['updatesettings'] = 'Update quiz settings';
-$string['updatequizslotswithrandomxofy'] = 'Updating quiz slots with "random" question data ({$a->done}/{$a->total})';
 $string['updatingatttemptgrades'] = 'Updating attempt grades.';
 $string['updatingfinalgrades'] = 'Updating final grades.';
 $string['updatingthegradebook'] = 'Updating the gradebook.';
@@ -984,3 +934,8 @@ $string['wronguse'] = 'You can not use this page like that';
 $string['xhtml'] = 'XHTML';
 $string['youneedtoenrol'] = 'You need to enrol in this course before you can attempt this quiz';
 $string['yourfinalgradeis'] = 'Your final grade for this quiz is {$a}.';
+
+// Deprecated since Moodle 2.9.
+
+$string['timelimitmin'] = 'Time limit (minutes)';
+$string['timelimitsec'] = 'Time limit (seconds)';

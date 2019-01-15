@@ -25,5 +25,3 @@
  */
 
 $string['pluginname'] = 'Date';
-$string['fieldtypelabel'] = 'Date field';
-$string['privacy:metadata'] = 'The Date field component does not store any personal data, it uses tables defined in mod_data.';

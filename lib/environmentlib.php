@@ -1048,19 +1048,6 @@ function environment_check_database($version, $env_select) {
         return $result;
     }
 
-    // Check if the DB Vendor has been properly configured.
-    // Hack: this is required when playing with MySQL and MariaDB since they share the same PHP module and base DB classes,
-    // whilst they are slowly evolving using separate directions though MariaDB is still an "almost" drop-in replacement.
-    $dbvendorismysql = ($current_vendor === 'mysql');
-    $dbtypeismariadb = (stripos($dbinfo['description'], 'mariadb') !== false);
-    if ($dbvendorismysql && $dbtypeismariadb) {
-        $result->setStatus(false);
-        $result->setLevel($level);
-        $result->setInfo($current_vendor . ' (' . $dbinfo['description'] . ')');
-        $result->setFeedbackStr('environmentmariadbwrongdbtype');
-        return $result;
-    }
-
 /// And finally compare them, saving results
     if (version_compare($current_version, $needed_version, '>=')) {
         $result->setStatus(true);
@@ -1273,7 +1260,7 @@ class environment_results {
      *
      * @param string $part
      */
-    public function __construct($part) {
+    function environment_results($part) {
         $this->part=$part;
         $this->status=false;
         $this->error_code=NO_ERROR;
@@ -1284,16 +1271,6 @@ class environment_results {
         $this->feedback_str='';
         $this->bypass_str='';
         $this->restrict_str='';
-    }
-
-    /**
-     * Old syntax of class constructor. Deprecated in PHP7.
-     *
-     * @deprecated since Moodle 3.1
-     */
-    public function environment_results($part) {
-        debugging('Use of class name as constructor is deprecated', DEBUG_DEVELOPER);
-        self::__construct($part);
     }
 
     /**
@@ -1594,37 +1571,4 @@ function restrict_php_version(&$result, $version) {
         // We're using an unsupported PHP version, apply restriction.
         return true;
     }
-}
-
-/**
- * Check if the current PHP version is greater than or equal to
- * PHP version 7.1.
- *
- * @param object $result an environment_results instance
- * @return bool result of version check
- */
-function restrict_php_version_71(&$result) {
-    return restrict_php_version($result, '7.1');
-}
-
-/**
- * Check if the current PHP version is greater than or equal to
- * PHP version 7.2.
- *
- * @param object $result an environment_results instance
- * @return bool result of version check
- */
-function restrict_php_version_72(&$result) {
-    return restrict_php_version($result, '7.2');
-}
-
-/**
- * Check if the current PHP version is greater than or equal to
- * PHP version 7.3.
- *
- * @param object $result an environment_results instance
- * @return bool result of version check
- */
-function restrict_php_version_73(&$result) {
-    return restrict_php_version($result, '7.3');
 }

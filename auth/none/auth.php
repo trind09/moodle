@@ -34,19 +34,9 @@ class auth_plugin_none extends auth_plugin_base {
     /**
      * Constructor.
      */
-    public function __construct() {
+    function auth_plugin_none() {
         $this->authtype = 'none';
-        $this->config = get_config('auth_none');
-    }
-
-    /**
-     * Old syntax of class constructor. Deprecated in PHP7.
-     *
-     * @deprecated since Moodle 3.1
-     */
-    public function auth_plugin_none() {
-        debugging('Use of class name as constructor is deprecated', DEBUG_DEVELOPER);
-        self::__construct();
+        $this->config = get_config('auth/none');
     }
 
     /**
@@ -131,6 +121,25 @@ class auth_plugin_none extends auth_plugin_base {
      * @return bool
      */
     function can_be_manually_set() {
+        return true;
+    }
+
+    /**
+     * Prints a form for configuring this authentication plugin.
+     *
+     * This function is called from admin/auth.php, and outputs a full page with
+     * a form for configuring this plugin.
+     *
+     * @param array $page An object containing all the data for this page.
+     */
+    function config_form($config, $err, $user_fields) {
+        include "config.html";
+    }
+
+    /**
+     * Processes and stores configuration data for this authentication plugin.
+     */
+    function process_config($config) {
         return true;
     }
 

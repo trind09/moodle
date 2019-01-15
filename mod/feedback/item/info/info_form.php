@@ -25,7 +25,6 @@ class feedback_info_form extends feedback_item_form {
         $common = $this->_customdata['common'];
         $positionlist = $this->_customdata['positionlist'];
         $position = $this->_customdata['position'];
-        $presentationoptions = $this->_customdata['presentationoptions'];
 
         $mform =& $this->_form;
 
@@ -42,10 +41,14 @@ class feedback_info_form extends feedback_item_form {
                             get_string('item_label', 'feedback'),
                             array('size'=>FEEDBACK_ITEM_LABEL_TEXTBOX_SIZE, 'maxlength'=>255));
 
+        $options=array();
+        $options[1]  = get_string('responsetime', 'feedback');
+        $options[2]  = get_string('course');
+        $options[3]  = get_string('coursecategory');
         $this->infotype = &$mform->addElement('select',
                                               'presentation',
                                               get_string('infotype', 'feedback'),
-                                              $presentationoptions);
+                                              $options);
 
         parent::definition();
         $this->set_data($item);

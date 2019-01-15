@@ -46,4 +46,3 @@ $string['group'] = '{$a} role settings';
 $string['groupdefault'] = 'Default';
 $string['sharedidtitle'] = 'Shared secret ID';
 $string['sharedsecrettitle'] = 'Shared secret';
-$string['privacy:metadata'] = 'The EQUELLA repository plugin does not store any personal data, but does transmit user data from Moodle to the remote system.';

@@ -79,9 +79,6 @@ if ($currentorg !== '') {
 if ($newattempt !== 'off') {
     $url->param('newattempt', $newattempt);
 }
-if ($displaymode !== '') {
-    $url->param('display', $displaymode);
-}
 $PAGE->set_url($url);
 $forcejs = get_config('scorm', 'forcejavascript');
 if (!empty($forcejs)) {
@@ -119,16 +116,22 @@ if (!$cm->visible and !has_capability('moodle/course:viewhiddenactivities', cont
     die;
 }
 
-// Check if SCORM available.
-list($available, $warnings) = scorm_get_availability_status($scorm);
-if (!$available) {
-    $reason = current(array_keys($warnings));
-    echo $OUTPUT->header();
-    echo $OUTPUT->box(get_string($reason, "scorm", $warnings[$reason]), "generalbox boxaligncenter");
-    echo $OUTPUT->footer();
-    die;
-}
+// Check if scorm closed.
+$timenow = time();
+if ($scorm->timeclose != 0) {
+    if ($scorm->timeopen > $timenow) {
+        echo $OUTPUT->header();
+        echo $OUTPUT->box(get_string("notopenyet", "scorm", userdate($scorm->timeopen)), "generalbox boxaligncenter");
+        echo $OUTPUT->footer();
+        die;
+    } else if ($timenow > $scorm->timeclose) {
+        echo $OUTPUT->header();
+        echo $OUTPUT->box(get_string("expired", "scorm", userdate($scorm->timeclose)), "generalbox boxaligncenter");
+        echo $OUTPUT->footer();
 
+        die;
+    }
+}
 // TOC processing
 $scorm->version = strtolower(clean_param($scorm->version, PARAM_SAFEDIR));   // Just to be safe.
 if (!file_exists($CFG->dirroot.'/mod/scorm/datamodels/'.$scorm->version.'lib.php')) {
@@ -160,16 +163,10 @@ $completion->set_module_viewed($cm);
 
 // Print the page header.
 if (empty($scorm->popup) || $displaymode == 'popup') {
-    if ($course->format == 'singleactivity' && $scorm->skipview == SCORM_SKIPVIEW_ALWAYS
-        && !has_capability('mod/scorm:viewreport', context_module::instance($cm->id))) {
-        // Redirect students back to site home to avoid redirect loop.
-        $exiturl = $CFG->wwwroot;
-    } else {
-        // Redirect back to the correct section if one section per page is being used.
-        $exiturl = course_get_url($course, $cm->sectionnum);
-    }
+    // Redirect back to the correct section if one section per page is being used.
+    $exiturl = course_get_url($course, $cm->sectionnum);
 
-    $exitlink = html_writer::link($exiturl, $strexit, array('title' => $strexit, 'class' => 'btn btn-default'));
+    $exitlink = html_writer::link($exiturl, $strexit, array('title' => $strexit));
     $PAGE->set_button($exitlink);
 }
 
@@ -272,8 +269,7 @@ if (empty($scorm->popup) || $displaymode == 'popup') {
                             $scorm->hidetoc, $collapsetocwinsize, $result->toctitle, $name, $sco->id, $adlnav), false, $jsmodule);
 }
 if (!empty($forcejs)) {
-    $message = $OUTPUT->box(get_string("forcejavascriptmessage", "scorm"), "generalbox boxaligncenter forcejavascriptmessage");
-    echo html_writer::tag('noscript', $message);
+    echo $OUTPUT->box(get_string("forcejavascriptmessage", "scorm"), "generalbox boxaligncenter forcejavascriptmessage");
 }
 
 if (file_exists($CFG->dirroot.'/mod/scorm/datamodels/'.$scorm->version.'.php')) {
@@ -284,14 +280,9 @@ if (file_exists($CFG->dirroot.'/mod/scorm/datamodels/'.$scorm->version.'.php')) 
 
 // Add the checknet system to keep checking for a connection.
 $PAGE->requires->string_for_js('networkdropped', 'mod_scorm');
-// Build arguments to send to checknet JS.
-$args = array(
+$PAGE->requires->yui_module('moodle-core-checknet', 'M.core.checknet.init', array(array(
     'message' => array('networkdropped', 'mod_scorm'),
-    'frequency' => 30000, // Frequency of network check.
-    'timeout' => 10000, // Timeout of network check.
-    'maxalerts' => 1 // Max number of alerts to be thrown.
-);
-$PAGE->requires->yui_module('moodle-core-checknet', 'M.core.checknet.init', array($args));
+)));
 echo $OUTPUT->footer();
 
 // Set the start time of this SCO.

@@ -13,19 +13,9 @@ class SpellChecker {
 	 *
 	 * @param $config Configuration name/value array.
 	 */
-	public function __construct(&$config) {
+	function SpellChecker(&$config) {
 		$this->_config = $config;
 	}
-
-    /**
-     * Old syntax of class constructor. Deprecated in PHP7.
-     *
-     * @deprecated since Moodle 3.1
-     */
-    public function SpellChecker(&$config) {
-        debugging('Use of class name as constructor is deprecated', DEBUG_DEVELOPER);
-        self::__construct($config);
-    }
 
 	/**
 	 * Simple loopback function everything that gets in will be send back.

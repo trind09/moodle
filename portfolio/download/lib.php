@@ -1,7 +1,6 @@
 <?php
 
 require_once($CFG->libdir . '/portfoliolib.php');
-require_once($CFG->libdir . '/portfolio/plugin.php');
 
 class portfolio_plugin_download extends portfolio_plugin_pull_base {
 

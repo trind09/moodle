@@ -26,7 +26,6 @@
  */
 
 require_once('HTML/QuickForm/element.php');
-require_once('templatable_form_element.php');
 
 /**
  * select type form element
@@ -38,11 +37,7 @@ require_once('templatable_form_element.php');
  * @copyright 2007 Jamie Pratt <me@jamiep.org>
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class MoodleQuickForm_selectgroups extends HTML_QuickForm_element implements templatable {
-
-    use templatable_form_element {
-        export_for_template as export_for_template_base;
-    }
+class MoodleQuickForm_selectgroups extends HTML_QuickForm_element {
 
     /** @var bool add choose option */
     var $showchoose = false;
@@ -68,25 +63,15 @@ class MoodleQuickForm_selectgroups extends HTML_QuickForm_element implements tem
      * @param mixed $attributes Either a typical HTML attribute string or an associative array
      * @param bool $showchoose add standard moodle "Choose..." option as first item
      */
-    public function __construct($elementName=null, $elementLabel=null, $optgrps=null, $attributes=null, $showchoose=false)
+    function MoodleQuickForm_selectgroups($elementName=null, $elementLabel=null, $optgrps=null, $attributes=null, $showchoose=false)
     {
         $this->showchoose = $showchoose;
-        parent::__construct($elementName, $elementLabel, $attributes);
+        HTML_QuickForm_element::HTML_QuickForm_element($elementName, $elementLabel, $attributes);
         $this->_persistantFreeze = true;
         $this->_type = 'selectgroups';
         if (isset($optgrps)) {
             $this->loadArrayOptGroups($optgrps);
         }
-    }
-
-    /**
-     * Old syntax of class constructor. Deprecated in PHP7.
-     *
-     * @deprecated since Moodle 3.1
-     */
-    public function MoodleQuickForm_selectgroups($elementName=null, $elementLabel=null, $optgrps=null, $attributes=null, $showchoose=false) {
-        debugging('Use of class name as constructor is deprecated', DEBUG_DEVELOPER);
-        self::__construct($elementName, $elementLabel, $optgrps, $attributes, $showchoose);
     }
 
     /**
@@ -376,9 +361,6 @@ class MoodleQuickForm_selectgroups extends HTML_QuickForm_element implements tem
         if (is_array($this->_values)) {
             foreach ($this->_values as $key => $val) {
                 foreach ($this->_optGroups as $optGroup) {
-                    if (empty($optGroup['options'])) {
-                        continue;
-                    }
                     for ($i = 0, $optCount = count($optGroup['options']); $i < $optCount; $i++) {
                         if ((string)$val == (string)$optGroup['options'][$i]['attr']['value']) {
                             $value[$key] = $optGroup['options'][$i]['text'];
@@ -514,54 +496,5 @@ class MoodleQuickForm_selectgroups extends HTML_QuickForm_element implements tem
         } else {
             return 'default';
         }
-    }
-
-    public function export_for_template(renderer_base $output) {
-        $context = $this->export_for_template_base($output);
-        $optiongroups = [];
-        if ($this->showchoose) {
-            $optionsgroups[] = [
-                'text' => get_string('choosedots')
-            ];
-        }
-
-        // Standard option attributes.
-        $standardoptionattributes = ['text', 'value', 'selected', 'disabled'];
-        foreach ($this->_optGroups as $group) {
-            $options = [];
-
-            if (empty($group['options'])) {
-                continue;
-            }
-            foreach ($group['options'] as $option) {
-                $o = ['value' => (string)$option['attr']['value']];
-                if (is_array($this->_values) && in_array($o['value'], $this->_values)) {
-                    $o['selected'] = true;
-                } else {
-                    $o['selected'] = false;
-                }
-                $o['text'] = $option['text'];
-                $o['disabled'] = !empty($option['attr']['disabled']);
-                // Set other attributes.
-                $otheroptionattributes = [];
-                foreach ($option['attr'] as $attr => $value) {
-                    if (!in_array($attr, $standardoptionattributes) && $attr != 'class' && !is_object($value)) {
-                        $otheroptionattributes[] = $attr . '="' . s($value) . '"';
-                    }
-                }
-                $o['optionattributes'] = implode(' ', $otheroptionattributes);
-                $options[] = $o;
-            }
-
-            $og = [
-                'text' => $group['attr']['label'],
-                'options' => $options
-            ];
-
-            $optiongroups[] = $og;
-        }
-        $context['optiongroups'] = $optiongroups;
-
-        return $context;
     }
 }

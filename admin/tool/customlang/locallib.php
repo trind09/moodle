@@ -159,11 +159,6 @@ class tool_customlang_utils {
                         $needsupdate = true;
                         $current[$stringid]->local          = $stringlocal;
                         $current[$stringid]->timecustomized = $now;
-                    } else if (isset($currentlocal) && $stringlocal !== $currentlocal) {
-                        // If local string has been removed, we need to remove also the old local value from DB.
-                        $needsupdate = true;
-                        $current[$stringid]->local          = null;
-                        $current[$stringid]->timecustomized = $now;
                     }
 
                     if ($needsupdate) {

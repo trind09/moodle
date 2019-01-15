@@ -263,11 +263,7 @@ switch ($mode) {
                 // Subject
                 $subject = get_string('essayemailsubject', 'lesson');
 
-                // Context url.
-                $contexturl = new moodle_url('/grade/report/user/index.php', array('id' => $course->id));
-
-                $eventdata = new \core\message\message();
-                $eventdata->courseid         = $course->id;
+                $eventdata = new stdClass();
                 $eventdata->modulename       = 'lesson';
                 $eventdata->userfrom         = $USER;
                 $eventdata->userto           = $users[$attempt->userid];
@@ -276,7 +272,6 @@ switch ($mode) {
                 $eventdata->fullmessageformat = FORMAT_PLAIN;
                 $eventdata->fullmessagehtml  = $message;
                 $eventdata->smallmessage     = '';
-                $eventdata->contexturl       = $contexturl;
 
                 // Required for messaging framework
                 $eventdata->component = 'mod_lesson';
@@ -367,8 +362,7 @@ switch ($mode) {
 
         // Setup table
         $table = new html_table();
-        $table->head = array(get_string('name'), get_string('essays', 'lesson'), get_string('status'),
-            get_string('email', 'lesson'));
+        $table->head = array(get_string('name'), get_string('essays', 'lesson'), get_string('email', 'lesson'));
         $table->attributes['class'] = 'standardtable generaltable';
         $table->align = array('left', 'left', 'left');
         $table->wrap = array('nowrap', 'nowrap', '');
@@ -377,10 +371,9 @@ switch ($mode) {
         foreach (array_keys($studentessays) as $userid) {
             $studentname = fullname($users[$userid], true);
             $essaylinks = array();
-            $essaystatuses = array();
 
             // Number of attempts on the lesson
-            $attempts = $lesson->count_user_retries($userid);
+            $attempts = $DB->count_records('lesson_grades', array('userid'=>$userid, 'lessonid'=>$lesson->id));
 
             // Go through each essay page
             foreach ($studentessays[$userid] as $page => $tries) {
@@ -405,39 +398,30 @@ switch ($mode) {
 
                     // link for each essay
                     $url = new moodle_url('/mod/lesson/essay.php', array('id'=>$cm->id,'mode'=>'grade','attemptid'=>$essay->id,'sesskey'=>sesskey()));
-                    $linktitle = userdate($essay->timeseen, get_string('strftimedatetime')).' '.
-                            format_string($pages[$essay->pageid]->title, true);
-
+                    $attributes = array();
                     // Different colors for all the states of an essay (graded, if sent, not graded)
                     if (!$essayinfo->graded) {
-                        $class = "label label-warning";
-                        $status = get_string('notgraded', 'lesson');
+                        $attributes['class'] = "essayungraded";
                     } elseif (!$essayinfo->sent) {
-                        $class = "label label-success";
-                        $status = get_string('graded', 'lesson');
+                        $attributes['class'] = "essaygraded";
                     } else {
-                        $class = "label label-success";
-                        $status = get_string('sent', 'lesson');
+                        $attributes['class'] = "essaysent";
                     }
-                    $attributes = array('tabindex' => 0);
-
-                    $essaylinks[] = html_writer::link($url, $linktitle);
-                    $essaystatuses[] = html_writer::span($status, $class, $attributes);
+                    $essaylinks[] = html_writer::link($url, userdate($essay->timeseen, get_string('strftimedatetime')).' '.format_string($pages[$essay->pageid]->title,true), $attributes);
                 }
             }
             // email link for this user
             $url = new moodle_url('/mod/lesson/essay.php', array('id'=>$cm->id,'mode'=>'email','userid'=>$userid,'sesskey'=>sesskey()));
             $emaillink = html_writer::link($url, get_string('emailgradedessays', 'lesson'));
 
-            $table->data[] = array($OUTPUT->user_picture($users[$userid], array('courseid' => $course->id)) . $studentname,
-                implode("<br />", $essaylinks), implode("<br />", $essaystatuses), $emaillink);
+            $table->data[] = array($OUTPUT->user_picture($users[$userid], array('courseid'=>$course->id)).$studentname, implode("<br />", $essaylinks), $emaillink);
         }
 
         // email link for all users
         $url = new moodle_url('/mod/lesson/essay.php', array('id'=>$cm->id,'mode'=>'email','sesskey'=>sesskey()));
         $emailalllink = html_writer::link($url, get_string('emailallgradedessays', 'lesson'));
 
-        $table->data[] = array(' ', ' ', ' ', $emailalllink);
+        $table->data[] = array(' ', ' ', $emailalllink);
 
         echo html_writer::table($table);
         break;

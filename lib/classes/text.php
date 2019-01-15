@@ -49,11 +49,6 @@ defined('MOODLE_INTERNAL') || die();
 class core_text {
 
     /**
-     * @var string[] Array of strings representing Unicode non-characters
-     */
-    protected static $noncharacters;
-
-    /**
      * Return t3lib helper class, which is used for conversion between charsets
      *
      * @param bool $reset
@@ -94,7 +89,7 @@ class core_text {
         $GLOBALS['TYPO3_CONF_VARS']['BE']['folderCreateMask'] = decoct($CFG->directorypermissions);
 
         // Default mask for Typo
-        $GLOBALS['TYPO3_CONF_VARS']['BE']['fileCreateMask'] = decoct($CFG->filepermissions);
+        $GLOBALS['TYPO3_CONF_VARS']['BE']['fileCreateMask'] = $CFG->directorypermissions;
 
         // This full path constants must be defined too, transforming backslashes
         // to forward slashed because Typo3 requires it.
@@ -248,30 +243,6 @@ class core_text {
         } else {
             $result = self::typo3()->substr($charset, (string)$text, $start, $len);
         }
-        error_reporting($oldlevel);
-
-        return $result;
-    }
-
-    /**
-     * Truncates a string to no more than a certain number of bytes in a multi-byte safe manner.
-     * UTF-8 only!
-     *
-     * Many of the other charsets we test for (like ISO-2022-JP and EUC-JP) are not supported
-     * by typo3, and will give invalid results, so we are supporting UTF-8 only.
-     *
-     * @param string $string String to truncate
-     * @param int $bytes Maximum length of bytes in the result
-     * @return string Portion of string specified by $bytes
-     * @since Moodle 3.1
-     */
-    public static function str_max_bytes($string, $bytes) {
-        if (function_exists('mb_strcut')) {
-            return mb_strcut($string, 0, $bytes, 'UTF-8');
-        }
-
-        $oldlevel = error_reporting(E_PARSE);
-        $result = self::typo3()->strtrunc('utf-8', $string, $bytes);
         error_reporting($oldlevel);
 
         return $result;
@@ -565,12 +536,8 @@ class core_text {
         static $callback2 = null ;
 
         if (!$callback1 or !$callback2) {
-            $callback1 = function($matches) {
-                return core_text::code2utf8(hexdec($matches[1]));
-            };
-            $callback2 = function($matches) {
-                return core_text::code2utf8($matches[1]);
-            };
+            $callback1 = create_function('$matches', 'return core_text::code2utf8(hexdec($matches[1]));');
+            $callback2 = create_function('$matches', 'return core_text::code2utf8($matches[1]);');
         }
 
         $result = (string)$str;
@@ -609,9 +576,7 @@ class core_text {
 
         if ($dec) {
             if (!$callback) {
-                $callback = function($matches) {
-                    return '&#' . hexdec($matches[1]) . ';';
-                };
+                $callback = create_function('$matches', 'return \'&#\'.(hexdec($matches[1])).\';\';');
             }
             $result = preg_replace_callback('/&#x([0-9a-f]+);/i', $callback, $result);
         }
@@ -631,39 +596,6 @@ class core_text {
             return substr($str, strlen($bom));
         }
         return $str;
-    }
-
-    /**
-     * There are a number of Unicode non-characters including the byte-order mark (which may appear
-     * multiple times in a string) and also other ranges. These can cause problems for some
-     * processing.
-     *
-     * This function removes the characters using string replace, so that the rest of the string
-     * remains unchanged.
-     *
-     * @param string $value Input string
-     * @return string Cleaned string value
-     * @since Moodle 3.5
-     */
-    public static function remove_unicode_non_characters($value) {
-        // Set up list of all Unicode non-characters for fast replacing.
-        if (!self::$noncharacters) {
-            self::$noncharacters = [];
-            // This list of characters is based on the Unicode standard. It includes the last two
-            // characters of each code planes 0-16 inclusive...
-            for ($plane = 0; $plane <= 16; $plane++) {
-                $base = ($plane === 0 ? '' : dechex($plane));
-                self::$noncharacters[] = html_entity_decode('&#x' . $base . 'fffe;');
-                self::$noncharacters[] = html_entity_decode('&#x' . $base . 'ffff;');
-            }
-            // ...And the character range U+FDD0 to U+FDEF.
-            for ($char = 0xfdd0; $char <= 0xfdef; $char++) {
-                self::$noncharacters[] = html_entity_decode('&#x' . dechex($char) . ';');
-            }
-        }
-
-        // Do character replacement.
-        return str_replace(self::$noncharacters, '', $value);
     }
 
     /**

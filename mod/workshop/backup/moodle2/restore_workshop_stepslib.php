@@ -104,8 +104,7 @@ class restore_workshop_activity_structure_step extends restore_activity_structur
         $oldid = $data->id;
         $data->course = $this->get_courseid();
 
-        // Any changes to the list of dates that needs to be rolled should be same during course restore and course reset.
-        // See MDL-9367.
+        $data->timemodified = $this->apply_date_offset($data->timemodified);
         $data->submissionstart = $this->apply_date_offset($data->submissionstart);
         $data->submissionend = $this->apply_date_offset($data->submissionend);
         $data->assessmentstart = $this->apply_date_offset($data->assessmentstart);
@@ -126,6 +125,8 @@ class restore_workshop_activity_structure_step extends restore_activity_structur
         $data->workshopid = $this->get_new_parentid('workshop');
         $data->example = 1;
         $data->authorid = $this->task->get_userid();
+        $data->timecreated = $this->apply_date_offset($data->timecreated);
+        $data->timemodified = $this->apply_date_offset($data->timemodified);
 
         $newitemid = $DB->insert_record('workshop_submissions', $data);
         $this->set_mapping('workshop_examplesubmission', $oldid, $newitemid, true); // Mapping with files
@@ -139,6 +140,8 @@ class restore_workshop_activity_structure_step extends restore_activity_structur
 
         $data->submissionid = $this->get_new_parentid('workshop_examplesubmission');
         $data->reviewerid = $this->task->get_userid();
+        $data->timecreated = $this->apply_date_offset($data->timecreated);
+        $data->timemodified = $this->apply_date_offset($data->timemodified);
 
         $newitemid = $DB->insert_record('workshop_assessments', $data);
         $this->set_mapping('workshop_referenceassessment', $oldid, $newitemid, true); // Mapping with files
@@ -152,6 +155,8 @@ class restore_workshop_activity_structure_step extends restore_activity_structur
 
         $data->submissionid = $this->get_new_parentid('workshop_examplesubmission');
         $data->reviewerid = $this->get_mappingid('user', $data->reviewerid);
+        $data->timecreated = $this->apply_date_offset($data->timecreated);
+        $data->timemodified = $this->apply_date_offset($data->timemodified);
 
         $newitemid = $DB->insert_record('workshop_assessments', $data);
         $this->set_mapping('workshop_exampleassessment', $oldid, $newitemid, true); // Mapping with files
@@ -166,6 +171,8 @@ class restore_workshop_activity_structure_step extends restore_activity_structur
         $data->workshopid = $this->get_new_parentid('workshop');
         $data->example = 0;
         $data->authorid = $this->get_mappingid('user', $data->authorid);
+        $data->timecreated = $this->apply_date_offset($data->timecreated);
+        $data->timemodified = $this->apply_date_offset($data->timemodified);
 
         $newitemid = $DB->insert_record('workshop_submissions', $data);
         $this->set_mapping('workshop_submission', $oldid, $newitemid, true); // Mapping with files
@@ -179,6 +186,8 @@ class restore_workshop_activity_structure_step extends restore_activity_structur
 
         $data->submissionid = $this->get_new_parentid('workshop_submission');
         $data->reviewerid = $this->get_mappingid('user', $data->reviewerid);
+        $data->timecreated = $this->apply_date_offset($data->timecreated);
+        $data->timemodified = $this->apply_date_offset($data->timemodified);
 
         $newitemid = $DB->insert_record('workshop_assessments', $data);
         $this->set_mapping('workshop_assessment', $oldid, $newitemid, true); // Mapping with files
@@ -192,9 +201,9 @@ class restore_workshop_activity_structure_step extends restore_activity_structur
 
         $data->workshopid = $this->get_new_parentid('workshop');
         $data->userid = $this->get_mappingid('user', $data->userid);
+        $data->timegraded = $this->apply_date_offset($data->timegraded);
 
         $newitemid = $DB->insert_record('workshop_aggregations', $data);
-        $this->set_mapping('workshop_aggregation', $oldid, $newitemid, true);
     }
 
     protected function after_execute() {

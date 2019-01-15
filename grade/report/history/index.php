@@ -30,10 +30,9 @@ require_once($CFG->dirroot.'/grade/lib.php');
 $download      = optional_param('download', '', PARAM_ALPHA);
 $courseid      = required_param('id', PARAM_INT);        // Course id.
 $page          = optional_param('page', 0, PARAM_INT);   // Active page.
-$showreport    = optional_param('showreport', 0, PARAM_INT);
 
 $PAGE->set_pagelayout('report');
-$url = new moodle_url('/grade/report/history/index.php', array('id' => $courseid, 'showreport' => 1));
+$url = new moodle_url('/grade/report/history/index.php', array('id' => $courseid));
 $PAGE->set_url($url);
 
 $course = $DB->get_record('course', array('id' => $courseid), '*', MUST_EXIST);
@@ -51,9 +50,6 @@ $USER->grade_last_report[$course->id] = 'history';
 
 $select = "itemtype <> 'course' AND courseid = :courseid AND " . $DB->sql_isnotempty('grade_items', 'itemname', true, true);
 $itemids = $DB->get_records_select_menu('grade_items', $select, array('courseid' => $course->id), 'itemname ASC', 'id, itemname');
-foreach ($itemids as $itemid => $itemname) {
-    $itemids[$itemid] = format_string($itemname, false, array("context" => $context));
-}
 $itemids = array(0 => get_string('allgradeitems', 'gradereport_history')) + $itemids;
 
 $output = $PAGE->get_renderer('gradereport_history');
@@ -109,17 +105,15 @@ if ($table->is_downloading()) {
 print_grade_page_head($COURSE->id, 'report', 'history', get_string('pluginname', 'gradereport_history'), false, '');
 $mform->display();
 
-if ($showreport) {
-    // Only display report after form has been submitted.
-    echo $output->render($table);
+// Render table.
+echo $output->render($table);
 
-    $event = \gradereport_history\event\grade_report_viewed::create(
-        array(
-            'context' => $context,
-            'courseid' => $courseid
-        )
-    );
-    $event->trigger();
-}
+$event = \gradereport_history\event\grade_report_viewed::create(
+    array(
+        'context' => $context,
+        'courseid' => $courseid
+    )
+);
+$event->trigger();
 
 echo $OUTPUT->footer();

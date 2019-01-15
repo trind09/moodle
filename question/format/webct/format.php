@@ -255,7 +255,7 @@ class qformat_webct extends qformat_default {
      * @return bool success
      */
     public function importpostprocess() {
-        if (!empty($this->tempdir)) {
+        if ($this->tempdir != '') {
             fulldelete($this->tempdir);
         }
         return true;
@@ -280,15 +280,15 @@ class qformat_webct extends qformat_default {
         }
         // We are importing a zip file.
         // Create name for temporary directory.
-        $this->tempdir = make_request_directory();
+        $uniquecode = time();
+        $this->tempdir = make_temp_directory('webct_import/' . $uniquecode);
         if (is_readable($filename)) {
             if (!copy($filename, $this->tempdir . '/webct.zip')) {
                 $this->error(get_string('cannotcopybackup', 'question'));
                 fulldelete($this->tempdir);
                 return false;
             }
-            $packer = get_file_packer('application/zip');
-            if ($packer->extract_to_pathname($this->tempdir . '/webct.zip', $this->tempdir, null, null, true)) {
+            if (unzip_file($this->tempdir . '/webct.zip', '', false)) {
                 $dir = $this->tempdir;
                 if ((($handle = opendir($dir))) == false) {
                     // The directory could not be opened.

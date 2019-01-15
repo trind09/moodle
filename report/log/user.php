@@ -58,10 +58,6 @@ if ($USER->id != $user->id and has_capability('moodle/user:viewuseractivitiesrep
 
 list($all, $today) = report_log_can_access_user_report($user, $course);
 
-if (!$today && !$all) {
-    print_error('nocapability', 'report_log');
-}
-
 if ($mode === 'today') {
     if (!$today) {
         require_capability('report/log:viewtoday', $coursecontext);
@@ -130,14 +126,17 @@ if (!empty($reportlog->selectedlogreader)) {
 
 echo $output->reader_selector($reportlog);
 
-if ($mode === 'all') {
+if ($mode === 'today') {
+    echo '<div class="graph">';
+    report_log_print_graph($course, $user->id, "userday.png", 0, $logreader);
+    echo '</div>';
+    echo $output->render($reportlog);
+} else {
+    echo '<div class="graph">';
+    report_log_print_graph($course, $user->id, "usercourse.png", 0, $logreader);
+    echo '</div>';
     $reportlog->selecteddate = 0;
+    echo $output->render($reportlog);
 }
 
-// Print the graphic chart accordingly to the mode (all, today).
-echo '<div class="graph">';
-report_log_print_graph($course, $user, $mode, 0, $logreader);
-echo '</div>';
-
-echo $output->render($reportlog);
 echo $OUTPUT->footer();

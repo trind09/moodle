@@ -178,24 +178,21 @@ abstract class wiki_markup_parser extends generic_parser {
      */
 
     protected function generate_header($text, $level) {
-        $toctext = $text = trim($text);
+        $text = trim($text);
 
         if (!$this->pretty_print && $level == 1) {
-            $editlink = '[' . get_string('editsection', 'wiki') . ']';
-            $url = array('href' => "edit.php?pageid={$this->wiki_page_id}&section=" . urlencode($text),
-                'class' => 'wiki_edit_section');
-            $text .= ' ' . parser_utils::h('a', $this->protect($editlink), $url);
-            $toctext .= ' ' . parser_utils::h('a', $editlink, $url);
+            $text .= ' ' . parser_utils::h('a', '['.get_string('editsection', 'wiki').']',
+                array('href' => "edit.php?pageid={$this->wiki_page_id}&section=" . urlencode($text),
+                    'class' => 'wiki_edit_section'));
         }
 
         if ($level <= $this->maxheaderdepth) {
-            $this->toc[] = array($level, $toctext);
+            $this->toc[] = array($level, $text);
             $num = count($this->toc);
             $text = parser_utils::h('a', "", array('name' => "toc-$num")) . $text;
         }
 
-        // Display headers as <h3> and lower for accessibility.
-        return parser_utils::h('h' . min(6, $level + 2), $text) . "\n\n";
+        return parser_utils::h('h' . $level, $text) . "\n\n";
     }
 
     /**
@@ -231,7 +228,7 @@ abstract class wiki_markup_parser extends generic_parser {
                 }
                 break;
             default:
-                continue 2;
+                continue;
             }
             $number = "$currentsection[0]";
             if (!empty($currentsection[1])) {
@@ -240,9 +237,7 @@ abstract class wiki_markup_parser extends generic_parser {
                     $number .= ".$currentsection[2]";
                 }
             }
-            $toc .= parser_utils::h('p', $number . ". " .
-               parser_utils::h('a', str_replace(array('[[', ']]'), '', $header[1]), array('href' => "#toc-$i")),
-               array('class' => 'wiki-toc-section-' . $header[0] . " wiki-toc-section"));
+            $toc .= parser_utils::h('p', $number . ". " . parser_utils::h('a', $header[1], array('href' => "#toc-$i")), array('class' => 'wiki-toc-section-' . $header[0] . " wiki-toc-section"));
             $i++;
         }
 

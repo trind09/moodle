@@ -144,7 +144,7 @@ class cc2moodle {
 
     public function generate_moodle_xml () {
 
-        global $CFG, $OUTPUT;
+        global $CFG;
 
         $cdir = static::$path_to_manifest_folder . DIRECTORY_SEPARATOR . 'course_files';
 
@@ -213,7 +213,7 @@ class cc2moodle {
 
         } else {
             $status = false;
-            echo $OUTPUT->notification('The course is empty');
+            notify('The course is empty');
             static::log_action('The course is empty', false);
         }
 
@@ -381,7 +381,7 @@ class cc2moodle {
         if (!empty($format['defaultblocks'])) {
             $blocknames = $format['defaultblocks'];
         } else {
-            if (isset($CFG->defaultblocks)) {
+            if (!empty($CFG->defaultblocks)) {
                 $blocknames = $CFG->defaultblocks;
             } else {
                 $blocknames = 'participants,activity_modules,search_forums,course_list:news_items,calendar_upcoming,recent_activity';

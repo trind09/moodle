@@ -6,7 +6,10 @@
 // of the webserver.
 define('NO_MOODLE_COOKIES', true);
 
-require(__DIR__.'/../../config.php');
+require_once(dirname(dirname(dirname(__FILE__))).'/config.php');
+
+//HTTPS is required in this page when $CFG->loginhttps enabled
+$PAGE->https_required();
 
 $PAGE->set_context(context_system::instance());
 
@@ -26,7 +29,8 @@ $file = $CFG->dirroot.'/pix/spacer.gif';
 if ($authplugin->ntlmsso_magic($sesskey) && file_exists($file)) {
     if (!empty($authplugin->config->ntlmsso_ie_fastpath)) {
         if (core_useragent::is_ie()) {
-            redirect($CFG->wwwroot.'/auth/ldap/ntlmsso_finish.php');
+            // $PAGE->https_required() up above takes care of what $CFG->httpswwwroot should be.
+            redirect($CFG->httpswwwroot.'/auth/ldap/ntlmsso_finish.php');
         }
     }
 

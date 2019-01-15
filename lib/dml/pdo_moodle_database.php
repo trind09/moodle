@@ -175,11 +175,10 @@ abstract class pdo_moodle_database extends moodle_database {
     /**
      * Do NOT use in code, to be used by database_manager only!
      * @param string|array $sql query
-     * @param array|null $tablenames an array of xmldb table names affected by this request.
      * @return bool true
      * @throws ddl_change_structure_exception A DDL specific exception is thrown for any errors.
      */
-    public function change_database_structure($sql, $tablenames = null) {
+    public function change_database_structure($sql) {
         $this->get_manager(); // Includes DDL exceptions classes ;-)
         $sqls = (array)$sql;
 
@@ -197,11 +196,11 @@ abstract class pdo_moodle_database extends moodle_database {
                 $this->query_end($result);
             }
         } catch (ddl_change_structure_exception $e) {
-            $this->reset_caches($tablenames);
+            $this->reset_caches();
             throw $e;
         }
 
-        $this->reset_caches($tablenames);
+        $this->reset_caches();
         return true;
     }
 

@@ -24,4 +24,3 @@
  */
 
 $string['pluginname'] = 'Tool Settings Service';
-$string['privacy:metadata'] = 'The Tool Settings Service plugin does not store any personal data.';

@@ -59,8 +59,7 @@ class backup_feedback_activity_structure_step extends backup_activity_structure_
                                                 'userid',
                                                 'timemodified',
                                                 'random_response',
-                                                'anonymous_response',
-                                                'courseid'));
+                                                'anonymous_response'));
 
         $items = new backup_nested_element('items');
 
@@ -77,14 +76,19 @@ class backup_feedback_activity_structure_step extends backup_activity_structure_
                                                 'dependvalue',
                                                 'options'));
 
+        $trackings = new backup_nested_element('trackings');
+
+        $tracking = new backup_nested_element('tracking', array('id'), array(
+                                                'userid',
+                                                'completed'));
+
         $values = new backup_nested_element('values');
 
         $value = new backup_nested_element('value', array('id'), array(
                                                 'item',
                                                 'template',
                                                 'completed',
-                                                'value',
-                                                'course_id'));
+                                                'value'));
 
         // Build the tree
         $feedback->add_child($items);
@@ -95,6 +99,9 @@ class backup_feedback_activity_structure_step extends backup_activity_structure_
 
         $completed->add_child($values);
         $values->add_child($value);
+
+        $feedback->add_child($trackings);
+        $trackings->add_child($tracking);
 
         // Define sources
         $feedback->set_source_table('feedback', array('id' => backup::VAR_ACTIVITYID));
@@ -110,11 +117,15 @@ class backup_feedback_activity_structure_step extends backup_activity_structure_
                 array(backup::VAR_PARENTID));
 
             $value->set_source_table('feedback_value', array('completed' => backup::VAR_PARENTID));
+
+            $tracking->set_source_table('feedback_tracking', array('feedback' => backup::VAR_PARENTID));
         }
 
         // Define id annotations
 
         $completed->annotate_ids('user', 'userid');
+
+        $tracking->annotate_ids('user', 'userid');
 
         // Define file annotations
 

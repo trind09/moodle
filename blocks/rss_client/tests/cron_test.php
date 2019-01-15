@@ -23,8 +23,8 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 defined('MOODLE_INTERNAL') || die();
-require_once(__DIR__ . '/../../moodleblock.class.php');
-require_once(__DIR__ . '/../block_rss_client.php');
+require_once(dirname(dirname(__DIR__)) . '/moodleblock.class.php');
+require_once(dirname(__DIR__) . '/block_rss_client.php');
 
 /**
  * Class for the PHPunit tests for rss client cron.
@@ -40,7 +40,7 @@ class block_rss_client_cron_testcase extends advanced_testcase {
      * than the current time the attempt is skipped.
      */
     public function test_skip() {
-        global $DB, $CFG;
+        global $DB;
         $this->resetAfterTest();
         // Create a RSS feed record with a skip until time set to the future.
         $record = (object) array(
@@ -57,12 +57,8 @@ class block_rss_client_cron_testcase extends advanced_testcase {
 
         $block = new block_rss_client();
         ob_start();
-
         // Silence SimplePie php notices.
-        $errorlevel = error_reporting($CFG->debug & ~E_USER_NOTICE);
-        $block->cron();
-        error_reporting($errorlevel);
-
+        @$block->cron();
         $cronoutput = ob_get_clean();
         $this->assertContains('skipping until ' . userdate($record->skipuntil), $cronoutput);
         $this->assertContains('0 feeds refreshed (took ', $cronoutput);
@@ -72,7 +68,7 @@ class block_rss_client_cron_testcase extends advanced_testcase {
      * Test that when a feed has an error the skip time is increaed correctly.
      */
     public function test_error() {
-        global $DB, $CFG;
+        global $DB;
         $this->resetAfterTest();
         $time = time();
         // A record that has failed before.
@@ -117,12 +113,8 @@ class block_rss_client_cron_testcase extends advanced_testcase {
         // Run the cron.
         $block = new block_rss_client();
         ob_start();
-
         // Silence SimplePie php notices.
-        $errorlevel = error_reporting($CFG->debug & ~E_USER_NOTICE);
-        $block->cron();
-        error_reporting($errorlevel);
-
+        @$block->cron();
         $cronoutput = ob_get_clean();
         $skiptime1 = $record->skiptime * 2;
         $message1 = 'http://example.com/rss Error: could not load/find the RSS feed - skipping for ' . $skiptime1 . ' seconds.';

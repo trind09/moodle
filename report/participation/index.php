@@ -25,7 +25,6 @@
 
 require('../../config.php');
 require_once($CFG->dirroot.'/lib/tablelib.php');
-require_once($CFG->dirroot.'/notes/lib.php');
 require_once($CFG->dirroot.'/report/participation/locallib.php');
 
 define('DEFAULT_PAGE_SIZE', 20);
@@ -76,8 +75,8 @@ if (!array_key_exists($action, $actionoptions)) {
     $action = '';
 }
 
-$PAGE->set_title(format_string($course->shortname, true, array('context' => $context)) .': '. $strparticipation);
-$PAGE->set_heading(format_string($course->fullname, true, array('context' => $context)));
+$PAGE->set_title($course->shortname .': '. $strparticipation);
+$PAGE->set_heading($course->fullname);
 echo $OUTPUT->header();
 
 $uselegacyreader = false; // Use legacy reader with sql_internal_table_reader to aggregate records.
@@ -174,17 +173,11 @@ if (!empty($instanceid) && !empty($roleid)) {
     $table = new flexible_table('course-participation-'.$course->id.'-'.$cm->id.'-'.$roleid);
     $table->course = $course;
 
-    $actionheader = !empty($action) ? get_string($action) : get_string('allactions');
-
-    if (empty($CFG->messaging)) {
-        $table->define_columns(array('fullname', 'count'));
-        $table->define_headers(array(get_string('user'), $actionheader));
-    } else {
-        $table->define_columns(array('fullname', 'count', 'select'));
-        $table->define_headers(array(get_string('user'), $actionheader, get_string('select')));
-    }
+    $table->define_columns(array('fullname','count','select'));
+    $table->define_headers(array(get_string('user'),((!empty($action)) ? get_string($action) : get_string('allactions')),get_string('select')));
     $table->define_baseurl($baseurl);
 
+    $table->set_attribute('cellpadding','5');
     $table->set_attribute('class', 'generaltable generalbox reporttable');
 
     $table->sortable(true,'lastname','ASC');
@@ -328,7 +321,7 @@ if (!empty($instanceid) && !empty($roleid)) {
 
     $a = new stdClass();
     $a->count = $totalcount;
-    $a->items = format_string($role->name, true, array('context' => $context));
+    $a->items = $role->name;
 
     if ($matchcount != $totalcount) {
         $a->count = $matchcount.'/'.$a->count;
@@ -336,23 +329,17 @@ if (!empty($instanceid) && !empty($roleid)) {
 
     echo '<h2>'.get_string('counteditems', '', $a).'</h2>'."\n";
 
-    if (!empty($CFG->messaging)) {
-        echo '<form action="'.$CFG->wwwroot.'/user/action_redir.php" method="post" id="participantsform">'."\n";
-        echo '<div>'."\n";
-        echo '<input type="hidden" name="id" value="'.$id.'" />'."\n";
-        echo '<input type="hidden" name="returnto" value="'. s($PAGE->url) .'" />'."\n";
-        echo '<input type="hidden" name="sesskey" value="'.sesskey().'" />'."\n";
-    }
+    echo '<form action="'.$CFG->wwwroot.'/user/action_redir.php" method="post" id="studentsform">'."\n";
+    echo '<div>'."\n";
+    echo '<input type="hidden" name="id" value="'.$id.'" />'."\n";
+    echo '<input type="hidden" name="returnto" value="'. s($PAGE->url) .'" />'."\n";
+    echo '<input type="hidden" name="sesskey" value="'.sesskey().'" />'."\n";
 
     foreach ($users as $u) {
-        $data = array();
-        $data[] = html_writer::link(new moodle_url('/user/view.php', array('id' => $u->userid, 'course' => $course->id)),
-            fullname($u, true));
-        $data[] = !empty($u->count) ? get_string('yes').' ('.$u->count.') ' : get_string('no');
-
-        if (!empty($CFG->messaging)) {
-            $data[] = '<input type="checkbox" class="usercheckbox" name="user'.$u->userid.'" value="'.$u->count.'" />';
-        }
+        $data = array('<a href="'.$CFG->wwwroot.'/user/view.php?id='.$u->userid.'&amp;course='.$course->id.'">'.fullname($u,true).'</a>'."\n",
+                      ((!empty($u->count)) ? get_string('yes').' ('.$u->count.') ' : get_string('no')),
+                      '<input type="checkbox" class="usercheckbox" name="user'.$u->userid.'" value="'.$u->count.'" />'."\n",
+                      );
         $table->add_data($data);
     }
 
@@ -370,30 +357,25 @@ if (!empty($instanceid) && !empty($roleid)) {
         echo html_writer::end_div();
     }
 
-    if (!empty($CFG->messaging)) {
-        $buttonclasses = 'btn btn-secondary';
-        echo '<div class="selectbuttons btn-group">';
-        echo '<input type="button" id="checkallonpage" value="'.get_string('selectall').'" class="'. $buttonclasses .'"> '."\n";
-        echo '<input type="button" id="checknone" value="'.get_string('deselectall').'" class="'. $buttonclasses .'"> '."\n";
-        if ($perpage >= $matchcount) {
-            echo '<input type="button" id="checkallnos" value="'.get_string('selectnos').'" class="'. $buttonclasses .'">'."\n";
-        }
-        echo '</div>';
-        echo '<div class="p-y-1">';
-        echo html_writer::label(get_string('withselectedusers'), 'formactionselect');
-        $displaylist['#messageselect'] = get_string('messageselectadd');
-        echo html_writer::select($displaylist, 'formaction', '', array('' => 'choosedots'), array('id' => 'formactionid'));
-        echo '</div>';
-        echo '</div>'."\n";
-        echo '</form>'."\n";
-
-        $options = new stdClass();
-        $options->courseid = $course->id;
-        $options->noteStateNames = note_get_state_names();
-        $options->stateHelpIcon = $OUTPUT->help_icon('publishstate', 'notes');
-        $PAGE->requires->js_call_amd('core_user/participants', 'init', [$options]);
+    echo '<div class="selectbuttons">';
+    echo '<input type="button" id="checkall" value="'.get_string('selectall').'" /> '."\n";
+    echo '<input type="button" id="checknone" value="'.get_string('deselectall').'" /> '."\n";
+    if ($perpage >= $matchcount) {
+        echo '<input type="button" id="checknos" value="'.get_string('selectnos').'" />'."\n";
     }
+    echo '</div>';
+    echo '<div>';
+    echo html_writer::label(get_string('withselectedusers'), 'formactionselect');
+    $displaylist['messageselect.php'] = get_string('messageselectadd');
+    echo html_writer::select($displaylist, 'formaction', '', array(''=>'choosedots'), array('id'=>'formactionselect'));
+    echo $OUTPUT->help_icon('withselectedusers');
+    echo '<input type="submit" value="' . get_string('ok') . '" />'."\n";
+    echo '</div>';
     echo '</div>'."\n";
+    echo '</form>'."\n";
+    echo '</div>'."\n";
+
+    $PAGE->requires->js_init_call('M.report_participation.init');
 }
 
 echo $OUTPUT->footer();

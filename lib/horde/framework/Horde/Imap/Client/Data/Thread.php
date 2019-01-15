@@ -1,12 +1,12 @@
 <?php
 /**
- * Copyright 2008-2017 Horde LLC (http://www.horde.org/)
+ * Copyright 2008-2014 Horde LLC (http://www.horde.org/)
  *
  * See the enclosed file COPYING for license information (LGPL). If you
  * did not receive this file, see http://www.horde.org/licenses/lgpl21.
  *
  * @category  Horde
- * @copyright 2008-2017 Horde LLC
+ * @copyright 2008-2014 Horde LLC
  * @license   http://www.horde.org/licenses/lgpl21 LGPL 2.1
  * @package   Imap_Client
  */
@@ -17,7 +17,7 @@
  *
  * @author    Michael Slusarz <slusarz@horde.org>
  * @category  Horde
- * @copyright 2008-2017 Horde LLC
+ * @copyright 2008-2014 Horde LLC
  * @license   http://www.horde.org/licenses/lgpl21 LGPL 2.1
  * @package   Imap_Client
  */
@@ -84,7 +84,8 @@ class Horde_Imap_Client_Data_Thread implements Countable, Serializable
      */
     public function getThread($index)
     {
-        foreach ($this->_thread as $v) {
+        reset($this->_thread);
+        while (list(,$v) = each($this->_thread)) {
             if (isset($v[$index])) {
                 reset($v);
 
@@ -95,8 +96,7 @@ class Horde_Imap_Client_Data_Thread implements Countable, Serializable
                 $levels = $out = array();
                 $last = 0;
 
-                while (($v2 = current($v)) !== false) {
-                    $k2 = key($v);
+                while (list($k2, $v2) = each($v)) {
                     $ob2 = clone $ob;
                     $ob2->level = $v2;
                     $out[$k2] = $ob2;
@@ -106,7 +106,6 @@ class Horde_Imap_Client_Data_Thread implements Countable, Serializable
                     }
                     $levels[$v2] = $k2;
                     $last = $v2;
-                    next($v);
                 }
 
                 foreach ($levels as $v) {
@@ -159,11 +158,12 @@ class Horde_Imap_Client_Data_Thread implements Countable, Serializable
     {
         $out = array();
 
-        foreach ($this->_thread as $val) {
-            $out += $val;
+        reset($this->_thread);
+        while (list(,$v) = each($this->_thread)) {
+            $out = array_merge($out, array_keys($v));
         }
 
-        return array_keys($out);
+        return $out;
     }
 
 }

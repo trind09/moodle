@@ -26,5 +26,3 @@
 
 $string['pluginname'] = 'URL';
 $string['openlinkinnewwindow'] = 'Open link in new window';
-$string['fieldtypelabel'] = 'URL field';
-$string['privacy:metadata'] = 'The URL field component does not store any personal data, it uses tables defined in mod_data.';

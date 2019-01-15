@@ -1,12 +1,12 @@
 <?php
 /**
- * Copyright 2011-2017 Horde LLC (http://www.horde.org/)
+ * Copyright 2011-2014 Horde LLC (http://www.horde.org/)
  *
  * See the enclosed file COPYING for license information (LGPL). If you
  * did not receive this file, see http://www.horde.org/licenses/lgpl21.
  *
  * @category  Horde
- * @copyright 2011-2017 Horde LLC
+ * @copyright 2011-2014 Horde LLC
  * @license   http://www.horde.org/licenses/lgpl21 LGPL 2.1
  * @package   Imap_Client
  */
@@ -16,15 +16,13 @@
  *
  * @author    Michael Slusarz <slusarz@horde.org>
  * @category  Horde
- * @copyright 2011-2017 Horde LLC
+ * @copyright 2011-2014 Horde LLC
  * @license   http://www.horde.org/licenses/lgpl21 LGPL 2.1
  * @package   Imap_Client
  *
- * @todo $date should return null if it doesn't exist.
- *
  * @property Horde_Mail_Rfc822_List $bcc  Bcc address(es).
  * @property Horde_Mail_Rfc822_List $cc  Cc address(es).
- * @property Horde_Imap_Client_DateTime $date  Message date.
+ * @property Horde_Imap_Client_DateTime $date  IMAP internal date.
  * @property Horde_Mail_Rfc822_List $from  From address(es).
  * @property string $in_reply_to  Message-ID of the message replied to.
  * @property string $message_id  Message-ID of the message.
@@ -35,8 +33,8 @@
  */
 class Horde_Imap_Client_Data_Envelope implements Serializable
 {
-    /* Serializable version. */
-    const VERSION = 3;
+    /** Serializable version. */
+    const VERSION = 2;
 
     /**
      * Data object.
@@ -64,17 +62,18 @@ class Horde_Imap_Client_Data_Envelope implements Serializable
      */
     public function __get($name)
     {
-        $name = $this->_normalizeProperty($name);
-
         switch ($name) {
+        case 'reply_to':
+            $name = 'reply-to';
+            // Fall-through
+
         case 'bcc':
         case 'cc':
         case 'from':
-        case 'reply-to':
         case 'sender':
         case 'to':
-            if ($h = $this->_data[$name]) {
-                return $h->getAddressList(true);
+            if (($ob = $this->_data->getOb($name)) !== null) {
+                return $ob;
             }
 
             if (in_array($name, array('sender', 'reply-to'))) {
@@ -83,16 +82,16 @@ class Horde_Imap_Client_Data_Envelope implements Serializable
             break;
 
         case 'date':
-            if ($val = $this->_data['date']) {
-                return new Horde_Imap_Client_DateTime($val->value);
+            if (($val = $this->_data->getValue($name)) !== null) {
+                return new Horde_Imap_Client_DateTime($val);
             }
             break;
 
-        case 'in-reply-to':
-        case 'message-id':
+        case 'in_reply_to':
+        case 'message_id':
         case 'subject':
-            if ($val = $this->_data[$name]) {
-                return $val->value;
+            if (($val = $this->_data->getValue($name)) !== null) {
+                return $val;
             }
             break;
         }
@@ -108,8 +107,8 @@ class Horde_Imap_Client_Data_Envelope implements Serializable
         case 'date':
             return new Horde_Imap_Client_DateTime();
 
-        case 'in-reply-to':
-        case 'message-id':
+        case 'in_reply_to':
+        case 'message_id':
         case 'subject':
             return '';
         }
@@ -125,39 +124,43 @@ class Horde_Imap_Client_Data_Envelope implements Serializable
             return;
         }
 
-        $name = $this->_normalizeProperty($name);
-
         switch ($name) {
         case 'bcc':
         case 'cc':
         case 'date':
         case 'from':
-        case 'in-reply-to':
-        case 'message-id':
-        case 'reply-to':
+        case 'in_reply_to':
+        case 'message_id':
+        case 'reply_to':
         case 'sender':
         case 'subject':
         case 'to':
             switch ($name) {
             case 'from':
-                if ($this->reply_to->match($value)) {
-                    unset($this->_data['reply-to']);
-                }
-                if ($this->sender->match($value)) {
-                    unset($this->_data['sender']);
+                foreach (array('reply_to', 'sender') as $val) {
+                    if ($this->$val->match($value)) {
+                        $this->_data->removeHeader($val);
+                    }
                 }
                 break;
 
-            case 'reply-to':
+            case 'reply_to':
             case 'sender':
                 if ($this->from->match($value)) {
-                    unset($this->_data[$name]);
+                    $this->_data->removeHeader($name);
                     return;
+                }
+
+                /* Convert reply-to name. */
+                if ($name == 'reply_to') {
+                    $name = 'reply-to';
                 }
                 break;
             }
 
-            $this->_data->addHeader($name, $value);
+            $this->_data->addHeader($name, $value, array(
+                'sanity_check' => true
+            ));
             break;
         }
     }
@@ -166,37 +169,20 @@ class Horde_Imap_Client_Data_Envelope implements Serializable
      */
     public function __isset($name)
     {
-        $name = $this->_normalizeProperty($name);
-
         switch ($name) {
-        case 'reply-to':
+        case 'reply_to':
+            $name = 'reply-to';
+            // Fall-through
+
         case 'sender':
-            if (isset($this->_data[$name])) {
+            if ($this->_data->getValue($name) !== null) {
                 return true;
             }
             $name = 'from';
             break;
         }
 
-        return isset($this->_data[$name]);
-    }
-
-    /**
-     */
-    protected function _normalizeProperty($name)
-    {
-        switch ($name) {
-        case 'in_reply_to':
-            return 'in-reply-to';
-
-        case 'message_id':
-            return 'message-id';
-
-        case 'reply_to':
-            return 'reply-to';
-        }
-
-        return $name;
+        return ($this->_data->getValue($name) !== null);
     }
 
     /* Serializable methods. */

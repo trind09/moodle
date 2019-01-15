@@ -44,7 +44,7 @@ $PAGE->set_url($url);
 
 /// basic access checks
 if (!$course = $DB->get_record('course', array('id' => $courseid))) {
-    print_error('invalidcourseid');
+    print_error('nocourseid');
 }
 
 if (!$item = $DB->get_record('grade_items', array('id' => $itemid))) {

@@ -184,8 +184,6 @@ class controller {
 
         if ($updated) {
             $this->info[] = get_string('langupdatecomplete', 'tool_langimport');
-            // The strings have been changed so we need to purge their cache to ensure users see the changes.
-            get_string_manager()->reset_caches();
         } else {
             $this->info[] = get_string('nolangupdateneeded', 'tool_langimport');
         }
@@ -208,17 +206,6 @@ class controller {
         }
         return false;
     }
-
-    /**
-     * Returns the URL where a given language pack can be downloaded
-     *
-     * Alternatively, if the parameter is empty, returns URL of the page with the
-     * list of all available language packs.
-     *
-     * @param string $langcode language code like 'cs' or empty for unknown
-     * @return string URL
-     */
-    public function lang_pack_url($langcode = '') {
-        return $this->installer->lang_pack_url($langcode);
-    }
 }
+
+

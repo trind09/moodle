@@ -44,11 +44,10 @@ class feedback_textfield_form extends feedback_item_form {
                             get_string('textfield_size', 'feedback').'&nbsp;',
                             array_slice(range(0, 255), 5, 255, true));
 
-        $mform->addElement('text',
+        $mform->addElement('select',
                             'itemmaxlength',
-                            get_string('textfield_maxlength', 'feedback'));
-        $mform->setType('itemmaxlength', PARAM_INT);
-        $mform->addRule('itemmaxlength', null, 'numeric', null, 'client');
+                            get_string('textfield_maxlength', 'feedback').'&nbsp;',
+                            array_slice(range(0, 255), 5, 255, true));
 
         parent::definition();
         $this->set_data($item);

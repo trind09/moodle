@@ -34,16 +34,16 @@ namespace core\output;
  */
 class mustache_javascript_helper {
 
-    /** @var moodle_page $page - Page used to get requirement manager */
-    private $page = null;
+    /** @var page_requirements_manager $requires - Page requirements manager for collecting JS calls. */
+    private $requires = null;
 
     /**
      * Create new instance of mustache javascript helper.
      *
-     * @param moodle_page $page Page.
+     * @param page_requirements_manager $requires Page requirements manager.
      */
-    public function __construct($page) {
-        $this->page = $page;
+    public function __construct($requires) {
+        $this->requires = $requires;
     }
 
     /**
@@ -54,6 +54,6 @@ class mustache_javascript_helper {
      * @param \Mustache_LambdaHelper $helper Used to render the content of this block.
      */
     public function help($text, \Mustache_LambdaHelper $helper) {
-        $this->page->requires->js_amd_inline($helper->render($text));
+        $this->requires->js_amd_inline($helper->render($text));
     }
 }

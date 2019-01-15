@@ -32,11 +32,13 @@ class mod_feedback_use_templ_form extends moodleform {
     public function definition() {
         $mform =& $this->_form;
 
+        //headline
+        $mform->addElement('header', 'general', get_string('general', 'form'));
+
         // visible elements
-        $mform->addElement('radio', 'deleteolditems', '', get_string('delete_old_items', 'feedback'), 1);
-        $mform->addElement('radio', 'deleteolditems', '', get_string('append_new_items', 'feedback'), 0);
+        $mform->addElement('radio', 'deleteolditems', '1)', get_string('delete_old_items', 'feedback'), 1);
+        $mform->addElement('radio', 'deleteolditems', '2)', get_string('append_new_items', 'feedback'), 0);
         $mform->setType('deleteolditems', PARAM_INT);
-        $mform->setDefault('deleteolditems', 1);
 
         // hidden elements
         $mform->addElement('hidden', 'id');
@@ -45,7 +47,8 @@ class mod_feedback_use_templ_form extends moodleform {
         $mform->setType('templateid', PARAM_INT);
         $mform->addElement('hidden', 'do_show');
         $mform->setType('do_show', PARAM_INT);
-        $mform->setConstant('do_show', 'edit');
+        $mform->addElement('hidden', 'confirmadd');
+        $mform->setType('confirmadd', PARAM_INT);
 
         //-------------------------------------------------------------------------------
         // buttons

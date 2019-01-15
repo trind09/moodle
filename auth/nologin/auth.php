@@ -35,18 +35,8 @@ class auth_plugin_nologin extends auth_plugin_base {
     /**
      * Constructor.
      */
-    public function __construct() {
+    function auth_plugin_nologin() {
         $this->authtype = 'nologin';
-    }
-
-    /**
-     * Old syntax of class constructor. Deprecated in PHP7.
-     *
-     * @deprecated since Moodle 3.1
-     */
-    public function auth_plugin_nologin() {
-        debugging('Use of class name as constructor is deprecated', DEBUG_DEVELOPER);
-        self::__construct();
     }
 
     /**

@@ -270,7 +270,7 @@ abstract class grade_export {
         if ($grade_item->itemtype == 'mod') {
             $column->name = get_string('modulename', $grade_item->itemmodule).get_string('labelsep', 'langconfig').$grade_item->get_name();
         } else {
-            $column->name = $grade_item->get_name(true);
+            $column->name = $grade_item->get_name();
         }
 
         // We can't have feedback and display type at the same time.
@@ -625,19 +625,9 @@ class grade_export_update_buffer {
     /**
      * Constructor - creates the buffer and initialises the time stamp
      */
-    public function __construct() {
+    public function grade_export_update_buffer() {
         $this->update_list = array();
         $this->export_time = time();
-    }
-
-    /**
-     * Old syntax of class constructor. Deprecated in PHP7.
-     *
-     * @deprecated since Moodle 3.1
-     */
-    public function grade_export_update_buffer() {
-        debugging('Use of class name as constructor is deprecated', DEBUG_DEVELOPER);
-        self::__construct();
     }
 
     public function flush($buffersize) {
@@ -699,7 +689,8 @@ class grade_export_update_buffer {
  * @param $courseid int The course being exported
  */
 function export_verify_grades($courseid) {
-    if (grade_needs_regrade_final_grades($courseid)) {
-        throw new moodle_exception('gradesneedregrading', 'grades');
+    $regraderesult = grade_regrade_final_grades($courseid);
+    if (is_array($regraderesult)) {
+        throw new moodle_exception('gradecantregrade', 'error', '', implode(', ', array_unique($regraderesult)));
     }
 }

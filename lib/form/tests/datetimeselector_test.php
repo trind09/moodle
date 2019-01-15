@@ -141,11 +141,11 @@ class core_form_datetimeselector_testcase extends advanced_testcase {
 
             // Create dateselector element with different timezones.
             $elparams = array('optional'=>false, 'timezone' => $vals['timezone']);
-            $el = $this->mform->addElement('date_time_selector', 'dateselector', null, $elparams);
-            $this->assertTrue($el instanceof MoodleQuickForm_date_time_selector);
+            $el = new MoodleQuickForm_date_time_selector('dateselector', null, $elparams);
+            $el->_createElements();
             $submitvalues = array('dateselector' => $vals);
 
-            $this->assertSame(array('dateselector' => $vals['timestamp']), $el->exportValue($submitvalues, true),
+            $this->assertSame(array('dateselector' => $vals['timestamp']), $el->exportValue($submitvalues),
                     "Please check if timezones are updated (Site adminstration -> location -> update timezone)");
         }
     }
@@ -165,8 +165,8 @@ class core_form_datetimeselector_testcase extends advanced_testcase {
 
             // Create dateselector element with different timezones.
             $elparams = array('optional'=>false, 'timezone' => $vals['timezone']);
-            $el = $this->mform->addElement('date_time_selector', 'dateselector', null, $elparams);
-            $this->assertTrue($el instanceof MoodleQuickForm_date_time_selector);
+            $el = new MoodleQuickForm_date_time_selector('dateselector', null, $elparams);
+            $el->_createElements();
             $expectedvalues = array(
                 'day' => array($vals['day']),
                 'month' => array($vals['month']),

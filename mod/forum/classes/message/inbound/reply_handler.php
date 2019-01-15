@@ -29,7 +29,6 @@ defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot . '/mod/forum/lib.php');
 require_once($CFG->dirroot . '/repository/lib.php');
-require_once($CFG->libdir . '/completionlib.php');
 
 /**
  * A Handler to process replies to forum posts.
@@ -162,7 +161,6 @@ class reply_handler extends \core\message\inbound\handler {
         $addpost->subject      = $subject;
         $addpost->parent       = $post->id;
         $addpost->itemid       = file_get_unused_draft_itemid();
-        $addpost->deleted      = 0;
 
         list ($message, $format) = self::remove_quoted_text($messagedata);
         $addpost->message = $message;
@@ -171,21 +169,11 @@ class reply_handler extends \core\message\inbound\handler {
         // We don't trust text coming from e-mail.
         $addpost->messagetrust = false;
 
-        // Find all attachments. If format is plain text, treat inline attachments as regular ones.
-        $attachments = !empty($messagedata->attachments['attachment']) ? $messagedata->attachments['attachment'] : [];
-        $inlineattachments = [];
-        if (!empty($messagedata->attachments['inline'])) {
-            if ($addpost->messageformat == FORMAT_HTML) {
-                $inlineattachments = $messagedata->attachments['inline'];
-            } else {
-                $attachments = array_merge($attachments, $messagedata->attachments['inline']);
-            }
-        }
-
         // Add attachments to the post.
-        if ($attachments) {
-            $attachmentcount = count($attachments);
-            if (!forum_can_create_attachment($forum, $modcontext)) {
+        if (!empty($messagedata->attachments['attachment']) && count($messagedata->attachments['attachment'])) {
+            $attachmentcount = count($messagedata->attachments['attachment']);
+            if (empty($forum->maxattachments) || $forum->maxbytes == 1 ||
+                    !has_capability('mod/forum:createattachment', $modcontext)) {
                 // Attachments are not allowed.
                 mtrace("--> User does not have permission to attach files in this forum. Rejecting e-mail.");
 
@@ -208,7 +196,7 @@ class reply_handler extends \core\message\inbound\handler {
 
             $filesize = 0;
             $addpost->attachments  = file_get_unused_draft_itemid();
-            foreach ($attachments as $attachment) {
+            foreach ($messagedata->attachments['attachment'] as $attachment) {
                 mtrace("--> Processing {$attachment->filename} as an attachment.");
                 $this->process_attachment('*', $usercontext, $addpost->attachments, $attachment);
                 $filesize += $attachment->filesize;
@@ -227,8 +215,8 @@ class reply_handler extends \core\message\inbound\handler {
         }
 
         // Process any files in the message itself.
-        if ($inlineattachments) {
-            foreach ($inlineattachments as $attachment) {
+        if (!empty($messagedata->attachments['inline'])) {
+            foreach ($messagedata->attachments['inline'] as $attachment) {
                 mtrace("--> Processing {$attachment->filename} as an inline attachment.");
                 $this->process_attachment('*', $usercontext, $addpost->itemid, $attachment);
 
@@ -255,14 +243,6 @@ class reply_handler extends \core\message\inbound\handler {
         $event->add_record_snapshot('forum_posts', $addpost);
         $event->add_record_snapshot('forum_discussions', $discussion);
         $event->trigger();
-
-        // Update completion state.
-        $completion = new \completion_info($course);
-        if ($completion->is_enabled($cm) && ($forum->completionreplies || $forum->completionposts)) {
-            $completion->update_state($cm, COMPLETION_COMPLETE);
-
-            mtrace("--> Updating completion status for user {$USER->id} in forum {$forum->id} for post {$addpost->id}.");
-        }
 
         mtrace("--> Created a post {$addpost->id} in {$discussion->id}.");
         return $addpost;
@@ -316,7 +296,6 @@ class reply_handler extends \core\message\inbound\handler {
         $a = new \stdClass();
         $a->subject = $handlerresult->subject;
         $discussionurl = new \moodle_url('/mod/forum/discuss.php', array('d' => $handlerresult->discussion));
-        $discussionurl->set_anchor('p' . $handlerresult->id);
         $a->discussionurl = $discussionurl->out();
 
         $message = new \stdClass();

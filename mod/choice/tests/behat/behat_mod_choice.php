@@ -27,6 +27,8 @@
 
 require_once(__DIR__ . '/../../../../lib/behat/behat_base.php');
 
+use Behat\Behat\Context\Step\Given as Given;
+
 /**
  * Choice activity definitions.
  *
@@ -47,11 +49,12 @@ class behat_mod_choice extends behat_base {
      */
     public function I_choose_option_from_activity($option, $choiceactivity) {
 
-        $this->execute("behat_general::click_link", $this->escape($choiceactivity));
-
-        $this->execute('behat_forms::i_set_the_field_to', array( $this->escape($option), 1));
-
-        $this->execute("behat_forms::press_button", get_string('savemychoice', 'choice'));
+        // Escaping again the strings as backslashes have been removed by the automatic transformation.
+        return array(
+            new Given('I follow "' . $this->escape($choiceactivity) . '"'),
+            new Given('I set the field "' . $this->escape($option) . '" to "1"'),
+            new Given('I press "' . get_string('savemychoice', 'choice') . '"')
+        );
     }
 
     /**
@@ -64,24 +67,14 @@ class behat_mod_choice extends behat_base {
      * @return array
      */
     public function I_choose_options_from_activity($option, $choiceactivity) {
-        // Get Behat general and forms contexts.
-        $behatgeneral = behat_context_helper::get('behat_general');
-        $behatforms = behat_context_helper::get('behat_forms');
-
-        // Go to choice activity.
-        $behatgeneral->click_link($this->escape($choiceactivity));
-
-        // Wait for page to be loaded.
-        $this->wait_for_pending_js();
-
-        // Set all options.
+        // Escaping again the strings as backslashes have been removed by the automatic transformation.
+        $return = array(new Given('I follow "' . $this->escape($choiceactivity) . '"'));
         $options = explode('","', trim($option, '"'));
         foreach ($options as $option) {
-            $behatforms->i_set_the_field_to($this->escape($option), '1');
+            $return[] = new Given('I set the field "' . $this->escape($option) . '" to "1"');
         }
-
-        // Save choice.
-        $behatforms->press_button(get_string('savemychoice', 'choice'));
+        $return[] = new Given('I press "' . get_string('savemychoice', 'choice') . '"');
+        return $return;
     }
 
 }

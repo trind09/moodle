@@ -118,6 +118,30 @@ class enrol_flatfile_plugin extends enrol_plugin {
     }
 
     /**
+     * Gets an array of the user enrolment actions.
+     *
+     * @param course_enrolment_manager $manager
+     * @param stdClass $ue A user enrolment object
+     * @return array An array of user_enrolment_actions
+     */
+    public function get_user_enrolment_actions(course_enrolment_manager $manager, $ue) {
+        $actions = array();
+        $context = $manager->get_context();
+        $instance = $ue->enrolmentinstance;
+        $params = $manager->get_moodlepage()->url->params();
+        $params['ue'] = $ue->id;
+        if ($this->allow_unenrol_user($instance, $ue) && has_capability("enrol/flatfile:unenrol", $context)) {
+            $url = new moodle_url('/enrol/unenroluser.php', $params);
+            $actions[] = new user_enrolment_action(new pix_icon('t/delete', ''), get_string('unenrol', 'enrol'), $url, array('class'=>'unenrollink', 'rel'=>$ue->id));
+        }
+        if ($this->allow_manage($instance) && has_capability("enrol/flatfile:manage", $context)) {
+            $url = new moodle_url('/enrol/editenrolment.php', $params);
+            $actions[] = new user_enrolment_action(new pix_icon('t/edit', ''), get_string('edit'), $url, array('class'=>'editenrollink', 'rel'=>$ue->id));
+        }
+        return $actions;
+    }
+
+    /**
      * Enrol user into course via enrol instance.
      *
      * @param stdClass $instance
@@ -135,6 +159,11 @@ class enrol_flatfile_plugin extends enrol_plugin {
             $context = context_course::instance($instance->courseid, MUST_EXIST);
             role_assign($roleid, $userid, $context->id, 'enrol_'.$this->get_name(), $instance->id);
         }
+    }
+
+    public function cron() {
+        $trace = new text_progress_trace();
+        $this->sync($trace);
     }
 
     /**
@@ -162,8 +191,7 @@ class enrol_flatfile_plugin extends enrol_plugin {
 
         if ($processed and $mailadmins) {
             if ($log = $buffer->get_buffer()) {
-                $eventdata = new \core\message\message();
-                $eventdata->courseid          = SITEID;
+                $eventdata = new stdClass();
                 $eventdata->modulename        = 'moodle';
                 $eventdata->component         = 'enrol_flatfile';
                 $eventdata->name              = 'flatfile_enrolment';
@@ -317,8 +345,7 @@ class enrol_flatfile_plugin extends enrol_plugin {
         }
 
         if (!unlink($filelocation)) {
-            $eventdata = new \core\message\message();
-            $eventdata->courseid          = SITEID;
+            $eventdata = new stdClass();
             $eventdata->modulename        = 'moodle';
             $eventdata->component         = 'enrol_flatfile';
             $eventdata->name              = 'flatfile_enrolment';
@@ -419,7 +446,7 @@ class enrol_flatfile_plugin extends enrol_plugin {
             $notify = false;
             if ($ue = $DB->get_record('user_enrolments', array('enrolid'=>$instance->id, 'userid'=>$user->id))) {
                 // Update only.
-                $this->update_user_enrol($instance, $user->id, ENROL_USER_ACTIVE, $timestart, $timeend);
+                $this->update_user_enrol($instance, $user->id, ENROL_USER_ACTIVE, $roleid, $timestart, $timeend);
                 if (!$DB->record_exists('role_assignments', array('contextid'=>$context->id, 'roleid'=>$roleid, 'userid'=>$user->id, 'component'=>'enrol_flatfile', 'itemid'=>$instance->id))) {
                     role_assign($roleid, $user->id, $context->id, 'enrol_flatfile', $instance->id);
                 }
@@ -441,8 +468,7 @@ class enrol_flatfile_plugin extends enrol_plugin {
                 $a->profileurl = "$CFG->wwwroot/user/view.php?id=$user->id&amp;course=$course->id";
                 $subject = get_string('enrolmentnew', 'enrol', format_string($course->shortname, true, array('context' => $context)));
 
-                $eventdata = new \core\message\message();
-                $eventdata->courseid          = $course->id;
+                $eventdata = new stdClass();
                 $eventdata->modulename        = 'moodle';
                 $eventdata->component         = 'enrol_flatfile';
                 $eventdata->name              = 'flatfile_enrolment';
@@ -473,8 +499,7 @@ class enrol_flatfile_plugin extends enrol_plugin {
                 $a->user = fullname($user);
                 $subject = get_string('enrolmentnew', 'enrol', format_string($course->shortname, true, array('context' => $context)));
 
-                $eventdata = new \core\message\message();
-                $eventdata->courseid          = $course->id;
+                $eventdata = new stdClass();
                 $eventdata->modulename        = 'moodle';
                 $eventdata->component         = 'enrol_flatfile';
                 $eventdata->name              = 'flatfile_enrolment';

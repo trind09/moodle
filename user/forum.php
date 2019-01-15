@@ -38,7 +38,6 @@ list($user, $course) = useredit_setup_preference_page($userid, $courseid);
 // Create form.
 $forumform = new user_edit_forum_form(null, array('userid' => $user->id));
 
-$user->markasreadonnotification = get_user_preferences('forum_markasreadonnotification', 1, $user->id);
 $forumform->set_data($user);
 
 $redirect = new moodle_url("/user/preferences.php", array('userid' => $user->id));
@@ -48,15 +47,8 @@ if ($forumform->is_cancelled()) {
 
     $user->maildigest = $data->maildigest;
     $user->autosubscribe = $data->autosubscribe;
-    if (!empty($CFG->forum_trackreadposts)) {
-        $user->trackforums = $data->trackforums;
-        if (property_exists($data, 'markasreadonnotification')) {
-            $user->preference_forum_markasreadonnotification = $data->markasreadonnotification;
-        }
-    }
-    unset($user->markasreadonnotification);
+    $user->trackforums = $data->trackforums;
 
-    useredit_update_user_preference($user);
     user_update_user($user, false, false);
 
     // Trigger event.
@@ -65,9 +57,7 @@ if ($forumform->is_cancelled()) {
     if ($USER->id == $user->id) {
         $USER->maildigest = $data->maildigest;
         $USER->autosubscribe = $data->autosubscribe;
-        if (!empty($CFG->forum_trackreadposts)) {
-            $USER->trackforums = $data->trackforums;
-        }
+        $USER->trackforums = $data->trackforums;
     }
 
     redirect($redirect);

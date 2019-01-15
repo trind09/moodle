@@ -39,7 +39,7 @@ if ($verbosescales !== 1) {
 $PAGE->set_url($url);
 
 if (!$course = $DB->get_record('course', array('id'=>$id))) {
-    print_error('invalidcourseid');
+    print_error('nocourseid');
 }
 
 require_login($course);

@@ -79,25 +79,20 @@ class lesson_page_type_numerical extends lesson_page {
         $data = $mform->get_data();
         require_sesskey();
 
-        $formattextdefoptions = new stdClass();
-        $formattextdefoptions->noclean = true;
-        $formattextdefoptions->para = false;
-
         // set defaults
         $result->response = '';
         $result->newpageid = 0;
 
-        if (!isset($data->answer) || !is_numeric($data->answer)) {
+        if (isset($data->answer)) {
+            // just doing default PARAM_RAW, not doing PARAM_INT because it could be a float
+            $result->useranswer = (float)$data->answer;
+        } else {
             $result->noanswer = true;
             return $result;
-        } else {
-            // Just doing default PARAM_RAW, not doing PARAM_INT because it could be a float.
-            $result->useranswer = (float)$data->answer;
         }
         $result->studentanswer = $result->userresponse = $result->useranswer;
         $answers = $this->get_answers();
         foreach ($answers as $answer) {
-            $answer = parent::rewrite_answers_urls($answer);
             if (strpos($answer->answer, ':')) {
                 // there's a pairs of values
                 list($min, $max) = explode(':', $answer->answer);
@@ -110,7 +105,7 @@ class lesson_page_type_numerical extends lesson_page {
             }
             if (($result->useranswer >= $minimum) && ($result->useranswer <= $maximum)) {
                 $result->newpageid = $answer->jumpto;
-                $result->response = format_text($answer->response, $answer->responseformat, $formattextdefoptions);
+                $result->response = trim($answer->response);
                 if ($this->lesson->jumpto_is_correct($this->properties->id, $result->newpageid)) {
                     $result->correctanswer = true;
                 }
@@ -139,30 +134,30 @@ class lesson_page_type_numerical extends lesson_page {
             $cells = array();
             if ($this->lesson->custom && $answer->score > 0) {
                 // if the score is > 0, then it is correct
-                $cells[] = '<label class="correct">' . get_string('answer', 'lesson') . ' ' . $i . '</label>:';
+                $cells[] = '<span class="labelcorrect">'.get_string("answer", "lesson")." $i</span>: \n";
             } else if ($this->lesson->custom) {
-                $cells[] = '<label>' . get_string('answer', 'lesson') . ' ' . $i . '</label>:';
+                $cells[] = '<span class="label">'.get_string("answer", "lesson")." $i</span>: \n";
             } else if ($this->lesson->jumpto_is_correct($this->properties->id, $answer->jumpto)) {
                 // underline correct answers
-                $cells[] = '<span class="correct">' . get_string('answer', 'lesson') . ' ' . $i . '</span>:' . "\n";
+                $cells[] = '<span class="correct">'.get_string("answer", "lesson")." $i</span>: \n";
             } else {
-                $cells[] = '<label class="correct">' . get_string('answer', 'lesson') . ' ' . $i . '</label>:';
+                $cells[] = '<span class="labelcorrect">'.get_string("answer", "lesson")." $i</span>: \n";
             }
             $cells[] = format_text($answer->answer, $answer->answerformat, $options);
             $table->data[] = new html_table_row($cells);
 
             $cells = array();
-            $cells[] = '<label>' . get_string('response', 'lesson') . ' ' . $i . '</label>:';
+            $cells[] = "<span class=\"label\">".get_string("response", "lesson")." $i</span>";
             $cells[] = format_text($answer->response, $answer->responseformat, $options);
             $table->data[] = new html_table_row($cells);
 
             $cells = array();
-            $cells[] = '<label>' . get_string('score', 'lesson') . '</label>:';
+            $cells[] = "<span class=\"label\">".get_string("score", "lesson").'</span>';
             $cells[] = $answer->score;
             $table->data[] = new html_table_row($cells);
 
             $cells = array();
-            $cells[] = '<label>' . get_string('jump', 'lesson') . '</label>:';
+            $cells[] = "<span class=\"label\">".get_string("jump", "lesson").'</span>';
             $cells[] = $this->get_jump_name($answer->jumpto);
             $table->data[] = new html_table_row($cells);
             if ($i === 1){
@@ -204,8 +199,7 @@ class lesson_page_type_numerical extends lesson_page {
                     $total = $stats["total"];
                     unset($stats["total"]);
                     foreach ($stats as $valentered => $ntimes) {
-                        $data = '<input class="form-control" type="text" size="50" ' .
-                                'disabled="disabled" readonly="readonly" value="'.s($valentered).'" />';
+                        $data = '<input type="text" size="50" disabled="disabled" readonly="readonly" value="'.s($valentered).'" />';
                         $percent = $ntimes / $total * 100;
                         $percent = round($percent, 2);
                         $percent .= "% ".get_string("enteredthis", "lesson");
@@ -215,11 +209,9 @@ class lesson_page_type_numerical extends lesson_page {
                     $answerdata->answers[] = array(get_string("nooneansweredthisquestion", "lesson"), " ");
                 }
                 $i++;
-            } else if ($useranswer != null && ($answer->id == $useranswer->answerid || ($answer == end($answers) &&
-                    empty($answerdata->answers)))) {
-                // Get in here when the user answered or for the last answer.
-                $data = '<input class="form-control" type="text" size="50" ' .
-                        'disabled="disabled" readonly="readonly" value="'.s($useranswer->useranswer).'">';
+            } else if ($useranswer != null && ($answer->id == $useranswer->answerid || ($answer == end($answers) && empty($answerdata)))) {
+                 // get in here when what the user entered is not one of the answers
+                $data = '<input type="text" size="50" disabled="disabled" readonly="readonly" value="'.s($useranswer->useranswer).'">';
                 if (isset($pagestats[$this->properties->id][$useranswer->useranswer])) {
                     $percent = $pagestats[$this->properties->id][$useranswer->useranswer] / $pagestats[$this->properties->id]["total"] * 100;
                     $percent = round($percent, 2);

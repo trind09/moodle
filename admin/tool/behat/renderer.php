@@ -24,6 +24,9 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+global $CFG;
+require_once($CFG->libdir . '/behat/classes/behat_selectors.php');
+
 /**
  * Renderer for behat tool web features
  *
@@ -41,8 +44,6 @@ class tool_behat_renderer extends plugin_renderer_base {
      * @return string HTML code
      */
     public function render_stepsdefinitions($stepsdefinitions, $form) {
-        global $CFG;
-        require_once($CFG->libdir . '/behat/classes/behat_selectors.php');
 
         $html = $this->generic_info();
 
@@ -139,7 +140,7 @@ class tool_behat_renderer extends plugin_renderer_base {
         $msg = get_string('wrongbehatsetup', 'tool_behat', $a);
 
         // Error box including generic error string + specific error msg.
-        $html .= $this->output->box_start('box errorbox alert alert-danger');
+        $html .= $this->output->box_start('box errorbox');
         $html .= html_writer::tag('div', $msg);
         $html .= $this->output->box_end();
 

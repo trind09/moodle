@@ -23,4 +23,3 @@
  */
 
 $string['pluginname'] = 'Font colour';
-$string['privacy:metadata'] = 'The atto_fontcolor plugin does not store any personal data.';

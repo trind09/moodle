@@ -65,11 +65,10 @@ class blog_edit_form extends moodleform {
         $mform->addHelpButton('publishstate', 'publishto', 'blog');
         $mform->setDefault('publishstate', 0);
 
-        if (core_tag_tag::is_enabled('core', 'post')) {
+        if (!empty($CFG->usetags)) {
             $mform->addElement('header', 'tagshdr', get_string('tags', 'tag'));
+            $mform->addElement('tags', 'tags', get_string('tags'));
         }
-        $mform->addElement('tags', 'tags', get_string('tags'),
-                array('itemtype' => 'post', 'component' => 'core'));
 
         $allmodnames = array();
 
@@ -152,7 +151,7 @@ class blog_edit_form extends moodleform {
     public function validation($data, $files) {
         global $CFG, $DB, $USER;
 
-        $errors = parent::validation($data, $files);
+        $errors = array();
 
         // Validate course association.
         if (!empty($data['courseassoc'])) {

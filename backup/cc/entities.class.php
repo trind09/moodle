@@ -198,7 +198,7 @@ class entities {
     }
 
     public function move_files($files, $destination_folder) {
-        global $CFG, $OUTPUT;
+        global $CFG;
 
         if (!empty($files)) {
 
@@ -220,7 +220,7 @@ class entities {
                 }
 
                 if (!$copy_success) {
-                    echo $OUTPUT->notification('WARNING: Cannot copy the file ' . $source . ' to ' . $destination);
+                    notify('WARNING: Cannot copy the file ' . $source . ' to ' . $destination);
                     cc2moodle::log_action('Cannot copy the file ' . $source . ' to ' . $destination, false);
                 }
             }

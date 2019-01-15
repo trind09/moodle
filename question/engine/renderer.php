@@ -52,7 +52,7 @@ class core_question_renderer extends plugin_renderer_base {
     public function question_preview_link($questionid, context $context, $showlabel) {
         if ($showlabel) {
             $alt = '';
-            $label = get_string('preview');
+            $label = ' ' . get_string('preview');
             $attributes = array();
         } else {
             $alt = get_string('preview');
@@ -107,18 +107,18 @@ class core_question_renderer extends plugin_renderer_base {
         $output .= html_writer::tag('div',
                 $this->add_part_heading($qtoutput->formulation_heading(),
                     $this->formulation($qa, $behaviouroutput, $qtoutput, $options)),
-                array('class' => 'formulation clearfix'));
+                array('class' => 'formulation'));
         $output .= html_writer::nonempty_tag('div',
                 $this->add_part_heading(get_string('feedback', 'question'),
                     $this->outcome($qa, $behaviouroutput, $qtoutput, $options)),
-                array('class' => 'outcome clearfix'));
+                array('class' => 'outcome'));
         $output .= html_writer::nonempty_tag('div',
                 $this->add_part_heading(get_string('comments', 'question'),
                     $this->manual_comment($qa, $behaviouroutput, $qtoutput, $options)),
-                array('class' => 'comment clearfix'));
+                array('class' => 'comment'));
         $output .= html_writer::nonempty_tag('div',
                 $this->response_history($qa, $behaviouroutput, $qtoutput, $options),
-                array('class' => 'history clearfix'));
+                array('class' => 'history'));
 
         $output .= html_writer::end_tag('div');
         $output .= html_writer::end_tag('div');
@@ -144,6 +144,7 @@ class core_question_renderer extends plugin_renderer_base {
         $output .= $this->number($number);
         $output .= $this->status($qa, $behaviouroutput, $options);
         $output .= $this->mark_summary($qa, $behaviouroutput, $options);
+        $output .= $options->extrainfocontent;
         $output .= $this->question_flag($qa, $options->flags);
         $output .= $this->edit_question_link($qa, $options);
         return $output;
@@ -156,15 +157,15 @@ class core_question_renderer extends plugin_renderer_base {
      * @return HTML fragment.
      */
     protected function number($number) {
-        if (trim($number) === '') {
-            return '';
-        }
         $numbertext = '';
-        if (trim($number) === 'i') {
-            $numbertext = get_string('information', 'question');
-        } else {
+        if (is_numeric($number)) {
             $numbertext = get_string('questionx', 'question',
                     html_writer::tag('span', $number, array('class' => 'qno')));
+        } else if ($number == 'i') {
+            $numbertext = get_string('information', 'question');
+        }
+        if (!$numbertext) {
+            return '';
         }
         return html_writer::tag('h3', $numbertext, array('class' => 'no'));
     }
@@ -328,7 +329,7 @@ class core_question_renderer extends plugin_renderer_base {
             $alt = get_string('notflagged', 'question');
         }
         $attributes = array(
-            'src' => $this->image_url($icon),
+            'src' => $this->pix_url($icon),
             'alt' => $alt,
         );
         if ($id) {
@@ -411,8 +412,6 @@ class core_question_renderer extends plugin_renderer_base {
                 $qtoutput->feedback($qa, $options), array('class' => 'feedback'));
         $output .= html_writer::nonempty_tag('div',
                 $behaviouroutput->feedback($qa, $options), array('class' => 'im-feedback'));
-        $output .= html_writer::nonempty_tag('div',
-                $options->extrainfocontent, array('class' => 'extra-feedback'));
         return $output;
     }
 

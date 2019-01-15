@@ -24,7 +24,7 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-require_once(__DIR__.'/../../config.php');
+require_once(dirname(__FILE__).'/../../config.php');
 require_once("{$CFG->libdir}/completionlib.php");
 
 /**
@@ -156,27 +156,11 @@ if ($csv) {
 
     echo $OUTPUT->header();
 
+    $PAGE->requires->js('/report/completion/textrotate.js');
+    $PAGE->requires->js_function_call('textrotate_init', null, true);
+
     // Handle groups (if enabled)
-    groups_print_course_menu($course, $CFG->wwwroot.'/report/completion/index.php?course='.$course->id);
-}
-
-if ($sifirst !== 'all') {
-    set_user_preference('ifirst', $sifirst);
-}
-if ($silast !== 'all') {
-    set_user_preference('ilast', $silast);
-}
-
-if (!empty($USER->preference['ifirst'])) {
-    $sifirst = $USER->preference['ifirst'];
-} else {
-    $sifirst = 'all';
-}
-
-if (!empty($USER->preference['ilast'])) {
-    $silast = $USER->preference['ilast'];
-} else {
-    $silast = 'all';
+    groups_print_course_menu($course, $CFG->wwwroot.'/report/completion/?course='.$course->id);
 }
 
 // Generate where clause
@@ -222,19 +206,44 @@ if ($total) {
 }
 
 // Build link for paging
-$link = $CFG->wwwroot.'/report/completion/index.php?course='.$course->id;
+$link = $CFG->wwwroot.'/report/completion/?course='.$course->id;
 if (strlen($sort)) {
     $link .= '&amp;sort='.$sort;
 }
 $link .= '&amp;start=';
 
-$pagingbar = '';
+// Build the the page by Initial bar
+$initials = array('first', 'last');
+$alphabet = explode(',', get_string('alphabet', 'langconfig'));
 
-// Initials bar.
-$prefixfirst = 'sifirst';
-$prefixlast = 'silast';
-$pagingbar .= $OUTPUT->initials_bar($sifirst, 'firstinitial', get_string('firstname'), $prefixfirst, $url);
-$pagingbar .= $OUTPUT->initials_bar($silast, 'lastinitial', get_string('lastname'), $prefixlast, $url);
+$pagingbar = '';
+foreach ($initials as $initial) {
+    $var = 'si'.$initial;
+
+    $othervar = $initial == 'first' ? 'silast' : 'sifirst';
+    $othervar = $$othervar != 'all' ? "&amp;{$othervar}={$$othervar}" : '';
+
+    $pagingbar .= ' <div class="initialbar '.$initial.'initial">';
+    $pagingbar .= get_string($initial.'name').':&nbsp;';
+
+    if ($$var == 'all') {
+        $pagingbar .= '<strong>'.get_string('all').'</strong> ';
+    }
+    else {
+        $pagingbar .= "<a href=\"{$link}{$othervar}\">".get_string('all').'</a> ';
+    }
+
+    foreach ($alphabet as $letter) {
+        if ($$var === $letter) {
+            $pagingbar .= '<strong>'.$letter.'</strong> ';
+        }
+        else {
+            $pagingbar .= "<a href=\"$link&amp;$var={$letter}{$othervar}\">$letter</a> ";
+        }
+    }
+
+    $pagingbar .= '</div>';
+}
 
 // Do we need a paging bar?
 if ($total > COMPLETION_REPORT_PAGE) {
@@ -302,8 +311,7 @@ if (!$csv) {
         exit;
     }
 
-    print '<table id="completion-progress" class="table table-bordered generaltable flexible boxaligncenter
-        completionreport" style="text-align: left" cellpadding="5" border="1">';
+    print '<table id="completion-progress" class="generaltable flexible boxaligncenter completionreport" style="text-align: left" cellpadding="5" border="1">';
 
     // Print criteria group names
     print PHP_EOL.'<thead><tr style="vertical-align: top">';
@@ -408,13 +416,13 @@ if (!$csv) {
             // Get criteria details
             $details = $criterion->get_title_detailed();
             print '<th scope="col" class="colheader criterianame">';
-            print '<div class="rotated-text-container"><span class="rotated-text">'.$details.'</span></div>';
+            print '<span class="completion-criterianame">'.$details.'</span>';
             print '</th>';
         }
 
         // Overall course completion status
         print '<th scope="col" class="colheader criterianame">';
-        print '<div class="rotated-text-container"><span class="rotated-text">'.get_string('coursecomplete', 'completion').'</span></div>';
+        print '<span class="completion-criterianame">'.get_string('coursecomplete', 'completion').'</span>';
         print '</th></tr>';
     }
 
@@ -428,10 +436,10 @@ if (!$csv) {
 
     if ($firstnamesort) {
         print
-            get_string('firstname')." / <a href=\"./index.php?course={$course->id}{$sistring}\">".
+            get_string('firstname')." / <a href=\"./?course={$course->id}{$sistring}\">".
             get_string('lastname').'</a>';
     } else {
-        print "<a href=\"./index.php?course={$course->id}&amp;sort=firstname{$sistring}\">".
+        print "<a href=\"./?course={$course->id}&amp;sort=firstname{$sistring}\">".
             get_string('firstname').'</a> / '.
             get_string('lastname');
     }
@@ -449,16 +457,18 @@ if (!$csv) {
     foreach ($criteria as $criterion) {
 
         // Generate icon details
+        $icon = '';
         $iconlink = '';
+        $icontitle = ''; // Required if $iconlink set
         $iconalt = ''; // Required
-        $iconattributes = array('class' => 'icon');
         switch ($criterion->criteriatype) {
 
             case COMPLETION_CRITERIA_TYPE_ACTIVITY:
 
                 // Display icon
+                $icon = $OUTPUT->pix_url('icon', $criterion->module);
                 $iconlink = $CFG->wwwroot.'/mod/'.$criterion->module.'/view.php?id='.$criterion->moduleinstance;
-                $iconattributes['title'] = $modinfo->cms[$criterion->moduleinstance]->get_formatted_name();
+                $icontitle = $modinfo->cms[$criterion->moduleinstance]->get_formatted_name();
                 $iconalt = get_string('modulename', $criterion->module);
                 break;
 
@@ -468,7 +478,7 @@ if (!$csv) {
 
                 // Display icon
                 $iconlink = $CFG->wwwroot.'/course/view.php?id='.$criterion->courseinstance;
-                $iconattributes['title'] = format_string($crs->fullname, true, array('context' => context_course::instance($crs->id, MUST_EXIST)));
+                $icontitle = format_string($crs->fullname, true, array('context' => context_course::instance($crs->id, MUST_EXIST)));
                 $iconalt = format_string($crs->shortname, true, array('context' => context_course::instance($crs->id)));
                 break;
 
@@ -481,16 +491,16 @@ if (!$csv) {
                 break;
         }
 
-        // Create icon alt if not supplied
-        if (!$iconalt) {
-            $iconalt = $criterion->get_title();
-        }
-
         // Print icon and cell
         print '<th class="criteriaicon">';
 
-        print ($iconlink ? '<a href="'.$iconlink.'" title="'.$iconattributes['title'].'">' : '');
-        print $OUTPUT->render($criterion->get_icon($iconalt, $iconattributes));
+        // Create icon if not supplied
+        if (!$icon) {
+            $icon = $OUTPUT->pix_url('i/'.$COMPLETION_CRITERIA_TYPES[$criterion->criteriatype]);
+        }
+
+        print ($iconlink ? '<a href="'.$iconlink.'" title="'.$icontitle.'">' : '');
+        print '<img src="'.$icon.'" class="icon" alt="'.$iconalt.'" '.(!$iconlink ? 'title="'.$iconalt.'"' : '').' />';
         print ($iconlink ? '</a>' : '');
 
         print '</th>';
@@ -498,7 +508,7 @@ if (!$csv) {
 
     // Overall course completion status
     print '<th class="criteriaicon">';
-    print $OUTPUT->pix_icon('i/course', get_string('coursecomplete', 'completion'));
+    print '<img src="'.$OUTPUT->pix_url('i/course').'" class="icon" alt="'.get_string('course').'" title="'.get_string('coursecomplete', 'completion').'" />';
     print '</th>';
 
     print '</tr></thead>';
@@ -616,7 +626,8 @@ foreach ($progress as $user) {
             } else {
                 print '<td class="completion-progresscell">';
 
-                print $OUTPUT->pix_icon('i/' . $completionicon, $fulldescribe);
+                print '<img src="'.$OUTPUT->pix_url('i/'.$completionicon).
+                      '" alt="'.s($describe).'" class="icon" title="'.s($fulldescribe).'" />';
 
                 print '</td>';
             }
@@ -663,9 +674,11 @@ foreach ($progress as $user) {
                 );
 
                 print '<a href="'.$toggleurl->out().'" title="'.s(get_string('clicktomarkusercomplete', 'report_completion')).'">' .
-                    $OUTPUT->pix_icon('i/completion-manual-' . ($is_complete ? 'y' : 'n'), $describe) . '</a></td>';
+                    '<img src="'.$OUTPUT->pix_url('i/completion-manual-'.($is_complete ? 'y' : 'n')).
+                    '" alt="'.s($describe).'" class="icon" /></a></td>';
             } else {
-                print $OUTPUT->pix_icon('i/' . $completionicon, $fulldescribe) . '</td>';
+                print '<img src="'.$OUTPUT->pix_url('i/'.$completionicon).'" alt="'.s($describe).
+                        '" class="icon" title="'.s($fulldescribe).'" /></td>';
             }
 
             print '</td>';
@@ -705,7 +718,8 @@ foreach ($progress as $user) {
         print '<td class="completion-progresscell">';
 
         // Display course completion status icon
-        print $OUTPUT->pix_icon('i/completion-auto-' . $completiontype, $fulldescribe);
+        print '<img src="'.$OUTPUT->pix_url('i/completion-auto-'.$completiontype).
+               '" alt="'.s($describe).'" class="icon" title="'.s($fulldescribe).'" />';
 
         print '</td>';
     }

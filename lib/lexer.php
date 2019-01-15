@@ -44,23 +44,13 @@
          *                    for insensitive.
          *    @access public
          */
-        public function __construct($case) {
+        function ParallelRegex($case) {
             $this->_case = $case;
             $this->_patterns = array();
             $this->_labels = array();
             $this->_regex = null;
         }
-
-        /**
-         * Old syntax of class constructor. Deprecated in PHP7.
-         *
-         * @deprecated since Moodle 3.1
-         */
-        public function ParallelRegex($case) {
-            debugging('Use of class name as constructor is deprecated', DEBUG_DEVELOPER);
-            self::__construct($case);
-        }
-
+        
         /**
          *    Adds a pattern with an optional label.
          *    @param string $pattern      Perl style regex, but ( and )
@@ -147,20 +137,10 @@
          *    @param string $start        Starting state name.
          *    @access public
          */
-        public function __construct($start) {
+        function StateStack($start) {
             $this->_stack = array($start);
         }
-
-        /**
-         * Old syntax of class constructor. Deprecated in PHP7.
-         *
-         * @deprecated since Moodle 3.1
-         */
-        public function StateStack($start) {
-            debugging('Use of class name as constructor is deprecated', DEBUG_DEVELOPER);
-            self::__construct($start);
-        }
-
+        
         /**
          *    Accessor for current state.
          *    @return string State as string.
@@ -223,22 +203,12 @@
          *    @param bool $case       True for case sensitive.
          *    @access public
          */
-        public function __construct(&$parser, $start = "accept", $case = false) {
+        function Lexer(&$parser, $start = "accept", $case = false) {
             $this->_case = $case;
             $this->_regexes = array();
             $this->_parser = &$parser;
             $this->_mode = new StateStack($start);
             $this->_mode_handlers = array();
-        }
-
-        /**
-         * Old syntax of class constructor. Deprecated in PHP7.
-         *
-         * @deprecated since Moodle 3.1
-         */
-        public function Lexer(&$parser, $start = "accept", $case = false) {
-            debugging('Use of class name as constructor is deprecated', DEBUG_DEVELOPER);
-            self::__construct($parser, $start, $case);
         }
         
         /**

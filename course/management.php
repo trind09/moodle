@@ -495,7 +495,7 @@ if ($displaycategorylisting) {
 if ($displaycourselisting) {
     echo $renderer->grid_column_start($coursesize, 'course-listing');
     if (!$issearching) {
-        echo $renderer->course_listing($category, $course, $page, $perpage, $viewmode);
+        echo $renderer->course_listing($category, $course, $page, $perpage);
     } else {
         list($courses, $coursescount, $coursestotal) =
             \core_course\management\helper::search_courses($search, $blocklist, $modulelist, $page, $perpage);

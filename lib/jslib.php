@@ -34,15 +34,14 @@ defined('MOODLE_INTERNAL') || die();
 function js_send_cached($jspath, $etag, $filename = 'javascript.php') {
     require(__DIR__ . '/xsendfilelib.php');
 
-    // 90 days only - based on Moodle point release cadence being every 3 months.
-    $lifetime = 60 * 60 * 24 * 90;
+    $lifetime = 60*60*24*60; // 60 days only - the revision may get incremented quite often
 
     header('Etag: "'.$etag.'"');
     header('Content-Disposition: inline; filename="'.$filename.'"');
     header('Last-Modified: '. gmdate('D, d M Y H:i:s', filemtime($jspath)) .' GMT');
     header('Expires: '. gmdate('D, d M Y H:i:s', time() + $lifetime) .' GMT');
     header('Pragma: ');
-    header('Cache-Control: public, max-age='.$lifetime.', immutable');
+    header('Cache-Control: public, max-age='.$lifetime);
     header('Accept-Ranges: none');
     header('Content-Type: application/javascript; charset=utf-8');
 
@@ -82,8 +81,7 @@ function js_send_uncached($js, $filename = 'javascript.php') {
  * @param string $etag
  */
 function js_send_unmodified($lastmodified, $etag) {
-    // 90 days only - based on Moodle point release cadence being every 3 months.
-    $lifetime = 60 * 60 * 24 * 90;
+    $lifetime = 60*60*24*60; // 60 days only - the revision may get incremented quite often
     header('HTTP/1.1 304 Not Modified');
     header('Expires: '. gmdate('D, d M Y H:i:s', time() + $lifetime) .' GMT');
     header('Cache-Control: public, max-age='.$lifetime);

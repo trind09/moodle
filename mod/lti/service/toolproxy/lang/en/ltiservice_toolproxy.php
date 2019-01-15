@@ -24,4 +24,3 @@
  */
 
 $string['pluginname'] = 'Tool Proxy Service';
-$string['privacy:metadata'] = 'The Tool Proxy Service plugin does not store any personal data.';

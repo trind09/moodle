@@ -17,7 +17,8 @@ Feature: In a lesson activity, teacher can edit lesson's pages
       | teacher1 | C1 | editingteacher |
       | student1 | C1 | student |
     And I log in as "teacher1"
-    And I am on "Course 1" course homepage with editing mode on
+    And I follow "Course 1"
+    And I turn editing mode on
     And I add a "Lesson" to section "1" and I fill the form with:
       | Name | Test lesson name |
       | Description | Test lesson description |
@@ -29,7 +30,7 @@ Feature: In a lesson activity, teacher can edit lesson's pages
       | id_answer_editor_0 | Next page |
       | id_jumpto_0 | Next page |
     And I press "Save page"
-    And I select "Add a content page" from the "qtype" singleselect
+    And I set the field "qtype" to "Add a content page"
     And I set the following fields to these values:
       | Page title | Second page name |
       | Page contents | Second page contents |
@@ -55,8 +56,9 @@ Feature: In a lesson activity, teacher can edit lesson's pages
       | id_score_1 | 0 |
     And I press "Save page"
 
+  @javascript
   Scenario: Edit lesson content page
-    Given I click on "//th[normalize-space(.)='Second page name']/descendant::a[3]" "xpath_element"
+    Given I click on "//th[normalize-space(.)='Second page name']/descendant::a[2]" "xpath_element"
     When I set the following fields to these values:
       | Page title | Modified second page |
       | Page contents | Modified contents |
@@ -69,7 +71,7 @@ Feature: In a lesson activity, teacher can edit lesson's pages
     And I should not see "Second page name"
     And I log out
     And I log in as "student1"
-    And I am on "Course 1" course homepage
+    And I follow "Course 1"
     And I follow "Test lesson name"
     And I should see "First page contents"
     And I press "Next page"
@@ -90,8 +92,9 @@ Feature: In a lesson activity, teacher can edit lesson's pages
     And I should see "Congratulations - end of lesson reached"
     And I should see "Your score is 1 (out of 1)."
 
+  @javascript
   Scenario: Edit lesson question page
-    Given I click on "//th[normalize-space(.)='Hardest question ever']/descendant::a[3]" "xpath_element"
+    Given I click on "//th[normalize-space(.)='Hardest question ever']/descendant::a[2]" "xpath_element"
     When I set the following fields to these values:
       | Page title | New hardest question |
       | Page contents | 1 + 2? |
@@ -108,7 +111,7 @@ Feature: In a lesson activity, teacher can edit lesson's pages
     And I should not see "Hardest question ever"
     And I log out
     And I log in as "student1"
-    And I am on "Course 1" course homepage
+    And I follow "Course 1"
     And I follow "Test lesson name"
     And I should see "First page contents"
     And I press "Next page"

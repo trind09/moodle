@@ -24,5 +24,4 @@
  */
 
 $string['pluginname'] = 'Behaviour for information items';
-$string['privacy:metadata'] = 'The Information items question behaviour plugin does not store any personal data.';
 $string['seen'] = 'Seen';

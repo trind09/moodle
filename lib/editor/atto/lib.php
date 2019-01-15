@@ -69,16 +69,6 @@ class atto_texteditor extends texteditor {
     /**
      * Use this editor for given element.
      *
-     * Available Atto-specific options:
-     *   atto:toolbar - set to a string to override the system config editor_atto/toolbar
-     *
-     * Available general options:
-     *   context - set to the current context object
-     *   enable_filemanagement - set false to get rid of the managefiles plugin
-     *   autosave - true/false to control autosave
-     *
-     * Options are also passed through to the plugins.
-     *
      * @param string $elementid
      * @param array $options
      * @param null $fpoptions
@@ -86,11 +76,7 @@ class atto_texteditor extends texteditor {
     public function use_editor($elementid, array $options=null, $fpoptions=null) {
         global $PAGE;
 
-        if (array_key_exists('atto:toolbar', $options)) {
-            $configstr = $options['atto:toolbar'];
-        } else {
-            $configstr = get_config('editor_atto', 'toolbar');
-        }
+        $configstr = get_config('editor_atto', 'toolbar');
 
         $grouplines = explode("\n", $configstr);
 
@@ -114,11 +100,6 @@ class atto_texteditor extends texteditor {
             foreach ($plugins as $plugin) {
                 // Do not die on missing plugin.
                 if (!core_component::get_component_directory('atto_' . $plugin))  {
-                    continue;
-                }
-
-                // Remove manage files if requested.
-                if ($plugin == 'managefiles' && isset($options['enable_filemanagement']) && !$options['enable_filemanagement']) {
                     continue;
                 }
 
@@ -180,12 +161,6 @@ class atto_texteditor extends texteditor {
         }
         $contentcss     = $PAGE->theme->editor_css_url()->out(false);
 
-        // Autosave disabled for guests and not logged in users.
-        if (isguestuser() OR !isloggedin()) {
-            $autosave = false;
-        }
-        // Note <> is a safe separator, because it will not appear in the output of s().
-        $pagehash = sha1($PAGE->url . '<>' . s($this->get_text()));
         $params = array(
             'elementid' => $elementid,
             'content_css' => $contentcss,
@@ -196,7 +171,7 @@ class atto_texteditor extends texteditor {
             'directionality' => $directionality,
             'filepickeroptions' => array(),
             'plugins' => $plugins,
-            'pageHash' => $pagehash,
+            'pageHash' => sha1($PAGE->url)
         );
         if ($fpoptions) {
             $params['filepickeroptions'] = $fpoptions;

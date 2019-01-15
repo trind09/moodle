@@ -40,7 +40,7 @@ navigation_node::override_active_url(new moodle_url('/grade/edit/tree/index.php'
     array('id'=>$courseid)));
 
 if (!$course = $DB->get_record('course', array('id' => $courseid))) {
-    print_error('invalidcourseid');
+    print_error('nocourseid');
 }
 
 require_login($course);

@@ -65,10 +65,7 @@ class award_criteria_manual extends award_criteria {
         $none = true;
 
         $roles = get_roles_with_capability('moodle/badges:awardbadge', CAP_ALLOW, $PAGE->context);
-        $visibleroles = get_viewable_roles($PAGE->context);
-        $roleids = array_map(function($o) {
-            return $o->id;
-        }, $roles);
+        $roleids = array_map(create_function('$o', 'return $o->id;'), $roles);
         $existing = array();
         $missing = array();
 
@@ -90,9 +87,6 @@ class award_criteria_manual extends award_criteria {
             $mform->addElement('header', 'first_header', $this->get_title());
             $mform->addHelpButton('first_header', 'criteria_' . $this->criteriatype, 'badges');
             foreach ($roleids as $rid) {
-                if (!key_exists($rid, $visibleroles)) {
-                    continue;
-                }
                 $checked = false;
                 if (in_array($rid, $existing)) {
                     $checked = true;
@@ -213,14 +207,11 @@ class award_criteria_manual extends award_criteria {
             return array($join, $where, $params);
         } else {
             foreach ($this->params as $param) {
-                $roledata[] = " bma.issuerrole = :issuerrole{$param['role']} ";
+                $join .= " LEFT JOIN {badge_manual_award} bma{$param['role']} ON
+                          bma{$param['role']}.recipientid = u.id AND
+                          bma{$param['role']}.issuerrole = :issuerrole{$param['role']} ";
+                $where .= " AND bma{$param['role']}.issuerrole IS NOT NULL ";
                 $params["issuerrole{$param['role']}"] = $param['role'];
-            }
-            if (!empty($roledata)) {
-                $extraon = implode(' AND ', $roledata);
-                $join = " JOIN {badge_manual_award} bma ON bma.recipientid = u.id
-                          AND bma.badgeid = :badgeid{$this->badgeid} AND ({$extraon})";
-                $params["badgeid{$this->badgeid}"] = $this->badgeid;
             }
             return array($join, $where, $params);
         }

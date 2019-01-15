@@ -58,7 +58,7 @@ class assign_feedback_editpdf extends assign_feedback_plugin {
      */
     public function get_widget($userid, $grade, $readonly) {
         $attempt = -1;
-        if ($grade && isset($grade->attemptnumber)) {
+        if ($grade && $grade->attemptnumber) {
             $attempt = $grade->attemptnumber;
         } else {
             $grade = $this->assignment->get_user_grade($userid, true);
@@ -134,14 +134,20 @@ class assign_feedback_editpdf extends assign_feedback_plugin {
            $filename = $feedbackfile->get_filename();
         }
 
+        // Retrieve total number of pages.
+        $pagetotal = document_services::page_number_for_attempt($this->assignment->get_instance()->id,
+                $userid,
+                $attempt,
+                $readonly);
+
         $widget = new assignfeedback_editpdf_widget($this->assignment->get_instance()->id,
                                                     $userid,
                                                     $attempt,
                                                     $url,
                                                     $filename,
                                                     $stampfiles,
-                                                    $readonly
-                                                );
+                                                    $readonly,
+                                                    $pagetotal);
         return $widget;
     }
 
@@ -162,85 +168,21 @@ class assign_feedback_editpdf extends assign_feedback_plugin {
             $attempt = $grade->attemptnumber;
         }
 
-        $renderer = $PAGE->get_renderer('assignfeedback_editpdf');
+        $files = document_services::list_compatible_submission_files_for_attempt($this->assignment, $userid, $attempt);
+        // Only show the editor if there was a compatible file submitted.
+        if (count($files)) {
 
-        $widget = $this->get_widget($userid, $grade, false);
+            $renderer = $PAGE->get_renderer('assignfeedback_editpdf');
 
-        $html = $renderer->render($widget);
-        $mform->addElement('static', 'editpdf', get_string('editpdf', 'assignfeedback_editpdf'), $html);
-        $mform->addHelpButton('editpdf', 'editpdf', 'assignfeedback_editpdf');
-        $mform->addElement('hidden', 'editpdf_source_userid', $userid);
-        $mform->setType('editpdf_source_userid', PARAM_INT);
-        $mform->setConstant('editpdf_source_userid', $userid);
-    }
+            $widget = $this->get_widget($userid, $grade, false);
 
-    /**
-     * Check to see if the grade feedback for the pdf has been modified.
-     *
-     * @param stdClass $grade Grade object.
-     * @param stdClass $data Data from the form submission (not used).
-     * @return boolean True if the pdf has been modified, else false.
-     */
-    public function is_feedback_modified(stdClass $grade, stdClass $data) {
-        // We only need to know if the source user's PDF has changed. If so then all
-        // following users will have the same status. If it's only an individual annotation
-        // then only one user will come through this method.
-        // Source user id is only added to the form if there was a pdf.
-        if (!empty($data->editpdf_source_userid)) {
-            $sourceuserid = $data->editpdf_source_userid;
-            // Retrieve the grade information for the source user.
-            $sourcegrade = $this->assignment->get_user_grade($sourceuserid, true, $grade->attemptnumber);
-            $pagenumbercount = document_services::page_number_for_attempt($this->assignment, $sourceuserid, $sourcegrade->attemptnumber);
-            for ($i = 0; $i < $pagenumbercount; $i++) {
-                // Select all annotations.
-                $draftannotations = page_editor::get_annotations($sourcegrade->id, $i, true);
-                $nondraftannotations = page_editor::get_annotations($grade->id, $i, false);
-                // Check to see if the count is the same.
-                if (count($draftannotations) != count($nondraftannotations)) {
-                    // The count is different so we have a modification.
-                    return true;
-                } else {
-                    $matches = 0;
-                    // Have a closer look and see if the draft files match all the non draft files.
-                    foreach ($nondraftannotations as $ndannotation) {
-                        foreach ($draftannotations as $dannotation) {
-                            foreach ($ndannotation as $key => $value) {
-                                if ($key != 'id' && $value != $dannotation->{$key}) {
-                                    continue 2;
-                                }
-                            }
-                            $matches++;
-                        }
-                    }
-                    if ($matches !== count($nondraftannotations)) {
-                        return true;
-                    }
-                }
-                // Select all comments.
-                $draftcomments = page_editor::get_comments($sourcegrade->id, $i, true);
-                $nondraftcomments = page_editor::get_comments($grade->id, $i, false);
-                if (count($draftcomments) != count($nondraftcomments)) {
-                    return true;
-                } else {
-                    // Go for a closer inspection.
-                    $matches = 0;
-                    foreach ($nondraftcomments as $ndcomment) {
-                        foreach ($draftcomments as $dcomment) {
-                            foreach ($ndcomment as $key => $value) {
-                                if ($key != 'id' && $value != $dcomment->{$key}) {
-                                    continue 2;
-                                }
-                            }
-                            $matches++;
-                        }
-                    }
-                    if ($matches !== count($nondraftcomments)) {
-                        return true;
-                    }
-                }
-            }
+            $html = $renderer->render($widget);
+            $mform->addElement('static', 'editpdf', get_string('editpdf', 'assignfeedback_editpdf'), $html);
+            $mform->addHelpButton('editpdf', 'editpdf', 'assignfeedback_editpdf');
+            $mform->addElement('hidden', 'editpdf_source_userid', $userid);
+            $mform->setType('editpdf_source_userid', PARAM_INT);
+            $mform->setConstant('editpdf_source_userid', $userid);
         }
-        return false;
     }
 
     /**
@@ -332,11 +274,12 @@ class assign_feedback_editpdf extends assign_feedback_plugin {
     }
 
     /**
-     * Determine if ghostscript is available and working.
+     * Automatically enable or disable editpdf feedback plugin based on
+     * whether the ghostscript path is set correctly.
      *
      * @return bool
      */
-    public function is_available() {
+    public function is_enabled() {
         if ($this->enabledcache === null) {
             $testpath = assignfeedback_editpdf\pdf::test_gs_path(false);
             $this->enabledcache = ($testpath->status == assignfeedback_editpdf\pdf::GSPATH_OK);
@@ -344,38 +287,11 @@ class assign_feedback_editpdf extends assign_feedback_plugin {
         return $this->enabledcache;
     }
     /**
-     * Prevent enabling this plugin if ghostscript is not available.
+     * Automatically hide the setting for the editpdf feedback plugin.
      *
      * @return bool false
      */
     public function is_configurable() {
-        return $this->is_available();
-    }
-
-    /**
-     * Get file areas returns a list of areas this plugin stores files.
-     *
-     * @return array - An array of fileareas (keys) and descriptions (values)
-     */
-    public function get_file_areas() {
-        return array(document_services::FINAL_PDF_FILEAREA => $this->get_name());
-    }
-
-    /**
-     * This plugin will inject content into the review panel with javascript.
-     * @return bool true
-     */
-    public function supports_review_panel() {
-        return true;
-    }
-
-    /**
-     * Return the plugin configs for external functions.
-     *
-     * @return array the list of settings
-     * @since Moodle 3.2
-     */
-    public function get_config_for_external() {
-        return (array) $this->get_config();
+        return false;
     }
 }

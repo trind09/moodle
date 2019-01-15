@@ -88,7 +88,7 @@
 
        $options = explode(",",$question->options);
 
-       foreach ($options as $key => $unused) {
+       while (list($key,) = each($options)) {
            $buckets1[$key] = 0;
            $buckets2[$key] = 0;
        }

@@ -41,9 +41,12 @@ echo $OUTPUT->doctype() ?>
             <a class="brand" href="<?php echo $CFG->wwwroot;?>"><?php echo
                 format_string($SITE->shortname, true, array('context' => context_course::instance(SITEID)));
                 ?></a>
-            <?php echo $OUTPUT->navbar_button(); ?>
+            <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </a>
             <?php echo $OUTPUT->user_menu(); ?>
-            <?php echo $OUTPUT->search_box(); ?>
             <div class="nav-collapse collapse">
                 <?php echo $OUTPUT->custom_menu(); ?>
                 <ul class="nav pull-right">
@@ -63,7 +66,6 @@ echo $OUTPUT->doctype() ?>
             <?php
             echo $OUTPUT->course_content_header();
             echo $OUTPUT->main_content();
-            echo $OUTPUT->activity_navigation();
             echo $OUTPUT->course_content_footer();
             ?>
         </section>

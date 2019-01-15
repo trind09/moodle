@@ -217,7 +217,7 @@ if (!empty($command)) {
                         $datamodel['[comments]'] = 'cmi.comments';
                         $datarows = explode("\r\n", $aiccdata);
                         reset($datarows);
-                        foreach ($datarows as $datarow) {
+                        while ((list(, $datarow) = each($datarows)) !== false) {
                             if (($equal = strpos($datarow, '=')) !== false) {
                                 $element = strtolower(trim(substr($datarow, 0, $equal)));
                                 $value = trim(substr($datarow, $equal + 1));

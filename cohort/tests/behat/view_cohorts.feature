@@ -27,6 +27,7 @@ Feature: View cohort list
       | user1 | manager | System       |           |
       | user2 | manager | Category     | CAT1      |
 
+  @javascript
   Scenario: Admin can see system cohorts and all cohorts
     When I log in as "admin"
     And I navigate to "Cohorts" node in "Site administration > Users > Accounts"
@@ -39,6 +40,7 @@ Feature: View cohort list
     And I should see "Cohort in category 3"
     And I log out
 
+  @javascript
   Scenario: Manager can see system cohorts and all cohorts
     When I log in as "user1"
     And I navigate to "Cohorts" node in "Site administration > Users > Accounts"
@@ -51,9 +53,10 @@ Feature: View cohort list
     And I should see "Cohort in category 3"
     And I log out
 
+  @javascript
   Scenario: Manager in category can see cohorts in the category
     When I log in as "user2"
-    And I am on course index
+    And I follow "Courses"
     And I follow "Cat 1"
     And I follow "Cohorts"
     And I should not see "All cohorts"

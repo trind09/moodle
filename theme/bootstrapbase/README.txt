@@ -23,7 +23,7 @@ accessibility and Search Engine Optimization (SEO).
 
 *less CSS
 Less CSS is a Object Oriented way of writing CSS code. All Less CSS files
-for this theme are stored in the /less folder. A developer can use grunt
+for this theme are stored in the /less folder. A developer can use recess
 to generate the CSS files in the /style folder. For more
 information read /less/README
 

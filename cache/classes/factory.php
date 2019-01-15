@@ -161,7 +161,6 @@ class cache_factory {
         $factory->reset_cache_instances();
         $factory->configs = array();
         $factory->definitions = array();
-        $factory->definitionstores = array();
         $factory->lockplugins = array(); // MUST be null in order to force its regeneration.
         // Reset the state to uninitialised.
         $factory->state = self::STATE_UNINITIALISED;
@@ -191,18 +190,15 @@ class cache_factory {
      * @return cache_application|cache_session|cache_request
      */
     public function create_cache_from_definition($component, $area, array $identifiers = array(), $unused = null) {
-        $identifierstring = empty($identifiers) ? '' : '/'.http_build_query($identifiers);
-        $definitionname = $component.'/'.$area.$identifierstring;
+        $definitionname = $component.'/'.$area;
         if (isset($this->cachesfromdefinitions[$definitionname])) {
             $cache = $this->cachesfromdefinitions[$definitionname];
+            $cache->set_identifiers($identifiers);
             return $cache;
         }
         $definition = $this->create_definition($component, $area);
-        // Identifiers are cached as part of the cache creation, so we store a cloned version of the cache.
-        $cacheddefinition = clone($definition);
-        $cacheddefinition->set_identifiers($identifiers);
-        $cache = $this->create_cache($cacheddefinition);
-
+        $definition->set_identifiers($identifiers);
+        $cache = $this->create_cache($definition, $identifiers);
         // Loaders are always held onto to speed up subsequent requests.
         $this->cachesfromdefinitions[$definitionname] = $cache;
         return $cache;
@@ -225,17 +221,13 @@ class cache_factory {
      * @return cache_application|cache_session|cache_request
      */
     public function create_cache_from_params($mode, $component, $area, array $identifiers = array(), array $options = array()) {
-        $identifierstring = empty($identifiers) ? '' : '_'.http_build_query($identifiers);
-        $key = "{$mode}_{$component}_{$area}{$identifierstring}";
-        if (isset($this->cachesfromparams[$key])) {
+        $key = "{$mode}_{$component}_{$area}";
+        if (array_key_exists($key, $this->cachesfromparams)) {
             return $this->cachesfromparams[$key];
         }
-        // Regular cache definitions are cached inside create_definition().  This is not the case for Adhoc definitions
-        // using load_adhoc().  They are built as a new object on each call.
-        // We do not need to clone the definition because we know it's new.
         $definition = cache_definition::load_adhoc($mode, $component, $area, $options);
         $definition->set_identifiers($identifiers);
-        $cache = $this->create_cache($definition);
+        $cache = $this->create_cache($definition, $identifiers);
         $this->cachesfromparams[$key] = $cache;
         return $cache;
     }
@@ -285,9 +277,6 @@ class cache_factory {
         if (!array_key_exists($name, $this->stores)) {
             // Properties: name, plugin, configuration, class.
             $class = $details['class'];
-            if (!$class::are_requirements_met()) {
-                return false;
-            }
             $store = new $class($details['name'], $details['configuration']);
             $this->stores[$name] = $store;
         }
@@ -333,15 +322,6 @@ class cache_factory {
      */
     public function get_caches_in_use() {
         return $this->cachesfromdefinitions;
-    }
-
-    /**
-     * Gets all adhoc caches that have been used within this request.
-     *
-     * @return cache_store[] Caches currently in use
-     */
-    public function get_adhoc_caches_in_use() {
-        return $this->cachesfromparams;
     }
 
     /**

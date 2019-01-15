@@ -61,7 +61,7 @@ if ($action === 'delete') {
             die;
         } else {
             if ($manager->delete_comment($commentid)) {
-                redirect($CFG->wwwroot.'/comment/');
+                redirect($CFG->httpswwwroot.'/comment/');
             } else {
                 $err = 'cannotdeletecomment';
             }
@@ -81,15 +81,14 @@ echo $OUTPUT->header();
 echo $OUTPUT->heading(get_string('comments'));
 echo $OUTPUT->box_start('generalbox commentsreport');
 if (!empty($err)) {
-    print_error($err, 'error', $CFG->wwwroot.'/comment/');
+    print_error($err, 'error', $CFG->httpswwwroot.'/comment/');
 }
 if (empty($action)) {
     echo '<form method="post">';
     $return = $manager->print_comments($page);
     // if no comments available, $return will be false
     if ($return) {
-        echo '<input type="submit" class="btn btn-primary" id="comments_delete" name="batchdelete"
-            value="'.get_string('delete').'" />';
+        echo '<input type="submit" id="comments_delete" name="batchdelete" value="'.get_string('delete').'" />';
     }
     echo '</form>';
 }

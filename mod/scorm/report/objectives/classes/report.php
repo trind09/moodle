@@ -484,31 +484,24 @@ class report extends \mod_scorm\report {
                                 if (!$download) {
                                     $url = new \moodle_url('/mod/scorm/report/userreporttracks.php', array('id' => $cm->id,
                                         'scoid' => $sco->id, 'user' => $scouser->userid, 'attempt' => $scouser->attempt));
-                                    $row[] = $OUTPUT->pix_icon($trackdata->status, $strstatus, 'scorm') . '<br>' .
+                                    $row[] = \html_writer::img($OUTPUT->pix_url($trackdata->status, 'scorm'), $strstatus,
+                                        array('title' => $strstatus)) . \html_writer::empty_tag('br') .
                                         \html_writer::link($url, $score, array('title' => get_string('details', 'scorm')));
                                 } else {
                                     $row[] = $score;
                                 }
                                 // Iterate over tracks and match objective id against values.
-                                $scorm2004 = false;
-                                if (scorm_version_check($scorm->version, SCORM_13)) {
-                                    $scorm2004 = true;
-                                    $objectiveprefix = "cmi.objectives.";
-                                } else {
-                                    $objectiveprefix = "cmi.objectives_";
-                                }
-
-                                $keywords = array(".id", $objectiveprefix);
+                                $keywords = array("cmi.objectives_", ".id");
                                 $objectivestatus = array();
                                 $objectivescore = array();
                                 foreach ($trackdata as $name => $value) {
-                                    if (strpos($name, $objectiveprefix) === 0 && strrpos($name, '.id') !== false) {
+                                    if (strpos($name, 'cmi.objectives_') === 0 && strrpos($name, '.id') !== false) {
                                         $num = trim(str_ireplace($keywords, '', $name));
                                         if (is_numeric($num)) {
-                                            if ($scorm2004) {
-                                                $element = $objectiveprefix.$num.'.completion_status';
+                                            if (scorm_version_check($scorm->version, SCORM_13)) {
+                                                $element = 'cmi.objectives_'.$num.'.completion_status';
                                             } else {
-                                                $element = $objectiveprefix.$num.'.status';
+                                                $element = 'cmi.objectives_'.$num.'.status';
                                             }
                                             if (isset($trackdata->$element)) {
                                                 $objectivestatus[$value] = $trackdata->$element;
@@ -516,7 +509,7 @@ class report extends \mod_scorm\report {
                                                 $objectivestatus[$value] = '';
                                             }
                                             if ($displayoptions['objectivescore']) {
-                                                $element = $objectiveprefix.$num.'.score.raw';
+                                                $element = 'cmi.objectives_'.$num.'.score.raw';
                                                 if (isset($trackdata->$element)) {
                                                     $objectivescore[$value] = $trackdata->$element;
                                                 } else {
@@ -550,7 +543,8 @@ class report extends \mod_scorm\report {
                                 // If we don't have track data, we haven't attempted yet.
                                 $strstatus = get_string('notattempted', 'scorm');
                                 if (!$download) {
-                                    $row[] = $OUTPUT->pix_icon('notattempted', $strstatus, 'scorm') . '<br>' . $strstatus;
+                                    $row[] = \html_writer::img($OUTPUT->pix_url('notattempted', 'scorm'), $strstatus,
+                                                array('title' => $strstatus)).\html_writer::empty_tag('br').$strstatus;
                                 } else {
                                     $row[] = $strstatus;
                                 }
@@ -580,24 +574,13 @@ class report extends \mod_scorm\report {
                     if ($candelete) {
                         echo \html_writer::start_tag('table', array('id' => 'commands'));
                         echo \html_writer::start_tag('tr').\html_writer::start_tag('td');
-                        echo \html_writer::link('#', get_string('selectall', 'scorm'), array('id' => 'checkattempts'));
-                        echo ' / ';
-                        echo \html_writer::link('#', get_string('selectnone', 'scorm'), array('id' => 'uncheckattempts'));
-                        $PAGE->requires->js_amd_inline("
-                        require(['jquery'], function($) {
-                            $('#checkattempts').click(function(e) {
-                                $('#attemptsform').find('input:checkbox').prop('checked', true);
-                                e.preventDefault();
-                            });
-                            $('#uncheckattempts').click(function(e) {
-                                $('#attemptsform').find('input:checkbox').prop('checked', false);
-                                e.preventDefault();
-                            });
-                        });");
+                        echo \html_writer::link('javascript:select_all_in(\'DIV\', null, \'scormtablecontainer\');',
+                                                    get_string('selectall', 'scorm')).' / ';
+                        echo \html_writer::link('javascript:deselect_all_in(\'DIV\', null, \'scormtablecontainer\');',
+                                                    get_string('selectnone', 'scorm'));
                         echo '&nbsp;&nbsp;';
                         echo \html_writer::empty_tag('input', array('type' => 'submit',
-                                                                    'value' => get_string('deleteselected', 'scorm'),
-                                                                    'class' => 'btn btn-secondary'));
+                                                                    'value' => get_string('deleteselected', 'scorm')));
                         echo \html_writer::end_tag('td').\html_writer::end_tag('tr').\html_writer::end_tag('table');
                         // Close form.
                         echo \html_writer::end_tag('div');
@@ -609,23 +592,17 @@ class report extends \mod_scorm\report {
                         echo \html_writer::start_tag('td');
                         echo $OUTPUT->single_button(new \moodle_url($PAGE->url,
                                                                    array('download' => 'ODS') + $displayoptions),
-                                                                   get_string('downloadods'),
-                                                                   'post',
-                                                                   ['class' => 'm-t-1']);
+                                                                   get_string('downloadods'));
                         echo \html_writer::end_tag('td');
                         echo \html_writer::start_tag('td');
                         echo $OUTPUT->single_button(new \moodle_url($PAGE->url,
                                                                    array('download' => 'Excel') + $displayoptions),
-                                                                   get_string('downloadexcel'),
-                                                                   'post',
-                                                                   ['class' => 'm-t-1']);
+                                                                   get_string('downloadexcel'));
                         echo \html_writer::end_tag('td');
                         echo \html_writer::start_tag('td');
                         echo $OUTPUT->single_button(new \moodle_url($PAGE->url,
                                                                    array('download' => 'CSV') + $displayoptions),
-                                                                   get_string('downloadtext'),
-                                                                   'post',
-                                                                   ['class' => 'm-t-1']);
+                                                                   get_string('downloadtext'));
                         echo \html_writer::end_tag('td');
                         echo \html_writer::start_tag('td');
                         echo \html_writer::end_tag('td');
@@ -671,9 +648,8 @@ function get_scorm_objectives($scormid) {
     $select = "scormid = ? AND ";
     $select .= $DB->sql_like("element", "?", false);
     $params[] = $scormid;
-    $params[] = "cmi.objectives%.id";
-    $value = $DB->sql_compare_text('value');
-    $rs = $DB->get_recordset_select("scorm_scoes_track", $select, $params, 'value', "DISTINCT $value AS value, scoid");
+    $params[] = "cmi.objectives_%.id";
+    $rs = $DB->get_recordset_select("scorm_scoes_track", $select, $params, 'value', 'DISTINCT value, scoid');
     if ($rs->valid()) {
         foreach ($rs as $record) {
             $objectives[$record->scoid][] = $record->value;

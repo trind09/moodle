@@ -51,7 +51,7 @@ class behat_repository_upload extends behat_files {
      * @param string $filemanagerelement
      */
     public function i_upload_file_to_filemanager($filepath, $filemanagerelement) {
-        $this->upload_file_to_filemanager($filepath, $filemanagerelement, new TableNode(array()), false);
+        $this->upload_file_to_filemanager($filepath, $filemanagerelement, new TableNode(), false);
     }
 
     /**
@@ -63,7 +63,7 @@ class behat_repository_upload extends behat_files {
      * @param string $filemanagerelement
      */
     public function i_upload_and_overwrite_file_to_filemanager($filepath, $filemanagerelement) {
-        $this->upload_file_to_filemanager($filepath, $filemanagerelement, new TableNode(array()),
+        $this->upload_file_to_filemanager($filepath, $filemanagerelement, new TableNode(),
                 get_string('overwrite', 'repository'));
     }
 
@@ -118,7 +118,7 @@ class behat_repository_upload extends behat_files {
             'xpath',
             "//div[contains(concat(' ', normalize-space(@class), ' '), ' file-picker ')]" .
                 "[contains(concat(' ', normalize-space(@class), ' '), ' repository_upload ')]" .
-                "/descendant::div[contains(concat(' ', normalize-space(@class), ' '), ' fp-content ')]" .
+                "/descendant::div[@class='fp-content']" .
                 "/descendant::div[contains(concat(' ', normalize-space(@class), ' '), ' fp-upload-form ')]" .
                 "/descendant::form",
             $noformexception

@@ -119,8 +119,6 @@ if (!empty($errormsg)) {
             //<![CDATA[
                 if(window != top){
                     top.location.href = '{$url}';
-                } else {
-                    window.location.href = '{$url}';
                 }
             //]]
             </script>

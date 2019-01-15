@@ -68,7 +68,7 @@ class cc_quiz extends entities {
         $last_question_id = 0;
         $last_answer_id = 0;
 
-        $instances = array();
+        $instances = '';
 
         $types = array(MOODLE_TYPE_QUIZ, MOODLE_TYPE_QUESTION_BANK);
 
@@ -885,30 +885,27 @@ class cc_quiz extends entities {
 
         $sheet_question_categories_question = cc2moodle::loadsheet(SHEET_COURSE_QUESTION_CATEGORIES_QUESTION_CATEGORY_QUESTION_TRUE_FALSE);
 
-        $trueanswer  = null;
-        $falseanswer = null;
+        $max_score = 0;
+        $true_answer_id = 0;
+        $false_answer_id = 0;
 
         if (!empty($question['answers'])) {
 
-            // Identify the true and false answers.
             foreach ($question['answers'] as $answer) {
-                if ($answer['identifier'] == 'true') {
-                    $trueanswer = $answer;
-                } else if ($answer['identifier'] == 'false') {
-                    $falseanswer = $answer;
-                } else {
-                    // Should not happen, but just in case.
-                    throw new coding_exception("Unknown answer identifier detected" .
-                            " in true/false quiz question with id {$question['id']}.");
+                if ($answer['score'] > $max_score) {
+                    $max_score = $answer['score'];
+                    $true_answer_id = $answer['id'];
                 }
 
                 $node_course_question_categories_question_answer .= $this->create_node_course_question_categories_question_category_question_answer($answer);
             }
 
-            // Make sure the true and false answer was found.
-            if (is_null($trueanswer) || is_null($falseanswer)) {
-                throw new coding_exception("Unable to correctly identify the " .
-                        "true and false answers in the question with id {$question['id']}.");
+            foreach ($question['answers'] as $answer) {
+
+                if ($answer['id'] != $true_answer_id) {
+                    $max_score = $answer['score'];
+                    $false_answer_id = $answer['id'];
+                }
             }
         }
 
@@ -917,8 +914,8 @@ class cc_quiz extends entities {
                            '[#false_answer_id#]');
 
         $replace_values = array($node_course_question_categories_question_answer,
-                                $trueanswer['id'],
-                                $falseanswer['id']);
+                                $true_answer_id,
+                                $false_answer_id);
 
         $node_question_categories_question = str_replace($find_tags, $replace_values, $sheet_question_categories_question);
 

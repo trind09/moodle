@@ -29,6 +29,7 @@ global $CFG;
 require_once($CFG->libdir . '/questionlib.php');
 require_once($CFG->dirroot . '/question/format/xml/format.php');
 require_once($CFG->dirroot . '/question/engine/tests/helpers.php');
+require_once($CFG->dirroot . '/tag/lib.php');
 
 
 /**
@@ -147,7 +148,6 @@ class qformat_xml_test extends question_testcase {
 
     public function test_write_hint_basic() {
         $q = $this->make_test_question();
-        $q->contextid = \context_system::instance()->id;
         $q->name = 'Short answer question';
         $q->questiontext = 'Name an amphibian: __________';
         $q->generalfeedback = 'Generalfeedback: frog or toad would have been OK.';
@@ -177,7 +177,6 @@ class qformat_xml_test extends question_testcase {
 
     public function test_write_hint_with_parts() {
         $q = $this->make_test_question();
-        $q->contextid = \context_system::instance()->id;
         $q->name = 'Matching question';
         $q->questiontext = 'Classify the animals.';
         $q->generalfeedback = 'Frogs and toads are amphibians, the others are mammals.';
@@ -331,7 +330,7 @@ END;
     public function test_export_description() {
         $qdata = new stdClass();
         $qdata->id = 123;
-        $qdata->contextid = \context_system::instance()->id;
+        $qdata->contextid = 0;
         $qdata->qtype = 'description';
         $qdata->name = 'A description';
         $qdata->questiontext = 'The question text.';
@@ -476,7 +475,7 @@ END;
     public function test_export_essay() {
         $qdata = new stdClass();
         $qdata->id = 123;
-        $qdata->contextid = \context_system::instance()->id;
+        $qdata->contextid = 0;
         $qdata->qtype = 'essay';
         $qdata->name = 'An essay';
         $qdata->questiontext = 'Write something.';
@@ -638,7 +637,7 @@ END;
     public function test_export_match() {
         $qdata = new stdClass();
         $qdata->id = 123;
-        $qdata->contextid = \context_system::instance()->id;
+        $qdata->contextid = 0;
         $qdata->qtype = 'match';
         $qdata->name = 'Matching question';
         $qdata->questiontext = 'Match the upper and lower case letters.';
@@ -869,7 +868,7 @@ END;
     public function test_export_multichoice() {
         $qdata = new stdClass();
         $qdata->id = 123;
-        $qdata->contextid = \context_system::instance()->id;
+        $qdata->contextid = 0;
         $qdata->qtype = 'multichoice';
         $qdata->name = 'Multiple choice question';
         $qdata->questiontext = 'Which are the even numbers?';
@@ -1042,7 +1041,7 @@ END;
 
         $qdata = new stdClass();
         $qdata->id = 123;
-        $qdata->contextid = \context_system::instance()->id;
+        $qdata->contextid = 0;
         $qdata->qtype = 'numerical';
         $qdata->name = 'Numerical question';
         $qdata->questiontext = 'What is the answer?';
@@ -1172,7 +1171,7 @@ END;
     public function test_export_shortanswer() {
         $qdata = new stdClass();
         $qdata->id = 123;
-        $qdata->contextid = \context_system::instance()->id;
+        $qdata->contextid = 0;
         $qdata->qtype = 'shortanswer';
         $qdata->name = 'Short answer question';
         $qdata->questiontext = 'Fill in the gap in this sequence: Alpha, ________, Gamma.';
@@ -1293,7 +1292,7 @@ END;
     public function test_export_truefalse() {
         $qdata = new stdClass();
         $qdata->id = 12;
-        $qdata->contextid = \context_system::instance()->id;
+        $qdata->contextid = 0;
         $qdata->qtype = 'truefalse';
         $qdata->name = 'True false question';
         $qdata->questiontext = 'The answer is true.';
@@ -1424,7 +1423,7 @@ END;
 
         $mc->layout = 0;
         $mc->single = 1;
-        $mc->shuffleanswers = 0;
+        $mc->shuffleanswers = 1;
         $mc->correctfeedback =          array('text' => '', 'format' => FORMAT_HTML, 'itemid' => null);
         $mc->partiallycorrectfeedback = array('text' => '', 'format' => FORMAT_HTML, 'itemid' => null);
         $mc->incorrectfeedback =        array('text' => '', 'format' => FORMAT_HTML, 'itemid' => null);
@@ -1457,7 +1456,7 @@ END;
 
     public function test_export_multianswer() {
         $qdata = test_question_maker::get_question_data('multianswer', 'twosubq');
-        $qdata->contextid = \context_system::instance()->id;
+
         $exporter = new qformat_xml();
         $xml = $exporter->writequestion($qdata);
 
@@ -1488,7 +1487,7 @@ END;
 
     public function test_export_multianswer_withdollars() {
         $qdata = test_question_maker::get_question_data('multianswer', 'dollarsigns');
-        $qdata->contextid = \context_system::instance()->id;
+
         $exporter = new qformat_xml();
         $xml = $exporter->writequestion($qdata);
 

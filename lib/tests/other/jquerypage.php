@@ -22,7 +22,7 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-require(__DIR__ . '/../../../config.php');
+require(dirname(__FILE__) . '/../../../config.php');
 
 require_login();
 $context = context_system::instance();
@@ -36,6 +36,7 @@ $PAGE->set_heading('jQuery library test');
 $PAGE->requires->jquery();
 $PAGE->requires->jquery_plugin('ui');
 $PAGE->requires->jquery_plugin('ui-css');
+$PAGE->requires->jquery_plugin('migrate');
 
 echo $OUTPUT->header();
 

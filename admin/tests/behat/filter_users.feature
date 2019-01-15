@@ -25,8 +25,9 @@ Feature: An administrator can filter user accounts by role, cohort and other pro
     And I log in as "admin"
     And I add "User Two (two@example.com)" user to "CH1" cohort members
     And I add "User Three (three@example.com)" user to "CH1" cohort members
-    And I navigate to "Users > Accounts > Browse list of users" in site administration
+    And I follow "Browse list of users"
 
+  @javascript
   Scenario: Filter user accounts by role and cohort
     When I set the following fields to these values:
       | courserole_rl | Student |
@@ -50,6 +51,7 @@ Feature: An administrator can filter user accounts by role, cohort and other pro
     And I should see "User Three"
     And I should see "User Four"
 
+  @javascript
   Scenario: Filter user accounts by confirm and authentication method
     When I set the following fields to these values:
       | Confirmed | No |

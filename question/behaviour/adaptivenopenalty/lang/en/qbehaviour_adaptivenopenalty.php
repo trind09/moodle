@@ -24,4 +24,3 @@
  */
 
 $string['pluginname'] = 'Adaptive mode (no penalties)';
-$string['privacy:metadata'] = 'The Adaptive mode (no penalties) question behaviour plugin does not store any personal data.';

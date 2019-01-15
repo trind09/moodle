@@ -117,22 +117,12 @@ class EvalMath {
 
     var $allowimplicitmultiplication;
 
-    public function __construct($allowconstants = false, $allowimplicitmultiplication = false) {
+    function EvalMath($allowconstants = false, $allowimplicitmultiplication = false) {
         if ($allowconstants){
             $this->v['pi'] = pi();
             $this->v['e'] = exp(1);
         }
         $this->allowimplicitmultiplication = $allowimplicitmultiplication;
-    }
-
-    /**
-     * Old syntax of class constructor. Deprecated in PHP7.
-     *
-     * @deprecated since Moodle 3.1
-     */
-    public function EvalMath($allowconstants = false, $allowimplicitmultiplication = false) {
-        debugging('Use of class name as constructor is deprecated', DEBUG_DEVELOPER);
-        self::__construct($allowconstants, $allowimplicitmultiplication);
     }
 
     function e($expr) {

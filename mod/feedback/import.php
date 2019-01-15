@@ -97,7 +97,6 @@ $PAGE->set_title($feedback->name);
 echo $OUTPUT->header();
 echo $OUTPUT->heading(format_string($feedback->name));
 /// print the tabs
-$current_tab = 'templates';
 require('tabs.php');
 
 /// Print the main part of the page
@@ -209,10 +208,6 @@ function feedback_import_loaded_data(&$data, $feedbackid) {
         $newitem->typ = $typ;
         $newitem->name = trim($item['#']['ITEMTEXT'][0]['#']);
         $newitem->label = trim($item['#']['ITEMLABEL'][0]['#']);
-        if ($typ === 'captcha' || $typ === 'label') {
-            $newitem->label = '';
-            $newitem->name = '';
-        }
         $newitem->options = trim($item['#']['OPTIONS'][0]['#']);
         $newitem->presentation = trim($item['#']['PRESENTATION'][0]['#']);
         //check old types of radio, check, and so on

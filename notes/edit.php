@@ -17,7 +17,6 @@
 require_once('../config.php');
 require_once('lib.php');
 require_once('edit_form.php');
-require_once($CFG->dirroot . '/course/lib.php');
 
 $noteid = optional_param('id', 0, PARAM_INT);
 
@@ -96,7 +95,9 @@ if ($noteid) {
 
 // Output HTML.
 $link = null;
-if (course_can_view_participants($context) || course_can_view_participants(context_system::instance())) {
+if (has_capability('moodle/course:viewparticipants', $context)
+    || has_capability('moodle/site:viewparticipants', context_system::instance())) {
+
     $link = new moodle_url('/user/index.php', array('id' => $course->id));
 }
 $PAGE->navbar->add(get_string('participants'), $link);

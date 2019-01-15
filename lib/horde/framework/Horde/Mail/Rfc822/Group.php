@@ -1,22 +1,22 @@
 <?php
 /**
- * Copyright 2012-2017 Horde LLC (http://www.horde.org/)
+ * Copyright 2012-2014 Horde LLC (http://www.horde.org/)
  *
  * See the enclosed file COPYING for license information (BSD). If you
  * did not receive this file, see http://www.horde.org/licenses/bsd.
  *
  * @category  Horde
- * @copyright 2012-2017 Horde LLC
+ * @copyright 2012-2014 Horde LLC
  * @license   http://www.horde.org/licenses/bsd New BSD License
  * @package   Mail
  */
 
 /**
- * Object representation of a RFC 822 group e-mail address.
+ * Object representation of a RFC 822 e-mail address.
  *
  * @author    Michael Slusarz <slusarz@horde.org>
  * @category  Horde
- * @copyright 2012-2017 Horde LLC
+ * @copyright 2012-2014 Horde LLC
  * @license   http://www.horde.org/licenses/bsd New BSD License
  * @package   Mail
  *
@@ -26,9 +26,7 @@
  * @property-read boolean $valid  Returns true if there is enough information
  *                                in object to create a valid address.
  */
-class Horde_Mail_Rfc822_Group
-    extends Horde_Mail_Rfc822_Object
-    implements Countable
+class Horde_Mail_Rfc822_Group extends Horde_Mail_Rfc822_Object implements Countable
 {
     /**
      * List of group e-mail address objects.
@@ -96,6 +94,9 @@ class Horde_Mail_Rfc822_Group
 
         case 'valid':
             return (bool)strlen($this->_groupname);
+
+        default:
+            return null;
         }
     }
 
@@ -108,18 +109,10 @@ class Horde_Mail_Rfc822_Group
         if (!empty($opts['encode'])) {
             $groupname = Horde_Mime::encode($groupname, $opts['encode']);
         }
-        if (empty($opts['noquote'])) {
-            $rfc822 = new Horde_Mail_Rfc822();
-            $groupname = $rfc822->encode($groupname, 'personal');
-        }
-        if (!empty($opts['comment']) && !empty($this->comment)) {
-            $rfc822 = new Horde_Mail_Rfc822();
-            foreach ($this->comment as $val) {
-                $personal .= ' (' . $rfc822->encode($val, 'comment') . ')';
-            }
-        }
 
-        return ltrim($groupname) . ':' .
+        $rfc822 = new Horde_Mail_Rfc822();
+
+        return $rfc822->encode($groupname, 'personal') . ':' .
             (strlen($addr) ? (' ' . $addr) : '') . ';';
     }
 

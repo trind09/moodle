@@ -26,4 +26,3 @@
 $string['downloadfile'] = 'Download your portfolio export file';
 $string['downloading'] = 'Downloading ...';
 $string['pluginname'] = 'File download';
-$string['privacy:metadata'] = 'This plugin does not store personal data, nor does it export personal data to an external location.';

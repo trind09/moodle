@@ -36,18 +36,19 @@ Feature: Control the aggregation of the scales
       | grade_includescalesinaggregation | 0 |
     And I log out
 
-  Scenario Outline: Scales can be excluded from aggregation
+  @javascript
+  Scenario Outline: Scales can be exluded from aggregation
     Given I log in as "teacher1"
-    And I am on "Course 1" course homepage
-    And I navigate to "View > Grader report" in the course gradebook
+    And I follow "Course 1"
+    And I navigate to "Grades" node in "Course administration"
     And I turn editing mode on
     When I give the grade "10" to the user "Student 1" for the grade item "Grade me"
     And I give the grade "B" to the user "Student 1" for the grade item "Scale me"
     And I press "Save changes"
     And I set the following settings for grade item "Course 1":
       | Aggregation | <aggregation> |
-    And I navigate to "View > User report" in the course gradebook
-    And I select "Student 1" from the "Select all or one user" singleselect
+    And I follow "User report"
+    And I set the field "Select all or one user" to "Student 1"
     Then the following should exist in the "user-grade" table:
       | Grade item             | Grade          | Percentage  | Contribution to course total |
       | Grade me               | 10.00          | 10.00 %     | <gradecontrib>               |
@@ -59,9 +60,10 @@ Feature: Control the aggregation of the scales
       | grade_includescalesinaggregation | 1 |
     And I log out
     And I log in as "teacher1"
-    And I am on "Course 1" course homepage
-    And I navigate to "View > User report" in the course gradebook
-    And I select "Student 1" from the "Select all or one user" singleselect
+    And I follow "Course 1"
+    And I navigate to "Grades" node in "Course administration"
+    And I follow "User report"
+    And I set the field "Select all or one user" to "Student 1"
     And the following should exist in the "user-grade" table:
       | Grade item             | Grade          | Percentage  | Contribution to course total |
       | Grade me               | 10.00          | 10.00 %     | <gradecontrib2>              |
@@ -83,28 +85,29 @@ Feature: Control the aggregation of the scales
   @javascript
   Scenario: Weights of scales cannot be edited when they are not aggregated
     Given I log in as "teacher1"
-    And I am on "Course 1" course homepage
-    And I navigate to "View > Grader report" in the course gradebook
+    And I follow "Course 1"
+    And I navigate to "Grades" node in "Course administration"
     And I turn editing mode on
     When I set the following settings for grade item "Course 1":
       | Aggregation | Natural |
-    And I navigate to "Setup > Gradebook setup" in the course gradebook
+    And I navigate to "Categories and items" node in "Grade administration > Setup"
     And I set the field "Override weight of Grade me" to "1"
     Then the field "Override weight of Grade me" matches value "100.00"
-    And I open the action menu in "Scale me" "table_row"
+    And I click on "Edit" "link" in the "Scale me" "table_row"
     And I click on "Edit settings" "link" in the "Scale me" "table_row"
     And I follow "Show more..."
     And I should not see "Weight adjusted"
     And I should not see "Weight"
     And the following config values are set as admin:
       | grade_includescalesinaggregation | 1 |
-    And I am on "Course 1" course homepage
-    And I navigate to "Setup > Gradebook setup" in the course gradebook
+    And I follow "Course 1"
+    And I navigate to "Grades" node in "Course administration"
+    And I navigate to "Categories and items" node in "Grade administration > Setup"
     And I set the field "Override weight of Grade me" to "1"
     And the field "Override weight of Grade me" matches value "95.238"
     And I set the field "Override weight of Scale me" to "1"
     And the field "Override weight of Scale me" matches value "4.8"
-    And I open the action menu in "Scale me" "table_row"
+    And I click on "Edit" "link" in the "Scale me" "table_row"
     And I click on "Edit settings" "link" in the "Scale me" "table_row"
     And I follow "Show more..."
     And I should see "Weight adjusted"

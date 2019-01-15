@@ -22,9 +22,8 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-require(__DIR__.'/../../config.php');
-require_once(__DIR__.'/lib.php');
-require_once(__DIR__.'/locallib.php');
+require(dirname(__FILE__).'/../../config.php');
+require_once(dirname(__FILE__).'/locallib.php');
 require_once($CFG->libdir.'/completionlib.php');
 
 $id        = optional_param('id', 0, PARAM_INT);        // Course Module ID
@@ -76,8 +75,7 @@ if ($allowedit and !$chapters) {
 }
 // Check chapterid and read chapter data
 if ($chapterid == '0') { // Go to first chapter if no given.
-    // Trigger course module viewed event.
-    book_view($book, null, false, $course, $cm, $context);
+    \mod_book\event\course_module_viewed::create_from_book($book, $context)->trigger();
 
     foreach ($chapters as $ch) {
         if ($edit) {
@@ -111,6 +109,10 @@ unset($id);
 unset($bid);
 unset($chapterid);
 
+// Security checks END.
+
+\mod_book\event\chapter_viewed::create_from_chapter($book, $context, $chapter)->trigger();
+
 // Read standard strings.
 $strbooks = get_string('modulenameplural', 'mod_book');
 $strbook  = get_string('modulename', 'mod_book');
@@ -126,10 +128,8 @@ book_add_fake_block($chapters, $chapter, $book, $cm, $edit);
 // prepare chapter navigation icons
 $previd = null;
 $prevtitle = null;
-$navprevtitle = null;
 $nextid = null;
 $nexttitle = null;
-$navnexttitle = null;
 $last = null;
 foreach ($chapters as $ch) {
     if (!$edit and $ch->hidden) {
@@ -138,16 +138,15 @@ foreach ($chapters as $ch) {
     if ($last == $chapter->id) {
         $nextid = $ch->id;
         $nexttitle = book_get_chapter_title($ch->id, $chapters, $book, $context);
-        $navnexttitle = get_string('navnexttitle', 'mod_book', $nexttitle);
         break;
     }
     if ($ch->id != $chapter->id) {
         $previd = $ch->id;
         $prevtitle = book_get_chapter_title($ch->id, $chapters, $book, $context);
-        $navprevtitle = get_string('navprevtitle', 'mod_book', $prevtitle);
     }
     $last = $ch->id;
 }
+
 
 if ($book->navstyle) {
     $navprevicon = right_to_left() ? 'nav_next' : 'nav_prev';
@@ -158,9 +157,9 @@ if ($book->navstyle) {
     if ($previd) {
         $navprev = get_string('navprev', 'book');
         if ($book->navstyle == 1) {
-            $chnavigation .= '<a title="' . $navprevtitle . '" class="bookprev" href="view.php?id=' .
+            $chnavigation .= '<a title="' . $navprev . '" class="bookprev" href="view.php?id=' .
                 $cm->id . '&amp;chapterid=' . $previd .  '">' .
-                $OUTPUT->pix_icon($navprevicon, $navprevtitle, 'mod_book') . '</a>';
+                '<img src="' . $OUTPUT->pix_url($navprevicon, 'mod_book') . '" class="icon" alt="' . $navprev . '"/></a>';
         } else {
             $chnavigation .= '<a title="' . $navprev . '" class="bookprev" href="view.php?id=' .
                 $cm->id . '&amp;chapterid=' . $previd . '">' .
@@ -169,15 +168,15 @@ if ($book->navstyle) {
         }
     } else {
         if ($book->navstyle == 1) {
-            $chnavigation .= $OUTPUT->pix_icon($navprevdisicon, '', 'mod_book');
+            $chnavigation .= '<img src="' . $OUTPUT->pix_url($navprevdisicon, 'mod_book') . '" class="icon" alt="" />';
         }
     }
     if ($nextid) {
         $navnext = get_string('navnext', 'book');
         if ($book->navstyle == 1) {
-            $chnavigation .= '<a title="' . $navnexttitle . '" class="booknext" href="view.php?id=' .
+            $chnavigation .= '<a title="' . $navnext . '" class="booknext" href="view.php?id=' .
                 $cm->id . '&amp;chapterid='.$nextid.'">' .
-                $OUTPUT->pix_icon($navnexticon, $navnexttitle, 'mod_book') . '</a>';
+                '<img src="' . $OUTPUT->pix_url($navnexticon, 'mod_book').'" class="icon" alt="' . $navnext . '" /></a>';
         } else {
             $chnavigation .= ' <a title="' . $navnext . '" class="booknext" href="view.php?id=' .
                 $cm->id . '&amp;chapterid='.$nextid.'">' .
@@ -190,28 +189,24 @@ if ($book->navstyle) {
         $returnurl = course_get_url($course, $sec);
         if ($book->navstyle == 1) {
             $chnavigation .= '<a title="' . $navexit . '" class="bookexit"  href="'.$returnurl.'">' .
-                $OUTPUT->pix_icon('nav_exit', $navexit, 'mod_book') . '</a>';
+                '<img src="' . $OUTPUT->pix_url('nav_exit', 'mod_book') . '" class="icon" alt="' . $navexit . '" /></a>';
         } else {
             $chnavigation .= ' <a title="' . $navexit . '" class="bookexit"  href="'.$returnurl.'">' .
                 '<span class="chaptername">' . $navexit . '&nbsp;' . $OUTPUT->uarrow() . '</span></a>';
         }
+
+        // We cheat a bit here in assuming that viewing the last page means the user viewed the whole book.
+        $completion = new completion_info($course);
+        $completion->set_module_viewed($cm);
     }
 }
-
-// We need to discover if this is the last chapter to mark activity as completed.
-$islastchapter = false;
-if (!$nextid) {
-    $islastchapter = true;
-}
-
-book_view($book, $chapter, $islastchapter, $course, $cm, $context);
 
 // =====================================================
 // Book display HTML code
 // =====================================================
 
 echo $OUTPUT->header();
-echo $OUTPUT->heading(format_string($book->name));
+echo $OUTPUT->heading($book->name);
 
 $navclasses = book_get_nav_classes();
 
@@ -239,10 +234,6 @@ $chaptertext = file_rewrite_pluginfile_urls($chapter->content, 'pluginfile.php',
 echo format_text($chaptertext, $chapter->contentformat, array('noclean'=>true, 'overflowdiv'=>true, 'context'=>$context));
 
 echo $OUTPUT->box_end();
-
-if (core_tag_tag::is_enabled('mod_book', 'book_chapters')) {
-    echo $OUTPUT->tag_list(core_tag_tag::get_item_tags('mod_book', 'book_chapters', $chapter->id), null, 'book-tags');
-}
 
 if ($book->navstyle) {
     // Lower navigation.

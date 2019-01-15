@@ -29,7 +29,7 @@ require_once("$CFG->libdir/clilib.php");
 require_once("$CFG->libdir/cronlib.php");
 
 list($options, $unrecognized) = cli_get_params(
-    array('help' => false, 'list' => false, 'execute' => false, 'showsql' => false, 'showdebugging' => false),
+    array('help' => false, 'list' => false, 'execute' => false),
     array('h' => 'help')
 );
 
@@ -45,8 +45,6 @@ if ($options['help'] or (!$options['list'] and !$options['execute'])) {
 Options:
 --execute=\\\\some\\\\task  Execute scheduled task manually
 --list                List all scheduled tasks
---showsql             Show sql queries before they are executed
---showdebugging       Show developer level debugging information
 -h, --help            Print out this help
 
 Example:
@@ -58,21 +56,12 @@ Example:
     die;
 }
 
-if ($options['showdebugging']) {
-    set_debugging(DEBUG_DEVELOPER, true);
-}
-
-if ($options['showsql']) {
-    $DB->set_debug(true);
-}
 if ($options['list']) {
     cli_heading("List of scheduled tasks ($CFG->wwwroot)");
 
     $shorttime = get_string('strftimedatetimeshort');
 
     $tasks = \core\task\manager::get_all_scheduled_tasks();
-    echo str_pad(get_string('scheduledtasks', 'tool_task'), 50, ' ') . ' ' . str_pad(get_string('runpattern', 'tool_task'), 17, ' ')
-        . ' ' . str_pad(get_string('lastruntime', 'tool_task'), 40, ' ') . get_string('nextruntime', 'tool_task') . "\n";
     foreach ($tasks as $task) {
         $class = '\\' . get_class($task);
         $schedule = $task->get_minute() . ' '
@@ -82,7 +71,6 @@ if ($options['list']) {
             . $task->get_month() . ' '
             . $task->get_day_of_week();
         $nextrun = $task->get_next_run_time();
-        $lastrun = $task->get_last_run_time();
 
         $plugininfo = core_plugin_manager::instance()->get_plugin_info($task->get_component());
         $plugindisabled = $plugininfo && $plugininfo->is_enabled() === false && !$task->get_run_if_component_disabled();
@@ -97,14 +85,7 @@ if ($options['list']) {
             $nextrun = get_string('asap', 'tool_task');
         }
 
-        if ($lastrun) {
-            $lastrun = userdate($lastrun);
-        } else {
-            $lastrun = get_string('never');
-        }
-
-        echo str_pad($class, 50, ' ') . ' ' . str_pad($schedule, 17, ' ') .
-            ' ' . str_pad($lastrun, 40, ' ') . ' ' . $nextrun . "\n";
+        echo str_pad($class, 50, ' ') . ' ' . str_pad($schedule, 17, ' ') . ' ' . $nextrun . "\n";
     }
     exit(0);
 }
@@ -129,8 +110,7 @@ if ($execute = $options['execute']) {
     $predbqueries = $DB->perf_get_queries();
     $pretime = microtime(true);
 
-    $fullname = $task->get_name() . ' (' . get_class($task) . ')';
-    mtrace('Execute scheduled task: ' . $fullname);
+    mtrace("Scheduled task: " . $task->get_name());
     // NOTE: it would be tricky to move this code to \core\task\manager class,
     //       because we want to do detailed error reporting.
     $cronlockfactory = \core\lock\lock_config::get_lock_factory('cron');
@@ -158,7 +138,7 @@ if ($execute = $options['execute']) {
             mtrace("... used " . ($DB->perf_get_queries() - $predbqueries) . " dbqueries");
             mtrace("... used " . (microtime(1) - $pretime) . " seconds");
         }
-        mtrace('Scheduled task complete: ' . $fullname);
+        mtrace("Task completed.");
         \core\task\manager::scheduled_task_complete($task);
         get_mailer('close');
         exit(0);
@@ -168,15 +148,7 @@ if ($execute = $options['execute']) {
         }
         mtrace("... used " . ($DB->perf_get_queries() - $predbqueries) . " dbqueries");
         mtrace("... used " . (microtime(true) - $pretime) . " seconds");
-        mtrace('Scheduled task failed: ' . $fullname . ',' . $e->getMessage());
-        if ($CFG->debugdeveloper) {
-            if (!empty($e->debuginfo)) {
-                mtrace("Debug info:");
-                mtrace($e->debuginfo);
-            }
-            mtrace("Backtrace:");
-            mtrace(format_backtrace($e->getTrace(), true));
-        }
+        mtrace("Task failed: " . $e->getMessage());
         \core\task\manager::scheduled_task_failed($task);
         get_mailer('close');
         exit(1);

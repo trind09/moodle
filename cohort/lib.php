@@ -38,7 +38,7 @@ define('COHORT_WITH_NOTENROLLED_MEMBERS_ONLY', 23);
  * @return int new cohort id
  */
 function cohort_add_cohort($cohort) {
-    global $DB, $CFG;
+    global $DB;
 
     if (!isset($cohort->name)) {
         throw new coding_exception('Missing cohort name in cohort_add_cohort().');
@@ -57,12 +57,6 @@ function cohort_add_cohort($cohort) {
     }
     if (empty($cohort->component)) {
         $cohort->component = '';
-    }
-    if (empty($CFG->allowcohortthemes) && isset($cohort->theme)) {
-        unset($cohort->theme);
-    }
-    if (empty($cohort->theme) || empty($CFG->allowcohortthemes)) {
-        $cohort->theme = '';
     }
     if (!isset($cohort->timecreated)) {
         $cohort->timecreated = time();
@@ -89,14 +83,10 @@ function cohort_add_cohort($cohort) {
  * @return void
  */
 function cohort_update_cohort($cohort) {
-    global $DB, $CFG;
+    global $DB;
     if (property_exists($cohort, 'component') and empty($cohort->component)) {
         // prevent NULLs
         $cohort->component = '';
-    }
-    // Only unset the cohort theme if allowcohortthemes is enabled to prevent the value from being overwritten.
-    if (empty($CFG->allowcohortthemes) && isset($cohort->theme)) {
-        unset($cohort->theme);
     }
     $cohort->timemodified = time();
     $DB->update_record('cohort', $cohort);
@@ -122,9 +112,6 @@ function cohort_delete_cohort($cohort) {
 
     $DB->delete_records('cohort_members', array('cohortid'=>$cohort->id));
     $DB->delete_records('cohort', array('id'=>$cohort->id));
-
-    // Notify the competency subsystem.
-    \core_competency\api::hook_cohort_deleted($cohort);
 
     $event = \core\event\cohort_deleted::create(array(
         'context' => context::instance_by_id($cohort->contextid),
@@ -244,9 +231,7 @@ function cohort_get_available_cohorts($currentcontext, $withmembers = 0, $offset
     // Build context subquery. Find the list of parent context where user is able to see any or visible-only cohorts.
     // Since this method is normally called for the current course all parent contexts are already preloaded.
     $contextsany = array_filter($currentcontext->get_parent_context_ids(),
-        function($a) {
-            return has_capability("moodle/cohort:view", context::instance_by_id($a));
-        });
+        create_function('$a', 'return has_capability("moodle/cohort:view", context::instance_by_id($a));'));
     $contextsvisible = array_diff($currentcontext->get_parent_context_ids(), $contextsany);
     if (empty($contextsany) && empty($contextsvisible)) {
         // User does not have any permissions to view cohorts.
@@ -271,17 +256,15 @@ function cohort_get_available_cohorts($currentcontext, $withmembers = 0, $offset
     $groupbysql = '';
     $havingsql = '';
     if ($withmembers) {
-        $fieldssql .= ', s.memberscnt';
-        $subfields = "c.id, COUNT(DISTINCT cm.userid) AS memberscnt";
-        $groupbysql = " GROUP BY c.id";
+        $groupbysql = " GROUP BY $fieldssql";
         $fromsql = " LEFT JOIN {cohort_members} cm ON cm.cohortid = c.id ";
+        $fieldssql .= ', COUNT(DISTINCT cm.userid) AS memberscnt';
         if (in_array($withmembers,
                 array(COHORT_COUNT_ENROLLED_MEMBERS, COHORT_WITH_ENROLLED_MEMBERS_ONLY, COHORT_WITH_NOTENROLLED_MEMBERS_ONLY))) {
             list($esql, $params2) = get_enrolled_sql($currentcontext);
             $fromsql .= " LEFT JOIN ($esql) u ON u.id = cm.userid ";
             $params = array_merge($params2, $params);
-            $fieldssql .= ', s.enrolledcnt';
-            $subfields .= ', COUNT(DISTINCT u.id) AS enrolledcnt';
+            $fieldssql .= ', COUNT(DISTINCT u.id) AS enrolledcnt';
         }
         if ($withmembers == COHORT_WITH_MEMBERS_ONLY) {
             $havingsql = " HAVING COUNT(DISTINCT cm.userid) > 0";
@@ -297,20 +280,13 @@ function cohort_get_available_cohorts($currentcontext, $withmembers = 0, $offset
         $params = array_merge($params, $searchparams);
     }
 
-    if ($withmembers) {
-        $sql = "SELECT " . str_replace('c.', 'cohort.', $fieldssql) . "
-                  FROM {cohort} cohort
-                  JOIN (SELECT $subfields
-                          FROM {cohort} c $fromsql
-                         WHERE $wheresql $groupbysql $havingsql
-                        ) s ON cohort.id = s.id
-              ORDER BY cohort.name, cohort.idnumber";
-    } else {
-        $sql = "SELECT $fieldssql
-                  FROM {cohort} c $fromsql
-                 WHERE $wheresql
-              ORDER BY c.name, c.idnumber";
-    }
+    $sql = "SELECT $fieldssql
+              FROM {cohort} c
+              $fromsql
+             WHERE $wheresql
+             $groupbysql
+             $havingsql
+          ORDER BY c.name, c.idnumber";
 
     return $DB->get_records_sql($sql, $params, $offset, $limit);
 }
@@ -337,33 +313,6 @@ function cohort_can_view_cohort($cohortorid, $currentcontext) {
         $cohortcontext = context::instance_by_id($cohort->contextid);
         if (has_capability('moodle/cohort:view', $cohortcontext)) {
             return true;
-        }
-    }
-    return false;
-}
-
-/**
- * Get a cohort by id. Also does a visibility check and returns false if the user cannot see this cohort.
- *
- * @param stdClass|int $cohortorid cohort object or id
- * @param context $currentcontext current context (course) where visibility is checked
- * @return stdClass|boolean
- */
-function cohort_get_cohort($cohortorid, $currentcontext) {
-    global $DB;
-    if (is_numeric($cohortorid)) {
-        $cohort = $DB->get_record('cohort', array('id' => $cohortorid), 'id, contextid, visible');
-    } else {
-        $cohort = $cohortorid;
-    }
-
-    if ($cohort && in_array($cohort->contextid, $currentcontext->get_parent_context_ids())) {
-        if ($cohort->visible) {
-            return $cohort;
-        }
-        $cohortcontext = context::instance_by_id($cohort->contextid);
-        if (has_capability('moodle/cohort:view', $cohortcontext)) {
-            return $cohort;
         }
     }
     return false;
@@ -489,47 +438,6 @@ function cohort_get_all_cohorts($page = 0, $perpage = 25, $search = '') {
 }
 
 /**
- * Get all the cohorts where the given user is member of.
- *
- * @param int $userid
- * @return array Array
- */
-function cohort_get_user_cohorts($userid) {
-    global $DB;
-
-    $sql = 'SELECT c.*
-              FROM {cohort} c
-              JOIN {cohort_members} cm ON c.id = cm.cohortid
-             WHERE cm.userid = ? AND c.visible = 1';
-    return $DB->get_records_sql($sql, array($userid));
-}
-
-/**
- * Get the user cohort theme.
- *
- * If the user is member of one cohort, will return this cohort theme (if defined).
- * If the user is member of 2 or more cohorts, will return the theme if all them have the same
- * theme (null themes are ignored).
- *
- * @param int $userid
- * @return string|null
- */
-function cohort_get_user_cohort_theme($userid) {
-    $cohorts = cohort_get_user_cohorts($userid);
-    $theme = null;
-    foreach ($cohorts as $cohort) {
-        if (!empty($cohort->theme)) {
-            if (null === $theme) {
-                $theme = $cohort->theme;
-            } else if ($theme != $cohort->theme) {
-                return null;
-            }
-        }
-    }
-    return $theme;
-}
-
-/**
  * Returns list of contexts where cohorts are present but current user does not have capability to view/manage them.
  *
  * This function is called from {@link cohort_get_all_cohorts()} to ensure correct pagination in rare cases when user
@@ -551,14 +459,10 @@ function cohort_get_invisible_contexts() {
     $excludedcontexts = array();
     foreach ($records as $ctx) {
         context_helper::preload_from_record($ctx);
-        if (context::instance_by_id($ctx->id) == context_system::instance()) {
-            continue; // System context cohorts should be available and permissions already checked.
-        }
         if (!has_any_capability(array('moodle/cohort:manage', 'moodle/cohort:view'), context::instance_by_id($ctx->id))) {
             $excludedcontexts[] = $ctx->id;
         }
     }
-    $records->close();
     return $excludedcontexts;
 }
 
@@ -602,36 +506,4 @@ function cohort_edit_controls(context $context, moodle_url $currenturl) {
         return new tabtree($tabs, $currenttab);
     }
     return null;
-}
-
-/**
- * Implements callback inplace_editable() allowing to edit values in-place
- *
- * @param string $itemtype
- * @param int $itemid
- * @param mixed $newvalue
- * @return \core\output\inplace_editable
- */
-function core_cohort_inplace_editable($itemtype, $itemid, $newvalue) {
-    if ($itemtype === 'cohortname') {
-        return \core_cohort\output\cohortname::update($itemid, $newvalue);
-    } else if ($itemtype === 'cohortidnumber') {
-        return \core_cohort\output\cohortidnumber::update($itemid, $newvalue);
-    }
-}
-
-/**
- * Returns a list of valid themes which can be displayed in a selector.
- *
- * @return array as (string)themename => (string)get_string_theme
- */
-function cohort_get_list_of_themes() {
-    $themes = array();
-    $allthemes = get_list_of_themes();
-    foreach ($allthemes as $key => $theme) {
-        if (empty($theme->hidefromselector)) {
-            $themes[$key] = get_string('pluginname', 'theme_'.$theme->name);
-        }
-    }
-    return $themes;
 }

@@ -50,7 +50,6 @@ navigation_node::override_active_url(new moodle_url('/enrol/otherusers.php', arr
 
 $userdetails = array (
     'picture' => false,
-    'userfullnamedisplay' => false,
     'firstname' => get_string('firstname'),
     'lastname' => get_string('lastname'),
 );
@@ -61,7 +60,7 @@ foreach ($extrafields as $field) {
 
 $fields = array(
     'userdetails' => $userdetails,
-    'lastaccess' => get_string('lastaccess'),
+    'lastseen' => get_string('lastaccess'),
     'role' => get_string('roles', 'role')
 );
 
@@ -69,7 +68,7 @@ $fields = array(
 if (!has_capability('moodle/course:viewhiddenuserfields', $context)) {
     $hiddenfields = array_flip(explode(',', $CFG->hiddenuserfields));
     if (isset($hiddenfields['lastaccess'])) {
-        unset($fields['lastaccess']);
+        unset($fields['lastseen']);
     }
 }
 

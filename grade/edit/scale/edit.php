@@ -71,7 +71,7 @@ if ($id) {
     $heading = get_string('addscale', 'grades');
     /// adding new scale from course
     if (!$course = $DB->get_record('course', array('id' => $courseid))) {
-        print_error('invalidcourseid');
+        print_error('nocourseid');
     }
     $scale_rec = new stdClass();
     $scale_rec->standard = 0;

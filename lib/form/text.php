@@ -26,7 +26,6 @@
  */
 
 require_once("HTML/QuickForm/text.php");
-require_once('templatable_form_element.php');
 
 /**
  * Text type form element
@@ -38,17 +37,12 @@ require_once('templatable_form_element.php');
  * @copyright 2006 Jamie Pratt <me@jamiep.org>
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class MoodleQuickForm_text extends HTML_QuickForm_text implements templatable {
-    use templatable_form_element;
-
+class MoodleQuickForm_text extends HTML_QuickForm_text{
     /** @var string html for help button, if empty then no help */
     var $_helpbutton='';
 
     /** @var bool if true label will be hidden */
     var $_hiddenLabel=false;
-
-    /** @var bool Whether to force the display of this element to flow LTR. */
-    protected $forceltr = false;
 
     /**
      * constructor
@@ -57,18 +51,8 @@ class MoodleQuickForm_text extends HTML_QuickForm_text implements templatable {
      * @param string $elementLabel (optional) text field label
      * @param string $attributes (optional) Either a typical HTML attribute string or an associative array
      */
-    public function __construct($elementName=null, $elementLabel=null, $attributes=null) {
-        parent::__construct($elementName, $elementLabel, $attributes);
-    }
-
-    /**
-     * Old syntax of class constructor. Deprecated in PHP7.
-     *
-     * @deprecated since Moodle 3.1
-     */
-    public function MoodleQuickForm_text($elementName=null, $elementLabel=null, $attributes=null) {
-        debugging('Use of class name as constructor is deprecated', DEBUG_DEVELOPER);
-        self::__construct($elementName, $elementLabel, $attributes);
+    function MoodleQuickForm_text($elementName=null, $elementLabel=null, $attributes=null) {
+        parent::HTML_QuickForm_text($elementName, $elementLabel, $attributes);
     }
 
     /**
@@ -112,28 +96,13 @@ class MoodleQuickForm_text extends HTML_QuickForm_text implements templatable {
      *
      * @return string
      */
-    public function toHtml() {
-
-        // Add the class at the last minute.
-        if ($this->get_force_ltr()) {
-            if (!isset($this->_attributes['class'])) {
-                $this->_attributes['class'] = 'text-ltr';
-            } else {
-                $this->_attributes['class'] .= ' text-ltr';
-            }
-        }
-
-        $this->_generateId();
-        if ($this->_flagFrozen) {
-            return $this->getFrozenHtml();
-        }
-        $html = $this->_getTabs() . '<input' . $this->_getAttrString($this->_attributes) . ' />';
-
+    function toHtml(){
         if ($this->_hiddenLabel){
+            $this->_generateId();
             return '<label class="accesshide" for="'.$this->getAttribute('id').'" >'.
-                        $this->getLabel() . '</label>' . $html;
+                        $this->getLabel().'</label>'.parent::toHtml();
         } else {
-             return $html;
+             return parent::toHtml();
         }
     }
 
@@ -146,23 +115,4 @@ class MoodleQuickForm_text extends HTML_QuickForm_text implements templatable {
         return $this->_helpbutton;
     }
 
-    /**
-     * Get force LTR option.
-     *
-     * @return bool
-     */
-    public function get_force_ltr() {
-        return $this->forceltr;
-    }
-
-    /**
-     * Force the field to flow left-to-right.
-     *
-     * This is useful for fields such as URLs, passwords, settings, etc...
-     *
-     * @param bool $value The value to set the option to.
-     */
-    public function set_force_ltr($value) {
-        $this->forceltr = (bool) $value;
-    }
 }

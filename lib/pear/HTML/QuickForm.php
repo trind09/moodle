@@ -21,10 +21,6 @@
 
 require_once('PEAR.php');
 require_once('HTML/Common.php');
-/**
- * Static utility methods.
- */
-require_once('HTML/QuickForm/utils.php');
 
 $GLOBALS['HTML_QUICKFORM_ELEMENT_TYPES'] =
         array(
@@ -257,9 +253,9 @@ class HTML_QuickForm extends HTML_Common {
      * @param    bool        $trackSubmit       (optional)Whether to track if the form was submitted by adding a special hidden field
      * @access   public
      */
-    public function __construct($formName='', $method='post', $action='', $target='', $attributes=null, $trackSubmit = false)
+    function HTML_QuickForm($formName='', $method='post', $action='', $target='', $attributes=null, $trackSubmit = false)
     {
-        parent::__construct($attributes);
+        HTML_Common::HTML_Common($attributes);
         $method = (strtoupper($method) == 'GET') ? 'get' : 'post';
         $action = ($action == '') ? $_SERVER['PHP_SELF'] : $action;
         $target = empty($target) ? array() : array('target' => $target);
@@ -304,16 +300,6 @@ class HTML_QuickForm extends HTML_Common {
             }
         }
     } // end constructor
-
-    /**
-     * Old syntax of class constructor. Deprecated in PHP7.
-     *
-     * @deprecated since Moodle 3.1
-     */
-    public function HTML_QuickForm($formName='', $method='post', $action='', $target='', $attributes=null, $trackSubmit = false) {
-        debugging('Use of class name as constructor is deprecated', DEBUG_DEVELOPER);
-        self::__construct($formName, $method, $action, $target, $attributes, $trackSubmit);
-    }
 
     // }}}
     // {{{ apiVersion()
@@ -548,18 +534,8 @@ class HTML_QuickForm extends HTML_Common {
      */
     function &createElement($elementType)
     {
-        if (!isset($this) || !($this instanceof HTML_QuickForm)) {
-            // Several form elements in Moodle core before 3.2 were calling this method
-            // statically suppressing PHP notices. This debugging message should notify
-            // developers who copied such code and did not test their plugins on PHP 7.1.
-            // Example of fixing group form elements can be found in commit
-            // https://github.com/moodle/moodle/commit/721e2def56a48fab4f8d3ec7847af5cd03f5ec79
-            debugging('Function createElement() can not be called statically, ' .
-                    'this will no longer work in PHP 7.1',
-                    DEBUG_DEVELOPER);
-        }
         $args    =  func_get_args();
-        $element = self::_loadElement('createElement', $elementType, array_slice($args, 1));
+        $element =& HTML_QuickForm::_loadElement('createElement', $elementType, array_slice($args, 1));
         return $element;
     } // end func createElement
 
@@ -580,7 +556,7 @@ class HTML_QuickForm extends HTML_Common {
     function &_loadElement($event, $type, $args)
     {
         $type = strtolower($type);
-        if (!self::isTypeRegistered($type)) {
+        if (!HTML_QuickForm::isTypeRegistered($type)) {
             $error = self::raiseError(null, QUICKFORM_UNREGISTERED_ELEMENT, null, E_USER_WARNING, "Element '$type' does not exist in HTML_QuickForm::_loadElement()", 'HTML_QuickForm_Error', true);
             return $error;
         }
@@ -838,15 +814,9 @@ class HTML_QuickForm extends HTML_Common {
 
         } elseif (false !== ($pos = strpos($elementName, '['))) {
             $base = substr($elementName, 0, $pos);
-            $keys = str_replace(
-                array('\\', '\'', ']', '['), array('\\\\', '\\\'', '', "']['"),
-                substr($elementName, $pos + 1, -1)
-            );
-            $idx  = "['" . $keys . "']";
-            $keyArray = explode("']['", $keys);
-
+            $idx  = "['" . str_replace(array(']', '['), array('', "']['"), substr($elementName, $pos + 1, -1)) . "']";
             if (isset($this->_submitValues[$base])) {
-                $value = HTML_QuickForm_utils::recursiveValue($this->_submitValues[$base], $keyArray, NULL);
+                $value = eval("return (isset(\$this->_submitValues['{$base}']{$idx})) ? \$this->_submitValues['{$base}']{$idx} : null;");
             }
 
             if ((is_array($value) || null === $value) && isset($this->_submitFiles[$base])) {
@@ -1081,6 +1051,9 @@ class HTML_QuickForm extends HTML_Common {
         if (!isset($this->_rules[$element])) {
             $this->_rules[$element] = array();
         }
+        if ($validation == 'client') {
+            $this->updateAttributes(array('onsubmit' => 'try { var myValidator = validate_' . $this->_attributes['id'] . '; } catch(e) { return true; } return myValidator(this);'));
+        }
         $this->_rules[$element][] = array(
             'type'        => $type,
             'format'      => $format,
@@ -1149,6 +1122,9 @@ class HTML_QuickForm extends HTML_Common {
                         $this->_required[] = $elementName;
                         $required++;
                     }
+                    if ('client' == $validation) {
+                        $this->updateAttributes(array('onsubmit' => 'try { var myValidator = validate_' . $this->_attributes['id'] . '; } catch(e) { return true; } return myValidator(this);'));
+                    }
                 }
             }
             if ($required > 0 && count($groupObj->getElements()) == $required) {
@@ -1179,6 +1155,9 @@ class HTML_QuickForm extends HTML_Common {
                                             'reset'      => $reset);
             if ($type == 'required') {
                 $this->_required[] = $group;
+            }
+            if ($validation == 'client') {
+                $this->updateAttributes(array('onsubmit' => 'try { var myValidator = validate_' . $this->_attributes['id'] . '; } catch(e) { return true; } return myValidator(this);'));
             }
         }
     } // end func addGroupRule
@@ -2004,25 +1983,14 @@ class HTML_QuickForm_Error extends PEAR_Error {
     * @param int   $level intensity of the error (PHP error code)
     * @param mixed $debuginfo any information that can inform user as to nature of the error
     */
-    public function __construct($code = QUICKFORM_ERROR, $mode = PEAR_ERROR_RETURN,
+    function HTML_QuickForm_Error($code = QUICKFORM_ERROR, $mode = PEAR_ERROR_RETURN,
                          $level = E_USER_NOTICE, $debuginfo = null)
     {
         if (is_int($code)) {
-            parent::__construct(HTML_QuickForm::errorMessage($code), $code, $mode, $level, $debuginfo);
+            $this->PEAR_Error(HTML_QuickForm::errorMessage($code), $code, $mode, $level, $debuginfo);
         } else {
-            parent::__construct("Invalid error code: $code", QUICKFORM_ERROR, $mode, $level, $debuginfo);
+            $this->PEAR_Error("Invalid error code: $code", QUICKFORM_ERROR, $mode, $level, $debuginfo);
         }
-    }
-
-    /**
-     * Old syntax of class constructor. Deprecated in PHP7.
-     *
-     * @deprecated since Moodle 3.1
-     */
-    public function HTML_QuickForm_Error($code = QUICKFORM_ERROR, $mode = PEAR_ERROR_RETURN,
-                         $level = E_USER_NOTICE, $debuginfo = null) {
-        debugging('Use of class name as constructor is deprecated', DEBUG_DEVELOPER);
-        self::__construct($code, $mode, $level, $debuginfo);
     }
 
     // }}}

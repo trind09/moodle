@@ -15,9 +15,7 @@
  * limitations under the License.
  */
 
-if (!class_exists('Google_Client')) {
-  require_once dirname(__FILE__) . '/../autoload.php';
-}
+require_once realpath(dirname(__FILE__) . '/../../../autoload.php');
 
 /**
  * Signs data.
@@ -45,8 +43,6 @@ class Google_Signer_P12 extends Google_Signer_Abstract
     // and the key from google wasn't being accepted by the version available
     // at the time.
     if (!$password && strpos($p12, "-----BEGIN RSA PRIVATE KEY-----") !== false) {
-      $this->privateKey = openssl_pkey_get_private($p12);
-    } elseif ($password === 'notasecret' && strpos($p12, "-----BEGIN PRIVATE KEY-----") !== false) {
       $this->privateKey = openssl_pkey_get_private($p12);
     } else {
       // This throws on error

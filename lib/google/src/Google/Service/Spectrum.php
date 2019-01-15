@@ -43,7 +43,6 @@ class Google_Service_Spectrum extends Google_Service
   public function __construct(Google_Client $client)
   {
     parent::__construct($client);
-    $this->rootUrl = 'https://www.googleapis.com/';
     $this->servicePath = 'spectrum/v1explorer/paws/';
     $this->version = 'v1explorer';
     $this->serviceName = 'spectrum';

@@ -22,7 +22,6 @@
  */
 require_once('../config.php');
 require_once('lib.php');
-require_once($CFG->dirroot . '/course/lib.php');
 
 $courseid     = optional_param('course', SITEID, PARAM_INT);
 $userid       = optional_param('user', 0, PARAM_INT);
@@ -104,6 +103,11 @@ if ($userid && $course->id == SITEID) {
     $PAGE->navbar->add(get_string('notes', 'notes'), $notesurl);
 } else if ($course->id != SITEID) {
     $notenode = $PAGE->navigation->find('currentcoursenotes', null)->make_inactive();
+    $participantsurl = new moodle_url('/user/view.php', array('id' => $userid, 'course' => $course->id));
+    $currentcoursenode = $PAGE->navigation->find('currentcourse', null);
+    $participantsnode = $currentcoursenode->find('participants', null);
+    $usernode = $participantsnode->add(fullname($user), $participantsurl);
+    $usernode->make_active();
 
     $notesurl = new moodle_url('/notes/index.php', array('user' => $userid, 'course' => $courseid));
     $PAGE->navbar->add(get_string('notes', 'notes'), $notesurl);
@@ -111,7 +115,9 @@ if ($userid && $course->id == SITEID) {
     $PAGE->set_context(context_course::instance($courseid));
 } else {
     $link = null;
-    if (course_can_view_participants($coursecontext) || course_can_view_participants($systemcontext)) {
+    if (has_capability('moodle/course:viewparticipants', $coursecontext)
+        || has_capability('moodle/site:viewparticipants', $systemcontext)) {
+
         $link = new moodle_url('/user/index.php', array('id' => $course->id));
     }
 }
@@ -184,13 +190,12 @@ if ($courseid != SITEID) {
             $ccontext = context_course::instance($c->id);
             $cfullname = format_string($c->fullname, true, array('context' => $ccontext));
             $header = '<a href="' . $CFG->wwwroot . '/course/view.php?id=' . $c->id . '">' . $cfullname . '</a>';
-            $viewcoursenotes = has_capability('moodle/notes:view', $ccontext);
-            if (has_capability('moodle/notes:manage', $ccontext)) {
+            if (has_capability('moodle/notes:manage', context_course::instance($c->id))) {
                 $addid = $c->id;
             } else {
                 $addid = 0;
             }
-            note_print_notes($header, $addid, $viewcoursenotes, $c->id, $userid, NOTES_STATE_PUBLIC, 0);
+            note_print_notes($header, $addid, $view, $c->id, $userid, NOTES_STATE_PUBLIC, 0);
         }
     }
 }

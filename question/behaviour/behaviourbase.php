@@ -124,17 +124,6 @@ abstract class question_behaviour {
      */
     public function check_file_access($options, $component, $filearea, $args, $forcedownload) {
         $this->adjust_display_options($options);
-
-        if ($component == 'question' && $filearea == 'response_bf_comment') {
-            foreach ($this->qa->get_step_iterator() as $attemptstep) {
-                if ($attemptstep->get_id() == $args[0]) {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
         return $this->question->check_file_access($this->qa, $options, $component,
                 $filearea, $args, $forcedownload);
     }
@@ -213,9 +202,9 @@ abstract class question_behaviour {
             return array();
         }
 
-        $vars = array('comment' => question_attempt::PARAM_RAW_FILES, 'commentformat' => PARAM_INT);
+        $vars = array('comment' => PARAM_RAW, 'commentformat' => PARAM_INT);
         if ($this->qa->get_max_mark()) {
-            $vars['mark'] = PARAM_RAW_TRIMMED;
+            $vars['mark'] = question_attempt::PARAM_MARK;
             $vars['maxmark'] = PARAM_FLOAT;
         }
         return $vars;
@@ -399,7 +388,7 @@ abstract class question_behaviour {
 
         // So, now we know the comment is the same, so check the mark, if present.
         $previousfraction = $this->qa->get_fraction();
-        $newmark = question_utils::clean_param_mark($pendingstep->get_behaviour_var('mark'));
+        $newmark = $pendingstep->get_behaviour_var('mark');
 
         if (is_null($previousfraction)) {
             return is_null($newmark) || $newmark === '';
@@ -488,24 +477,15 @@ abstract class question_behaviour {
         }
 
         if ($pendingstep->has_behaviour_var('mark')) {
-            $mark = question_utils::clean_param_mark($pendingstep->get_behaviour_var('mark'));
-            if ($mark === null) {
-                throw new coding_exception('Inalid number format ' . $pendingstep->get_behaviour_var('mark') .
-                        ' when processing a manual grading action.', 'Question ' . $this->question->id .
-                        ', slot ' . $this->qa->get_slot());
-
-            } else if ($mark === '') {
+            $fraction = $pendingstep->get_behaviour_var('mark') /
+                            $pendingstep->get_behaviour_var('maxmark');
+            if ($pendingstep->get_behaviour_var('mark') === '') {
                 $fraction = null;
-
-            } else {
-                $fraction = $mark / $pendingstep->get_behaviour_var('maxmark');
-                if ($fraction > $this->qa->get_max_fraction() || $fraction < $this->qa->get_min_fraction()) {
-                    throw new coding_exception('Score out of range when processing ' .
-                            'a manual grading action.', 'Question ' . $this->question->id .
-                            ', slot ' . $this->qa->get_slot() . ', fraction ' . $fraction);
-                }
+            } else if ($fraction > $this->qa->get_max_fraction() || $fraction < $this->qa->get_min_fraction()) {
+                throw new coding_exception('Score out of range when processing ' .
+                        'a manual grading action.', 'Question ' . $this->question->id .
+                                ', slot ' . $this->qa->get_slot() . ', fraction ' . $fraction);
             }
-
             $pendingstep->set_fraction($fraction);
         }
 
@@ -518,20 +498,15 @@ abstract class question_behaviour {
      * @param $comment the comment text to format. If omitted,
      *      $this->qa->get_manual_comment() is used.
      * @param $commentformat the format of the comment, one of the FORMAT_... constants.
-     * @param $context the quiz context.
      * @return string the comment, ready to be output.
      */
-    public function format_comment($comment = null, $commentformat = null, $context = null) {
+    public function format_comment($comment = null, $commentformat = null) {
         $formatoptions = new stdClass();
         $formatoptions->noclean = true;
         $formatoptions->para = false;
 
         if (is_null($comment)) {
-            list($comment, $commentformat, $commentstep) = $this->qa->get_manual_comment();
-        }
-
-        if ($context !== null) {
-            $comment = $this->qa->rewrite_response_pluginfile_urls($comment, $context->id, 'bf_comment', $commentstep);
+            list($comment, $commentformat) = $this->qa->get_manual_comment();
         }
 
         return format_text($comment, $commentformat, $formatoptions);
@@ -544,14 +519,13 @@ abstract class question_behaviour {
     protected function summarise_manual_comment($step) {
         $a = new stdClass();
         if ($step->has_behaviour_var('comment')) {
-            list($comment, $commentformat, $commentstep) = $this->qa->get_manual_comment();
-            $comment = question_utils::to_plain_text($comment, $commentformat);
-            $a->comment = shorten_text($comment, 200);
+            $a->comment = shorten_text(html_to_text($this->format_comment(
+                    $step->get_behaviour_var('comment')), 0, false), 200);
         } else {
             $a->comment = '';
         }
 
-        $mark = question_utils::clean_param_mark($step->get_behaviour_var('mark'));
+        $mark = $step->get_behaviour_var('mark');
         if (is_null($mark) || $mark === '') {
             return get_string('commented', 'question', $a->comment);
         } else {

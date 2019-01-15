@@ -24,11 +24,12 @@
  */
 
 $messageproviders = array (
-    // Ordinary single forum posts.
-    'posts' => array(
-    ),
 
-    // Forum digest messages.
-    'digests' => array(
-    ),
+/// Ordinary single forum posts
+    'posts' => array (
+    )
+
 );
+
+
+

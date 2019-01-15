@@ -58,7 +58,10 @@ class behat_form_checkbox extends behat_form_field {
             $this->field->click();
 
             // Trigger the onchange event as triggered when 'checking' the checkbox.
-            $this->trigger_on_change();
+            $this->session->getDriver()->triggerSynScript(
+                $this->field->getXPath(),
+                "Syn.trigger('change', {}, {{ELEMENT}})"
+            );
 
         } else if (empty($value) && $this->field->isChecked()) {
 
@@ -71,7 +74,10 @@ class behat_form_checkbox extends behat_form_field {
             $this->field->click();
 
             // Trigger the onchange event as triggered when 'checking' the checkbox.
-            $this->trigger_on_change();
+            $this->session->getDriver()->triggerSynScript(
+                $this->field->getXPath(),
+                "Syn.trigger('change', {}, {{ELEMENT}})"
+            );
         }
     }
 
@@ -104,16 +110,4 @@ class behat_form_checkbox extends behat_form_field {
         return false;
     }
 
-    /**
-     * Trigger on change event.
-     */
-    protected function trigger_on_change() {
-        $driver = $this->session->getDriver();
-        if ($driver instanceof \Moodle\BehatExtension\Driver\MoodleSelenium2Driver) {
-            $driver->triggerSynScript(
-                $this->field->getXPath(),
-                "Syn.trigger('change', {}, {{ELEMENT}})"
-            );
-        }
-    }
 }

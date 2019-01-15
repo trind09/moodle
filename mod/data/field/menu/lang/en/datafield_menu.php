@@ -25,5 +25,3 @@
  */
 
 $string['pluginname'] = 'Menu';
-$string['fieldtypelabel'] = 'Menu field';
-$string['privacy:metadata'] = 'The Menu field component does not store any personal data, it uses tables defined in mod_data.';

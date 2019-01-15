@@ -57,7 +57,7 @@ class recordset_walk implements \Iterator {
     protected $callback;
 
     /**
-     * @var mixed|null Extra param for the callback.
+     * @var array|false Extra params for the callback.
      */
     protected $callbackextra;
 
@@ -66,9 +66,9 @@ class recordset_walk implements \Iterator {
      *
      * @param \moodle_recordset $recordset Recordset to iterate.
      * @param callable $callback Apply this function to each record. If using a method, it should be public.
-     * @param mixed $callbackextra An extra single parameter to pass to the callback. Use a container to pass multiple values.
+     * @param array $callbackextra Array of arguments to pass to the callback.
      */
-    public function __construct(\moodle_recordset $recordset, callable $callback, $callbackextra = null) {
+    public function __construct(\moodle_recordset $recordset, callable $callback, $callbackextra = false) {
         $this->recordset = $recordset;
         $this->callback = $callback;
         $this->callbackextra = $callbackextra;
@@ -99,10 +99,10 @@ class recordset_walk implements \Iterator {
         }
 
         // Apply callback and return.
-        if (!is_null($this->callbackextra)) {
-            return call_user_func($this->callback, $record, $this->callbackextra);
-        } else {
+        if ($this->callbackextra) {
             return call_user_func($this->callback, $record);
+        } else {
+            return call_user_func($this->callback, $record, $this->callbackextra);
         }
     }
 

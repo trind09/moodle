@@ -28,7 +28,8 @@
 require_once(__DIR__ . '/../../../lib/behat/behat_base.php');
 require_once(__DIR__ . '/../../../lib/behat/behat_field_manager.php');
 
-use Behat\Gherkin\Node\TableNode as TableNode,
+use Behat\Behat\Context\Step\Given as Given,
+    Behat\Gherkin\Node\TableNode as TableNode,
     Behat\Mink\Exception\ElementNotFoundException as ElementNotFoundException;
 
 /**
@@ -74,7 +75,7 @@ class behat_admin extends behat_base {
             $exception = new ElementNotFoundException($this->getSession(), '"' . $label . '" administration setting ');
 
             // The argument should be converted to an xpath literal.
-            $label = behat_context_helper::escape($label);
+            $label = $this->getSession()->getSelectorsHandler()->xpathLiteral($label);
 
             // Single element settings.
             try {
@@ -89,10 +90,8 @@ class behat_admin extends behat_base {
             } catch (ElementNotFoundException $e) {
 
                 // Multi element settings, interacting only the first one.
-                $fieldxpath = "//*[label[normalize-space(.)= $label]|span[normalize-space(.)= $label]]/" .
-                    "ancestor::div[contains(concat(' ', normalize-space(@class), ' '), ' form-item ')]" .
-                    "/descendant::div[@class='form-group']/descendant::*[self::input | self::textarea | self::select]" .
-                    "[not(./@type = 'submit' or ./@type = 'image' or ./@type = 'hidden')]";
+                $fieldxpath = "//*[label[.= $label]|span[.= $label]]/ancestor::div[contains(concat(' ', normalize-space(@class), ' '), ' form-item ')]" .
+                    "/descendant::div[@class='form-group']/descendant::*[self::input | self::textarea | self::select][not(./@type = 'submit' or ./@type = 'image' or ./@type = 'hidden')]";
                 $fieldnode = $this->find('xpath', $fieldxpath);
 
                 // It is the same one that contains the type.

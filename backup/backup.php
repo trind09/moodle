@@ -15,17 +15,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-/**
- * This script is used to configure and execute the backup proccess.
- *
- * @package    core
- * @subpackage backup
- * @copyright  Moodle
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
-
-define('NO_OUTPUT_BUFFERING', true);
-
 require_once('../config.php');
 require_once($CFG->dirroot . '/backup/util/includes/backup_includes.php');
 require_once($CFG->dirroot . '/backup/moodle2/backup_plan_builder.class.php');
@@ -34,7 +23,6 @@ require_once($CFG->dirroot . '/backup/moodle2/backup_plan_builder.class.php');
 $courseid = required_param('id', PARAM_INT);
 $sectionid = optional_param('section', null, PARAM_INT);
 $cmid = optional_param('cm', null, PARAM_INT);
-$cancel      = optional_param('cancel', '', PARAM_ALPHA);
 /**
  * Part of the forms in stages after initial, is POST never GET
  */
@@ -105,10 +93,7 @@ $PAGE->set_title($heading);
 $PAGE->set_heading($heading);
 
 $renderer = $PAGE->get_renderer('core','backup');
-if (empty($cancel)) {
-    // Do not print the header if user cancelled the process, as we are going to redirect the user.
-    echo $OUTPUT->header();
-}
+echo $OUTPUT->header();
 
 // Prepare a progress bar which can display optionally during long-running
 // operations while setting up the UI.
@@ -153,9 +138,7 @@ if ($backup->get_stage() == backup_ui::STAGE_FINAL) {
     }
 
     // Get HTML from logger.
-    if ($CFG->debugdisplay) {
-        $loghtml = $logger->get_html();
-    }
+    $loghtml = $logger->get_html();
 
     // Hide the progress display and first backup step bar (the 'finished' step will show next).
     echo html_writer::end_div();

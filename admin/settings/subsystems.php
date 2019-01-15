@@ -15,6 +15,8 @@ if ($hassiteconfig) { // speedup for non-admins, add all caps used on this page
 
     $optionalsubsystems->add(new admin_setting_configcheckbox('messaging', new lang_string('messaging', 'admin'), new lang_string('configmessaging','admin'), 1));
 
+    $optionalsubsystems->add(new admin_setting_configcheckbox('messaginghidereadnotifications', new lang_string('messaginghidereadnotifications', 'admin'), new lang_string('configmessaginghidereadnotifications','admin'), 0));
+
     $options = array(DAYSECS=>new lang_string('secondstotime86400'), WEEKSECS=>new lang_string('secondstotime604800'), 2620800=>new lang_string('nummonths', 'moodle', 1), 15724800=>new lang_string('nummonths', 'moodle', 6),0=>new lang_string('never'));
     $optionalsubsystems->add(new admin_setting_configselect('messagingdeletereadnotificationsdelay', new lang_string('messagingdeletereadnotificationsdelay', 'admin'), new lang_string('configmessagingdeletereadnotificationsdelay', 'admin'), 604800, $options));
 
@@ -32,7 +34,7 @@ if ($hassiteconfig) { // speedup for non-admins, add all caps used on this page
     // Conditional activities: completion and availability
     $optionalsubsystems->add(new admin_setting_configcheckbox('enablecompletion',
         new lang_string('enablecompletion','completion'),
-        new lang_string('configenablecompletion', 'completion'), 1));
+        new lang_string('configenablecompletion','completion'), 0));
 
     $options = array(
         1 => get_string('completionactivitydefault', 'completion'),
@@ -43,16 +45,10 @@ if ($hassiteconfig) { // speedup for non-admins, add all caps used on this page
 
     $optionalsubsystems->add($checkbox = new admin_setting_configcheckbox('enableavailability',
             new lang_string('enableavailability', 'availability'),
-            new lang_string('enableavailability_desc', 'availability'), 1));
+            new lang_string('enableavailability_desc', 'availability'), 0));
     $checkbox->set_affects_modinfo(true);
 
     $optionalsubsystems->add(new admin_setting_configcheckbox('enableplagiarism', new lang_string('enableplagiarism','plagiarism'), new lang_string('configenableplagiarism','plagiarism'), 0));
 
     $optionalsubsystems->add(new admin_setting_configcheckbox('enablebadges', new lang_string('enablebadges', 'badges'), new lang_string('configenablebadges', 'badges'), 1));
-
-    $optionalsubsystems->add(new admin_setting_configcheckbox('enableglobalsearch', new lang_string('enableglobalsearch', 'admin'),
-        new lang_string('enableglobalsearch_desc', 'admin'), 0, 1, 0));
-
-    $optionalsubsystems->add(new admin_setting_configcheckbox('allowstealth', new lang_string('allowstealthmodules'),
-        new lang_string('allowstealthmodules_help'), 0, 1, 0));
 }

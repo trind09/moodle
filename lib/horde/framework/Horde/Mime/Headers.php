@@ -1,165 +1,183 @@
 <?php
 /**
- * Copyright 2002-2017 Horde LLC (http://www.horde.org/)
+ * This class contains functions related to handling the headers of MIME data.
+ *
+ * Copyright 2002-2014 Horde LLC (http://www.horde.org/)
  *
  * See the enclosed file COPYING for license information (LGPL). If you
  * did not receive this file, see http://www.horde.org/licenses/lgpl21.
  *
- * @category  Horde
- * @copyright 2002-2017 Horde LLC
- * @license   http://www.horde.org/licenses/lgpl21 LGPL 2.1
- * @package   Mime
+ * @author   Michael Slusarz <slusarz@horde.org>
+ * @category Horde
+ * @license  http://www.horde.org/licenses/lgpl21 LGPL 2.1
+ * @package  Mime
  */
-
-/**
- * This class represents the collection of header values for a single mail
- * message part.
- *
- * It supports the base e-mail spec (RFC 5322) and the MIME extensions to that
- * spec (RFC 2045).
- *
- * @author    Michael Slusarz <slusarz@horde.org>
- * @category  Horde
- * @copyright 2002-2017 Horde LLC
- * @license   http://www.horde.org/licenses/lgpl21 LGPL 2.1
- * @package   Mime
- */
-class Horde_Mime_Headers
-implements ArrayAccess, IteratorAggregate, Serializable
+class Horde_Mime_Headers implements Serializable
 {
     /* Serialized version. */
-    const VERSION = 3;
+    const VERSION = 2;
+
+    /* Constants for getValue(). */
+    const VALUE_STRING = 1;
+    const VALUE_BASE = 2;
+    const VALUE_PARAMS = 3;
 
     /**
      * The default charset to use when parsing text parts with no charset
      * information.
      *
-     * @todo Make this a non-static property or pass as parameter to static
-     *       methods in Horde 6.
      * @var string
      */
-    public static $defaultCharset = 'us-ascii';
-
-    /**
-     * Cached handler information for Header Element objects.
-     *
-     * @var array
-     */
-    protected static $_handlers = array();
+    static public $defaultCharset = 'us-ascii';
 
     /**
      * The internal headers array.
      *
-     * @var Horde_Support_CaseInsensitiveArray
+     * Keys are the lowercase header name.
+     * Values are:
+     *   - h: The case-sensitive header name.
+     *   - p: Parameters for this header.
+     *   - v: The value of the header. Values are stored in UTF-8.
+     *
+     * @var array
      */
-    protected $_headers;
+    protected $_headers = array();
 
     /**
-     * Constructor.
+     * The sequence to use as EOL for the headers.
+     * The default is currently to output the EOL sequence internally as
+     * just "\n" instead of the canonical "\r\n" required in RFC 822 & 2045.
+     * To be RFC complaint, the full <CR><LF> EOL combination should be used
+     * when sending a message.
+     *
+     * @var string
      */
-    public function __construct()
-    {
-        $this->_headers = new Horde_Support_CaseInsensitiveArray();
-    }
+    protected $_eol = "\n";
 
     /**
+     * The User-Agent string to use.
+     *
+     * @var string
      */
-    public function __clone()
-    {
-        $copy = new Horde_Support_CaseInsensitiveArray();
-        foreach ($this->_headers as $key => $val) {
-            $copy[$key] = clone $val;
-        }
-        $this->_headers = $copy;
-    }
+    protected $_agent = null;
 
     /**
-     * Returns the headers in array format.
+     * List of single header fields.
+     *
+     * @var array
+     */
+    protected $_singleFields = array(
+        // Mail: RFC 5322
+        'to', 'from', 'cc', 'bcc', 'date', 'sender', 'reply-to',
+        'message-id', 'in-reply-to', 'references', 'subject',
+        // MIME: RFC 1864
+        'content-md5',
+        // MIME: RFC 2045
+        'mime-version', 'content-type', 'content-transfer-encoding',
+        'content-id', 'content-description',
+        // MIME: RFC 2110
+        'content-base',
+        // MIME: RFC 2183
+        'content-disposition',
+        // MIME: RFC 2424
+        'content-duration',
+        // MIME: RFC 2557
+        'content-location',
+        // MIME: RFC 2912 [3]
+        'content-features',
+        // MIME: RFC 3282
+        'content-language',
+        // MIME: RFC 3297
+        'content-alternative',
+        // Importance: See, e.g., RFC 4356 [2.1.3.3.1]
+        'importance',
+        // OTHER: X-Priority
+        // See: http://kb.mozillazine.org/Emulate_Microsoft_email_clients
+        'x-priority'
+    );
+
+    /**
+     * Returns the internal header array in array format.
      *
      * @param array $opts  Optional parameters:
-     * <pre>
-     *   - broken_rfc2231: (boolean) Attempt to work around non-RFC
-     *                     2231-compliant MUAs by generating both a RFC
-     *                     2047-like parameter name and also the correct RFC
-     *                     2231 parameter
-     *                     DEFAULT: false
-     *   - canonical: (boolean) Use canonical (RFC 822/2045) CRLF EOLs?
-     *                DEFAULT: Uses "\n"
+     *   - canonical: (boolean) Use canonical (RFC 822/2045) line endings?
+     *                DEFAULT: Uses $this->_eol
      *   - charset: (string) Encodes the headers using this charset. If empty,
-     *              encodes using UTF-8.
+     *              encodes using internal charset (UTF-8).
      *              DEFAULT: No encoding.
      *   - defserver: (string) The default domain to append to mailboxes.
      *                DEFAULT: No default name.
-     *   - lang: (string) The language to use when encoding.
-     *           DEFAULT: None specified
      *   - nowrap: (integer) Don't wrap the headers.
      *             DEFAULT: Headers are wrapped.
-     * </pre>
      *
-     * @return array  The headers in array format. Keys are header names, but
-     *                case sensitivity cannot be guaranteed. Values are
-     *                header values.
+     * @return array  The headers in array format.
      */
     public function toArray(array $opts = array())
     {
+        $address_keys = $this->addressFields();
         $charset = array_key_exists('charset', $opts)
             ? (empty($opts['charset']) ? 'UTF-8' : $opts['charset'])
             : null;
         $eol = empty($opts['canonical'])
             ? $this->_eol
             : "\r\n";
+        $mime = $this->mimeParamFields();
         $ret = array();
 
-        foreach ($this->_headers as $ob) {
-            $sopts = array(
-                'charset' => $charset
-            );
+        foreach ($this->_headers as $header => $ob) {
+            $val = is_array($ob['v']) ? $ob['v'] : array($ob['v']);
 
-            if (($ob instanceof Horde_Mime_Headers_Addresses) ||
-                ($ob instanceof Horde_Mime_Headers_AddressesMulti)) {
-                if (!empty($opts['defserver'])) {
-                    $sopts['defserver'] = $opts['defserver'];
+            foreach (array_keys($val) as $key) {
+                if (in_array($header, $address_keys) ) {
+                    /* Address encoded headers. */
+                    $rfc822 = new Horde_Mail_Rfc822();
+                    $text = $rfc822->parseAddressList($val[$key], array(
+                        'default_domain' => empty($opts['defserver']) ? null : $opts['defserver']
+                    ))->writeAddress(array(
+                        'encode' => $charset,
+                        'idn' => true
+                    ));
+                } elseif (in_array($header, $mime) && !empty($ob['p'])) {
+                    /* MIME encoded headers (RFC 2231). */
+                    $text = $val[$key];
+                    foreach ($ob['p'] as $name => $param) {
+                        foreach (Horde_Mime::encodeParam($name, $param, array('charset' => $charset, 'escape' => true)) as $name2 => $param2) {
+                            $text .= '; ' . $name2 . '=' . $param2;
+                        }
+                    }
+                } else {
+                    $text = is_null($charset)
+                        ? $val[$key]
+                        : Horde_Mime::encode($val[$key], $charset);
                 }
-            } elseif ($ob instanceof Horde_Mime_Headers_ContentParam) {
-                $sopts['broken_rfc2231'] = !empty($opts['broken_rfc2231']);
-                if (!empty($opts['lang'])) {
-                    $sopts['lang'] = $opts['lang'];
-                }
-            }
 
-            $tmp = array();
-
-            foreach ($ob->sendEncode(array_filter($sopts)) as $val) {
                 if (empty($opts['nowrap'])) {
                     /* Remove any existing linebreaks and wrap the line. */
-                    $htext = $ob->name . ': ';
-                    $val = ltrim(
-                        substr(
-                            wordwrap(
-                                $htext . strtr(trim($val), array("\r" => '', "\n" => '')),
-                                76,
-                                $eol . ' '
-                            ),
-                            strlen($htext)
-                        )
-                    );
+                    $header_text = $ob['h'] . ': ';
+                    $text = ltrim(substr(wordwrap($header_text . strtr(trim($text), array("\r" => '', "\n" => '')), 76, $eol . ' '), strlen($header_text)));
                 }
 
-                $tmp[] = $val;
+                $val[$key] = $text;
             }
 
-            $ret[$ob->name] = (count($tmp) == 1)
-                ? reset($tmp)
-                : $tmp;
+            $ret[$ob['h']] = (count($val) == 1) ? reset($val) : $val;
         }
 
         return $ret;
     }
 
     /**
-     * Returns all headers concatenated into a single string.
+     * Returns the internal header array in string format.
      *
-     * @param array $opts  See toArray().
+     * @param array $opts  Optional parameters:
+     *   - canonical: (boolean) Use canonical (RFC 822/2045) line endings?
+     *                DEFAULT: Uses $this->_eol
+     *   - charset: (string) Encodes the headers using this charset.
+     *              DEFAULT: No encoding.
+     *   - defserver: (string) The default domain to append to mailboxes.
+     *                DEFAULT: No default name.
+     *   - nowrap: (integer) Don't wrap the headers.
+     *             DEFAULT: Headers are wrapped.
      *
      * @return string  The headers in string format.
      */
@@ -171,7 +189,10 @@ implements ArrayAccess, IteratorAggregate, Serializable
         $text = '';
 
         foreach ($this->toArray($opts) as $key => $val) {
-            foreach ((is_array($val) ? $val : array($val)) as $entry) {
+            if (!is_array($val)) {
+                $val = array($val);
+            }
+            foreach ($val as $entry) {
                 $text .= $key . ': ' . $entry . $eol;
             }
         }
@@ -180,133 +201,189 @@ implements ArrayAccess, IteratorAggregate, Serializable
     }
 
     /**
-     * Add/append/replace a header.
+     * Generate the 'Received' header for the Web browser->Horde hop
+     * (attempts to conform to guidelines in RFC 5321 [4.4]).
+     *
+     * @param array $opts  Additional opts:
+     *   - dns: (Net_DNS2_Resolver) Use the DNS resolver object to lookup
+     *          hostnames.
+     *          DEFAULT: Use gethostbyaddr() function.
+     *   - server: (string) Use this server name.
+     *             DEFAULT: Auto-detect using current PHP values.
+     */
+    public function addReceivedHeader(array $opts = array())
+    {
+        $old_error = error_reporting(0);
+        if (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+            /* This indicates the user is connecting through a proxy. */
+            $remote_path = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
+            $remote_addr = $remote_path[0];
+            if (!empty($opts['dns'])) {
+                $remote = $remote_addr;
+                try {
+                    if ($response = $opts['dns']->query($remote_addr, 'PTR')) {
+                        foreach ($response->answer as $val) {
+                            if (isset($val->ptrdname)) {
+                                $remote = $val->ptrdname;
+                                break;
+                            }
+                        }
+                    }
+                } catch (Net_DNS2_Exception $e) {}
+            } else {
+                $remote = gethostbyaddr($remote_addr);
+            }
+        } else {
+            $remote_addr = $_SERVER['REMOTE_ADDR'];
+            if (empty($_SERVER['REMOTE_HOST'])) {
+                if (!empty($opts['dns'])) {
+                    $remote = $remote_addr;
+                    try {
+                        if ($response = $opts['dns']->query($remote_addr, 'PTR')) {
+                            foreach ($response->answer as $val) {
+                                if (isset($val->ptrdname)) {
+                                    $remote = $val->ptrdname;
+                                    break;
+                                }
+                            }
+                        }
+                    } catch (Net_DNS2_Exception $e) {}
+                } else {
+                    $remote = gethostbyaddr($remote_addr);
+                }
+            } else {
+                $remote = $_SERVER['REMOTE_HOST'];
+            }
+        }
+        error_reporting($old_error);
+
+        if (!empty($_SERVER['REMOTE_IDENT'])) {
+            $remote_ident = $_SERVER['REMOTE_IDENT'] . '@' . $remote . ' ';
+        } elseif ($remote != $_SERVER['REMOTE_ADDR']) {
+            $remote_ident = $remote . ' ';
+        } else {
+            $remote_ident = '';
+        }
+
+        if (!empty($opts['server'])) {
+            $server_name = $opts['server'];
+        } elseif (!empty($_SERVER['SERVER_NAME'])) {
+            $server_name = $_SERVER['SERVER_NAME'];
+        } elseif (!empty($_SERVER['HTTP_HOST'])) {
+            $server_name = $_SERVER['HTTP_HOST'];
+        } else {
+            $server_name = 'unknown';
+        }
+
+        $received = 'from ' . $remote . ' (' . $remote_ident .
+            '[' . $remote_addr . ']) ' .
+            'by ' . $server_name . ' (Horde Framework) with HTTP; ' .
+            date('r');
+
+        $this->addHeader('Received', $received);
+    }
+
+    /**
+     * Generate the 'Message-ID' header.
+     */
+    public function addMessageIdHeader()
+    {
+        $this->addHeader('Message-ID', Horde_Mime::generateMessageId());
+    }
+
+    /**
+     * Generate the user agent description header.
+     */
+    public function addUserAgentHeader()
+    {
+        $this->addHeader('User-Agent', $this->getUserAgent());
+    }
+
+    /**
+     * Returns the user agent description header.
+     *
+     * @return string  The user agent header.
+     */
+    public function getUserAgent()
+    {
+        if (is_null($this->_agent)) {
+            $this->_agent = 'Horde Application Framework 5';
+        }
+        return $this->_agent;
+    }
+
+    /**
+     * Explicitly sets the User-Agent string.
+     *
+     * @param string $agent  The User-Agent string to use.
+     */
+    public function setUserAgent($agent)
+    {
+        $this->_agent = $agent;
+    }
+
+    /**
+     * Add a header to the header array.
      *
      * @param string $header  The header name.
      * @param string $value   The header value (UTF-8).
-     * @param array $opts     DEPRECATED
+     * @param array $opts     Additional options:
+     *   - params: (array) MIME parameters for Content-Type or
+     *             Content-Disposition.
+     *             DEFAULT: None
+     *   - sanity_check: (boolean) Do sanity-checking on header value?
+     *                   DEFAULT: false
      */
     public function addHeader($header, $value, array $opts = array())
     {
-        /* Existing header? Add to that object. */
         $header = trim($header);
-        if ($hdr = $this[$header]) {
-            $hdr->setValue($value);
-            return;
-        }
+        $lcHeader = Horde_String::lower($header);
 
-        $classname = $this->_getHeaderClassName($header);
-
-        try {
-            $ob = new $classname($header, $value);
-        } catch (InvalidArgumentException $e) {
-            /* Ignore an invalid header. */
-            return;
-        } catch (Horde_Mime_Exception $e) {
-            return;
-        }
-
-        switch ($classname) {
-        case 'Horde_Mime_Headers_ContentParam_ContentDisposition':
-        case 'Horde_Mime_Headers_ContentParam_ContentType':
-            /* BC */
-            if (!empty($opts['params'])) {
-                foreach ($opts['params'] as $key => $val) {
-                    $ob[$key] = $val;
-                }
-            }
-            break;
-        }
-
-        $this->_headers[$ob->name] = $ob;
-    }
-
-    /**
-     * Add a Horde_Mime_Headers_Element object to the current header list.
-     *
-     * @since 2.5.0
-     *
-     * @param Horde_Mime_Headers_Element $ob  Header object to add.
-     * @param boolean $check                  Check that the header and object
-     *                                        type match?
-     *
-     * @throws InvalidArgumentException
-     */
-    public function addHeaderOb(Horde_Mime_Headers_Element $ob, $check = false)
-    {
-        if ($check) {
-            $cname = $this->_getHeaderClassName($ob->name);
-            if (!($ob instanceof $cname)) {
-                throw new InvalidArgumentException(sprintf(
-                    'Object is not correct class: %s',
-                    $cname
-                ));
-            }
-        }
-
-        /* Existing header? Add to that object. */
-        if ($hdr = $this[$ob->name]) {
-            $hdr->setValue($ob);
-        } else {
-            $this->_headers[$ob->name] = $ob;
-        }
-    }
-
-    /**
-     * Return the header class to use for a header name.
-     *
-     * @param string $header  The header name.
-     *
-     * @return string  The Horde_Mime_Headers_* class to use.
-     */
-    protected function _getHeaderClassName($header)
-    {
-        if (empty(self::$_handlers)) {
-            $search = array(
-                'Horde_Mime_Headers_Element_Single',
-                'Horde_Mime_Headers_AddressesMulti',
-                'Horde_Mime_Headers_Addresses',
-                'Horde_Mime_Headers_ContentDescription',
-                'Horde_Mime_Headers_ContentId',
-                'Horde_Mime_Headers_ContentLanguage',
-                'Horde_Mime_Headers_ContentParam_ContentDisposition',
-                'Horde_Mime_Headers_ContentParam_ContentType',
-                'Horde_Mime_Headers_ContentTransferEncoding',
-                'Horde_Mime_Headers_Date',
-                'Horde_Mime_Headers_Identification',
-                'Horde_Mime_Headers_MessageId',
-                'Horde_Mime_Headers_Mime',
-                'Horde_Mime_Headers_MimeVersion',
-                'Horde_Mime_Headers_Received',
-                'Horde_Mime_Headers_Subject',
-                'Horde_Mime_Headers_UserAgent'
+        if (!isset($this->_headers[$lcHeader])) {
+            $this->_headers[$lcHeader] = array(
+                'h' => $header
             );
+        }
+        $ptr = &$this->_headers[$lcHeader];
 
-            foreach ($search as $val) {
-                foreach ($val::getHandles() as $hdr) {
-                    self::$_handlers[$hdr] = $val;
-                }
-            }
+        if (!empty($opts['sanity_check'])) {
+            $value = $this->_sanityCheck($value);
         }
 
-        $header = Horde_String::lower($header);
+        // Fields defined in RFC 2822 that contain address information
+        if (in_array($lcHeader, $this->addressFields())) {
+            $rfc822 = new Horde_Mail_Rfc822();
+            $addr_list = $rfc822->parseAddressList($value);
 
-        return isset(self::$_handlers[$header])
-            ? self::$_handlers[$header]
-            : 'Horde_Mime_Headers_Element_Multiple';
-    }
+            switch ($lcHeader) {
+            case 'bcc':
+            case 'cc':
+            case 'from':
+            case 'to':
+                /* Catch malformed undisclosed-recipients entries. */
+                if ((count($addr_list) == 1) &&
+                    preg_match("/^\s*undisclosed-recipients:?\s*$/i", $addr_list[0]->bare_address)) {
+                    $addr_list = new Horde_Mail_Rfc822_List('undisclosed-recipients:;');
+                }
+                break;
+            }
+            $value = strval($addr_list);
+        } else {
+            $value = Horde_Mime::decode($value);
+        }
 
-    /**
-     * Get a header from the header array.
-     *
-     * @param string $header  The header name.
-     *
-     * @return Horde_Mime_Headers_Element  Element object, or null if not
-     *                                     found.
-     */
-    public function getHeader($header)
-    {
-        return $this[$header];
+        if (isset($ptr['v'])) {
+            if (!is_array($ptr['v'])) {
+                $ptr['v'] = array($ptr['v']);
+            }
+            $ptr['v'][] = $value;
+        } else {
+            $ptr['v'] = $value;
+        }
+
+        if (!empty($opts['params'])) {
+            $ptr['p'] = $opts['params'];
+        }
     }
 
     /**
@@ -316,7 +393,244 @@ implements ArrayAccess, IteratorAggregate, Serializable
      */
     public function removeHeader($header)
     {
-        unset($this[$header]);
+        unset($this->_headers[Horde_String::lower(trim($header))]);
+    }
+
+    /**
+     * Replace a value of a header.
+     *
+     * @param string $header  The header name.
+     * @param string $value   The header value.
+     * @param array $opts     Additional options:
+     *   - params: (array) MIME parameters for Content-Type or
+     *             Content-Disposition.
+     *             DEFAULT: None
+     *   - sanity_check: (boolean) Do sanity-checking on header value?
+     *                   DEFAULT: false
+     */
+    public function replaceHeader($header, $value, array $opts = array())
+    {
+        $this->removeHeader($header);
+        $this->addHeader($header, $value, $opts);
+    }
+
+    /**
+     * Attempts to return the header in the correct case.
+     *
+     * @param string $header  The header to search for.
+     *
+     * @return string  The value for the given header.
+     *                 If the header is not found, returns null.
+     */
+    public function getString($header)
+    {
+        $lcHeader = Horde_String::lower($header);
+        return (isset($this->_headers[$lcHeader]))
+            ? $this->_headers[$lcHeader]['h']
+            : null;
+    }
+
+    /**
+     * Attempt to return the value for a given header.
+     * The following header fields can only have 1 entry, so if duplicate
+     * entries exist, the first value will be used:
+     *   * To, From, Cc, Bcc, Date, Sender, Reply-to, Message-ID, In-Reply-To,
+     *     References, Subject (RFC 2822 [3.6])
+     *   * All List Headers (RFC 2369 [3])
+     * The values are not MIME encoded.
+     *
+     * @param string $header  The header to search for.
+     * @param integer $type   The type of return:
+     *   - VALUE_STRING: Returns a string representation of the entire header.
+     *   - VALUE_BASE: Returns a string representation of the base value of
+     *                 the header. If this is not a header that allows
+     *                 parameters, this will be equivalent to VALUE_STRING.
+     *   - VALUE_PARAMS: Returns the list of parameters for this header. If
+     *                   this is not a header that allows parameters, this
+     *                   will be an empty array.
+     *
+     * @return mixed  The value for the given header.
+     *                If the header is not found, returns null.
+     */
+    public function getValue($header, $type = self::VALUE_STRING)
+    {
+        $header = Horde_String::lower($header);
+
+        if (!isset($this->_headers[$header])) {
+            return null;
+        }
+
+        $ptr = &$this->_headers[$header];
+        if (is_array($ptr['v']) &&
+            in_array($header, $this->singleFields(true))) {
+            if (in_array($header, $this->addressFields())) {
+                $base = str_replace(';,', ';', implode(', ', $ptr['v']));
+            } else {
+                $base = $ptr['v'][0];
+            }
+        } else {
+            $base = $ptr['v'];
+        }
+        $params = isset($ptr['p']) ? $ptr['p'] : array();
+
+        switch ($type) {
+        case self::VALUE_BASE:
+            return $base;
+
+        case self::VALUE_PARAMS:
+            return $params;
+
+        case self::VALUE_STRING:
+            foreach ($params as $key => $val) {
+                $base .= '; ' . $key . '=' . $val;
+            }
+            return $base;
+        }
+    }
+
+    /**
+     * Returns the list of RFC defined header fields that contain address
+     * info.
+     *
+     * @return array  The list of headers, in lowercase.
+     */
+    static public function addressFields()
+    {
+        return array(
+            'from', 'to', 'cc', 'bcc', 'reply-to', 'resent-to', 'resent-cc',
+            'resent-bcc', 'resent-from', 'sender'
+        );
+    }
+
+    /**
+     * Returns the list of RFC defined header fields that can only contain
+     * a single value.
+     *
+     * @param boolean $list  Return list-related headers also?
+     *
+     * @return array  The list of headers, in lowercase.
+     */
+    public function singleFields($list = true)
+    {
+        return $list
+            ? array_merge($this->_singleFields, array_keys($this->listHeaders()))
+            : $this->_singleFields;
+    }
+
+    /**
+     * Returns the list of RFC defined MIME header fields that may contain
+     * parameter info.
+     *
+     * @return array  The list of headers, in lowercase.
+     */
+    static public function mimeParamFields()
+    {
+        return array('content-type', 'content-disposition');
+    }
+
+    /**
+     * Returns the list of valid mailing list headers.
+     *
+     * @deprecated  Use Horde_ListHeaders#headers() instead.
+     *
+     * @return array  The list of valid mailing list headers.
+     */
+    static public function listHeaders()
+    {
+        return array(
+            /* RFC 2369 */
+            'list-help'         =>  Horde_Mime_Translation::t("List-Help"),
+            'list-unsubscribe'  =>  Horde_Mime_Translation::t("List-Unsubscribe"),
+            'list-subscribe'    =>  Horde_Mime_Translation::t("List-Subscribe"),
+            'list-owner'        =>  Horde_Mime_Translation::t("List-Owner"),
+            'list-post'         =>  Horde_Mime_Translation::t("List-Post"),
+            'list-archive'      =>  Horde_Mime_Translation::t("List-Archive"),
+            /* RFC 2919 */
+            'list-id'           =>  Horde_Mime_Translation::t("List-Id")
+        );
+    }
+
+    /**
+     * Do any mailing list headers exist?
+     *
+     * @return boolean  True if any mailing list headers exist.
+     */
+    public function listHeadersExist()
+    {
+        return (bool)count(array_intersect(array_keys($this->listHeaders()), array_keys($this->_headers)));
+    }
+
+    /**
+     * Sets a new string to use for EOLs.
+     *
+     * @param string $eol  The string to use for EOLs.
+     */
+    public function setEOL($eol)
+    {
+        $this->_eol = $eol;
+    }
+
+    /**
+     * Get the string to use for EOLs.
+     *
+     * @return string  The string to use for EOLs.
+     */
+    public function getEOL()
+    {
+        return $this->_eol;
+    }
+
+    /**
+     * Returns an address object for a header.
+     *
+     * @param string $field  The header to return as an object.
+     *
+     * @return Horde_Mail_Rfc822_List  The object for the requested field.
+     *                                 Returns null if field doesn't exist.
+     */
+    public function getOb($field)
+    {
+        if (($value = $this->getValue($field)) === null) {
+            return null;
+        }
+
+        $rfc822 = new Horde_Mail_Rfc822();
+        return $rfc822->parseAddressList($value);
+    }
+
+    /**
+     * Perform sanity checking on a raw header (e.g. handle 8-bit characters).
+     *
+     * @param string $data  The header data.
+     *
+     * @return string  The cleaned header data.
+     */
+    protected function _sanityCheck($data)
+    {
+        $charset_test = array(
+            'windows-1252',
+            self::$defaultCharset
+        );
+
+        if (!Horde_String::validUtf8($data)) {
+            /* Appears to be a PHP error with the internal String structure
+             * which prevents accurate manipulation of the string. Copying
+             * the data to a new variable fixes things. */
+            $data = substr($data, 0);
+
+            /* Assumption: broken charset in headers is generally either
+             * UTF-8 or ISO-8859-1/Windows-1252. Test these charsets
+             * first before using default charset. This may be a
+             * Western-centric approach, but it's better than nothing. */
+            foreach ($charset_test as $charset) {
+                $tmp = Horde_String::convertCharset($data, $charset, 'UTF-8');
+                if (Horde_String::validUtf8($tmp)) {
+                    return $tmp;
+                }
+            }
+        }
+
+        return $data;
     }
 
     /* Static methods. */
@@ -329,11 +643,11 @@ implements ArrayAccess, IteratorAggregate, Serializable
      *
      * @return Horde_Mime_Headers  A new Horde_Mime_Headers object.
      */
-    public static function parseHeaders($text)
+    static public function parseHeaders($text)
     {
-        $curr = null;
-        $headers = new Horde_Mime_Headers();
-        $hdr_list = array();
+        $currheader = $currtext = null;
+        $mime = self::mimeParamFields();
+        $to_process = array();
 
         if ($text instanceof Horde_Stream) {
             $stream = $text;
@@ -348,32 +662,43 @@ implements ArrayAccess, IteratorAggregate, Serializable
                 break;
             }
 
-            if ($curr && (($val[0] == ' ') || ($val[0] == "\t"))) {
-                $curr->text .= ' ' . ltrim($val);
+            if (($val[0] == ' ') || ($val[0] == "\t")) {
+                $currtext .= ' ' . ltrim($val);
             } else {
+                if (!is_null($currheader)) {
+                    $to_process[] = array($currheader, rtrim($currtext));
+                }
+
                 $pos = strpos($val, ':');
-
-                $curr = new stdClass;
-                $curr->header = substr($val, 0, $pos);
-                $curr->text = ltrim(substr($val, $pos + 1));
-
-                $hdr_list[] = $curr;
+                $currheader = substr($val, 0, $pos);
+                $currtext = ltrim(substr($val, $pos + 1));
             }
         }
 
-        foreach ($hdr_list as $val) {
-            /* When parsing, only keep the FIRST header seen for single value
-             * text-only headers, since newer headers generally are appended
-             * to the top of the message. */
-            if (!($ob = $headers[$val->header]) ||
-                !($ob instanceof Horde_Mime_Headers_Element_Single) ||
-                ($ob instanceof Horde_Mime_Headers_Addresses)) {
-                $headers->addHeader($val->header, rtrim($val->text));
-            }
+        if (!is_null($currheader)) {
+            $to_process[] = array($currheader, $currtext);
         }
 
-        if (!($text instanceof Horde_Stream)) {
-            $stream->close();
+        $headers = new Horde_Mime_Headers();
+
+        reset($to_process);
+        while (list(,$val) = each($to_process)) {
+            /* Ignore empty headers. */
+            if (!strlen($val[1])) {
+                continue;
+            }
+
+            if (in_array(Horde_String::lower($val[0]), $mime)) {
+                $res = Horde_Mime::decodeParam($val[0], $val[1]);
+                $headers->addHeader($val[0], $res['val'], array(
+                    'params' => $res['params'],
+                    'sanity_check' => true
+                ));
+            } else {
+                $headers->addHeader($val[0], $val[1], array(
+                    'sanity_check' => true
+                ));
+            }
         }
 
         return $headers;
@@ -391,10 +716,13 @@ implements ArrayAccess, IteratorAggregate, Serializable
         $data = array(
             // Serialized data ID.
             self::VERSION,
-            $this->_headers->getArrayCopy(),
-            // TODO: BC
+            $this->_headers,
             $this->_eol
         );
+
+        if (!is_null($this->_agent)) {
+            $data[] = $this->_agent;
+        }
 
         return serialize($data);
     }
@@ -415,121 +743,11 @@ implements ArrayAccess, IteratorAggregate, Serializable
             throw new Horde_Mime_Exception('Cache version change');
         }
 
-        $this->_headers = new Horde_Support_CaseInsensitiveArray($data[1]);
-        // TODO: BC
+        $this->_headers = $data[1];
         $this->_eol = $data[2];
+        if (isset($data[3])) {
+            $this->_agent = $data[3];
+        }
     }
-
-    /* ArrayAccess methods. */
-
-    /**
-     * Does header exist?
-     *
-     * @since 2.5.0
-     *
-     * @param string $header  Header name.
-     *
-     * @return boolean  True if header exists.
-     */
-    public function offsetExists($offset)
-    {
-        return isset($this->_headers[trim($offset)]);
-    }
-
-    /**
-     * Return header element object.
-     *
-     * @since 2.5.0
-     *
-     * @param string $header  Header name.
-     *
-     * @return Horde_Mime_Headers_Element  Element object, or null if not
-     *                                     found.
-     */
-    public function offsetGet($offset)
-    {
-        return $this->_headers[trim($offset)];
-    }
-
-    /**
-     * Store a header element object.
-     *
-     * @since 2.5.0
-     *
-     * @param string $offset                   Not used.
-     * @param Horde_Mime_Headers_Element $elt  Header element.
-     */
-    public function offsetSet($offset, $value)
-    {
-        $this->addHeaderOb($value);
-    }
-
-    /**
-     * Remove a header element object.
-     *
-     * @since 2.5.0
-     *
-     * @param string $offset  Header name.
-     */
-    public function offsetUnset($offset)
-    {
-        unset($this->_headers[trim($offset)]);
-    }
-
-    /* IteratorAggregate function */
-
-    /**
-     * @since 2.5.0
-     */
-    public function getIterator()
-    {
-        return new ArrayIterator($this->_headers);
-    }
-
-    /* Deprecated functions */
-
-    /**
-     * Handle deprecated methods.
-     */
-    public function __call($name, $arguments)
-    {
-        $d = new Horde_Mime_Headers_Deprecated($this);
-        return call_user_func_array(array($d, $name), $arguments);
-    }
-
-    /**
-     * Handle deprecated static methods.
-     */
-    public static function __callStatic($name, $arguments)
-    {
-        $d = new Horde_Mime_Headers_Deprecated();
-        return call_user_func_array(array($d, $name), $arguments);
-    }
-
-    /**
-     * @deprecated
-     */
-    protected $_eol = "\n";
-
-    /**
-     * @deprecated
-     */
-    public function setEOL($eol)
-    {
-        $this->_eol = $eol;
-    }
-
-    /**
-     * @deprecated
-     */
-    public function getEOL()
-    {
-        return $this->_eol;
-    }
-
-    /* Constants for getValue(). @deprecated */
-    const VALUE_STRING = 1;
-    const VALUE_BASE = 2;
-    const VALUE_PARAMS = 3;
 
 }

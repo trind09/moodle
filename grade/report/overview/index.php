@@ -33,10 +33,9 @@ $userid   = optional_param('userid', $USER->id, PARAM_INT);
 $PAGE->set_url(new moodle_url('/grade/report/overview/index.php', array('id' => $courseid, 'userid' => $userid)));
 
 if (!$course = $DB->get_record('course', array('id' => $courseid))) {
-    print_error('invalidcourseid');
+    print_error('nocourseid');
 }
 require_login(null, false);
-$PAGE->set_course($course);
 
 $context = context_course::instance($course->id);
 $systemcontext = context_system::instance();
@@ -65,13 +64,33 @@ if (isset($personalcontext) && $courseid == SITEID) {
 if ($userid == $USER->id) {
     $settings = $PAGE->settingsnav->find('mygrades', null);
     $settings->make_active();
-} else if ($courseid != SITEID && $userid) {
+} else if ($courseid != SITEID) {
     // Show some other navbar thing.
-    $user = $DB->get_record('user', array('id' => $userid), '*', MUST_EXIST);
+    $user = $DB->get_record('user', array('id' => $userid));
     $PAGE->navigation->extend_for_user($user);
 }
 
-$access = grade_report_overview::check_access($systemcontext, $context, $personalcontext, $course, $userid);
+$access = false;
+if (has_capability('moodle/grade:viewall', $systemcontext)) {
+    // Ok - can view all course grades.
+    $access = true;
+
+} else if (has_capability('moodle/grade:viewall', $context)) {
+    // Ok - can view any grades in context.
+    $access = true;
+
+} else if ($userid == $USER->id and ((has_capability('moodle/grade:view', $context) and $course->showgrades)
+        || $courseid == SITEID)) {
+    // Ok - can view own course grades.
+    $access = true;
+
+} else if (has_capability('moodle/grade:viewall', $personalcontext) and $course->showgrades) {
+    // Ok - can view grades of this user - parent most probably.
+    $access = true;
+} else if (has_capability('moodle/user:viewuseractivitiesreport', $personalcontext) and $course->showgrades) {
+    // Ok - can view grades of this user - parent most probably.
+    $access = true;
+}
 
 if (!$access) {
     // no access to grades!
@@ -87,8 +106,8 @@ if (!isset($USER->grade_last_report)) {
 }
 $USER->grade_last_report[$course->id] = 'overview';
 
-// First make sure we have proper final grades.
-grade_regrade_final_grades_if_required($course);
+//first make sure we have proper final grades - this must be done before constructing of the grade tree
+grade_regrade_final_grades($courseid);
 
 if (has_capability('moodle/grade:viewall', $context) && $courseid != SITEID) {
     // Please note this would be extremely slow if we wanted to implement this properly for all teachers.
@@ -194,6 +213,15 @@ if (has_capability('moodle/grade:viewall', $context) && $courseid != SITEID) {
     }
 }
 
-grade_report_overview::viewed($context, $courseid, $userid);
+$event = \gradereport_overview\event\grade_report_viewed::create(
+    array(
+        'context' => $context,
+        'courseid' => $courseid,
+        'relateduserid' => $userid,
+    )
+);
+$event->trigger();
 
 echo $OUTPUT->footer();
+
+

@@ -69,13 +69,4 @@ class ltisource extends base {
             $ADMIN->add($parentnodename, $settings);
         }
     }
-
-    /**
-     * Should there be a way to uninstall the plugin via the administration UI.
-     *
-     * @return bool
-     */
-    public function is_uninstall_allowed() {
-        return true;
-    }
 }

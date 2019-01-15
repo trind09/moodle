@@ -1,28 +1,20 @@
 <?php
 /**
- * Copyright 2007-2017 Horde LLC (http://www.horde.org/)
- *
- * See the enclosed file COPYING for license information (LGPL). If you
- * did not receive this file, see http://www.horde.org/licenses/lgpl21.
- *
- * @category  Horde
- * @copyright 2007-2017 Horde LLC
- * @license   http://www.horde.org/licenses/lgpl21 LGPL 2.1
- * @package   Mime
- */
-
-/**
  * The Horde_Mime_Mail:: class wraps around the various MIME library classes
  * to provide a simple interface for creating and sending MIME messages.
  *
  * All content has to be passed UTF-8 encoded. The charset parameters is used
  * for the generated message only.
  *
- * @author    Jan Schneider <jan@horde.org>
- * @category  Horde
- * @copyright 2007-2017 Horde LLC
- * @license   http://www.horde.org/licenses/lgpl21 LGPL 2.1
- * @package   Mime
+ * Copyright 2007-2014 Horde LLC (http://www.horde.org/)
+ *
+ * See the enclosed file COPYING for license information (LGPL). If you
+ * did not receive this file, see http://www.horde.org/licenses/lgpl21.
+ *
+ * @author   Jan Schneider <jan@horde.org>
+ * @category Horde
+ * @license  http://www.horde.org/licenses/lgpl21 LGPL 2.1
+ * @package  Mime
  */
 class Horde_Mime_Mail
 {
@@ -178,20 +170,6 @@ class Horde_Mime_Mail
         } else {
             $this->_headers->addHeader($header, $value);
         }
-    }
-
-    /**
-     * Add a Horde_Mime_Headers_Element object to the current header list.
-     *
-     * @since 2.5.0
-     *
-     * @param Horde_Mime_Headers_Element $ob  Header object to add.
-     *
-     * @throws InvalidArgumentException
-     */
-    public function addHeaderOb(Horde_Mime_Headers_Element $ob)
-    {
-        $this->_headers->addHeaderOb($ob, true);
     }
 
     /**
@@ -404,18 +382,22 @@ class Horde_Mime_Mail
     public function send($mailer, $resend = false, $flowed = true)
     {
         /* Add mandatory headers if missing. */
-        if (!$resend || !isset($this->_headers['Message-ID'])) {
-            $this->_headers->addHeaderOb(
-                Horde_Mime_Headers_MessageId::create()
-            );
+        $has_header = $this->_headers->getValue('Message-ID');
+        if (!$resend || !$has_header) {
+            if ($has_header) {
+                $this->_headers->removeHeader('Message-ID');
+            }
+            $this->_headers->addMessageIdHeader();
         }
-        if (!isset($this->_headers['User-Agent'])) {
-            $this->_headers->addHeaderOb(
-                Horde_Mime_Headers_UserAgent::create()
-            );
+        if (!$this->_headers->getValue('User-Agent')) {
+            $this->_headers->addUserAgentHeader();
         }
-        if (!$resend || !isset($this->_headers['Date'])) {
-            $this->_headers->addHeaderOb(Horde_Mime_Headers_Date::create());
+        $has_header = $this->_headers->getValue('Date');
+        if (!$resend || !$has_header) {
+            if ($has_header) {
+                $this->_headers->removeHeader('Date');
+            }
+            $this->_headers->addHeader('Date', date('r'));
         }
 
         if (isset($this->_base)) {
@@ -435,9 +417,9 @@ class Horde_Mime_Mail
             if (!empty($this->_body) && !empty($this->_htmlBody)) {
                 $body->setType('multipart/alternative');
                 $this->_body->setDescription(Horde_Mime_Translation::t("Plaintext Version of Message"));
-                $body[] = $this->_body;
+                $body->addPart($this->_body);
                 $this->_htmlBody->setDescription(Horde_Mime_Translation::t("HTML Version of Message"));
-                $body[] = $this->_htmlBody;
+                $body->addPart($this->_htmlBody);
             } elseif (!empty($this->_htmlBody)) {
                 $body = $this->_htmlBody;
             } elseif (!empty($this->_body)) {
@@ -448,10 +430,10 @@ class Horde_Mime_Mail
                 $basepart->setType('multipart/mixed');
                 $basepart->isBasePart(true);
                 if ($body) {
-                    $basepart[] = $body;
+                    $basepart->addPart($body);
                 }
                 foreach ($this->_parts as $mime_part) {
-                    $basepart[] = $mime_part;
+                    $basepart->addPart($mime_part);
                 }
             } else {
                 $basepart = $body;
@@ -463,9 +445,7 @@ class Horde_Mime_Mail
         /* Build recipients. */
         $recipients = clone $this->_recipients;
         foreach (array('to', 'cc') as $header) {
-            if ($h = $this->_headers[$header]) {
-                $recipients->add($h->getAddressList());
-            }
+            $recipients->add($this->_headers->getOb($header));
         }
         if ($this->_bcc) {
             $recipients->add($this->_bcc);
@@ -496,15 +476,10 @@ class Horde_Mime_Mail
         if ($stream) {
             $hdr = new Horde_Stream();
             $hdr->add($this->_headers->toString(), true);
-            return Horde_Stream_Wrapper_Combine::getStream(
-                array($hdr->stream,
-                      $this->getBasePart()->toString(
-                        array('stream' => true, 'encode' => Horde_Mime_Part::ENCODE_7BIT | Horde_Mime_Part::ENCODE_8BIT | Horde_Mime_Part::ENCODE_BINARY))
-                )
-            );
+            return Horde_Stream_Wrapper_Combine::getStream(array($hdr->stream, $this->getBasePart()->toString(array('stream' => true))));
         }
 
-        return $this->_headers->toString() . $this->getBasePart()->toString();
+        return $this->_headers->toString() . $this->_getBasePart->toString();
     }
 
     /**

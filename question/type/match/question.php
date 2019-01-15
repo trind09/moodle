@@ -25,7 +25,6 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->dirroot . '/question/type/questionbase.php');
 
 /**
  * Represents a matching question.
@@ -135,34 +134,25 @@ class qtype_match_question extends question_graded_automatically_with_countback 
     }
 
     public function classify_response(array $response) {
-        $selectedchoicekeys = array();
+        $selectedchoices = array();
         foreach ($this->stemorder as $key => $stemid) {
             if (array_key_exists($this->field($key), $response) && $response[$this->field($key)]) {
-                $selectedchoicekeys[$stemid] = $this->choiceorder[$response[$this->field($key)]];
+                $selectedchoices[$stemid] = $this->choiceorder[$response[$this->field($key)]];
             } else {
-                $selectedchoicekeys[$stemid] = 0;
+                $selectedchoices[$stemid] = 0;
             }
         }
 
         $parts = array();
         foreach ($this->stems as $stemid => $stem) {
-            if ($this->right[$stemid] == 0 || !isset($selectedchoicekeys[$stemid])) {
-                // Choice for a deleted subquestion, ignore. (See apply_attempt_state.)
-                continue;
-            }
-            $selectedchoicekey = $selectedchoicekeys[$stemid];
-            if (empty($selectedchoicekey)) {
+            if (empty($selectedchoices[$stemid])) {
                 $parts[$stemid] = question_classified_response::no_response();
                 continue;
             }
-            $choice = $this->choices[$selectedchoicekey];
-            if ($choice == get_string('deletedchoice', 'qtype_match')) {
-                // Deleted choice, ignore. (See apply_attempt_state.)
-                continue;
-            }
+            $choice = $this->choices[$selectedchoices[$stemid]];
             $parts[$stemid] = new question_classified_response(
-                    $selectedchoicekey, $choice,
-                    ($selectedchoicekey == $this->right[$stemid]) / count($this->stems));
+                    $selectedchoices[$stemid], $choice,
+                    ($selectedchoices[$stemid] == $this->right[$stemid]) / count($this->stems));
         }
         return $parts;
     }
@@ -342,7 +332,7 @@ class qtype_match_question extends question_graded_automatically_with_countback 
 
         } else if ($component == 'question' && in_array($filearea,
                 array('correctfeedback', 'partiallycorrectfeedback', 'incorrectfeedback'))) {
-            return $this->check_combined_feedback_file_access($qa, $options, $filearea, $args);
+            return $this->check_combined_feedback_file_access($qa, $options, $filearea);
 
         } else if ($component == 'question' && $filearea == 'hint') {
             return $this->check_hint_file_access($qa, $options, $args);

@@ -74,16 +74,7 @@ class completion_completion extends data_object {
      * @return data_object instance of data_object or false if none found.
      */
     public static function fetch($params) {
-        $cache = cache::make('core', 'coursecompletion');
-
-        $key = $params['userid'] . '_' . $params['course'];
-        if ($hit = $cache->get($key)) {
-            return $hit['value'];
-        }
-
-        $tocache = self::fetch_helper('course_completions', __CLASS__, $params);
-        $cache->set($key, ['value' => $tocache]);
-        return $tocache;
+        return self::fetch_helper('course_completions', __CLASS__, $params);
     }
 
     /**
@@ -188,10 +179,9 @@ class completion_completion extends data_object {
             $this->timeenrolled = 0;
         }
 
-        $result = false;
         // Save record
         if ($this->id) {
-            $result = $this->update();
+            return $this->update();
         } else {
             // Make sure reaggregate field is not null
             if (!$this->reaggregate) {
@@ -203,17 +193,7 @@ class completion_completion extends data_object {
                 $this->timestarted = 0;
             }
 
-            $result = $this->insert();
+            return $this->insert();
         }
-
-        if ($result) {
-            // Update the cached record.
-            $cache = cache::make('core', 'coursecompletion');
-            $data = $this->get_record_data();
-            $key = $data->userid . '_' . $data->course;
-            $cache->set($key, ['value' => $data]);
-        }
-
-        return $result;
     }
 }

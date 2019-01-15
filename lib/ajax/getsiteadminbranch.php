@@ -26,7 +26,7 @@
  */
 
 define('AJAX_SCRIPT', true);
-require_once(__DIR__ . '/../../config.php');
+require_once(dirname(__FILE__) . '/../../config.php');
 
 // This should be accessed by only valid logged in user.
 require_login(null, false);

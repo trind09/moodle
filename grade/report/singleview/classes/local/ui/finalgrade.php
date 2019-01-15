@@ -47,7 +47,14 @@ class finalgrade extends grade_attribute_format implements unique_value, be_disa
     public function get_value() {
         $this->label = $this->grade->grade_item->itemname;
 
-        $val = $this->grade->finalgrade;
+        $isoverridden = $this->grade->is_overridden();
+        // If the grade is overridden or the grade type is not an activity then use finalgrade.
+        if (!empty($isoverridden) || $this->grade->grade_item->itemtype != 'mod') {
+            $val = $this->grade->finalgrade;
+        } else {
+            $val = $this->grade->rawgrade;
+        }
+
         if ($this->grade->grade_item->scaleid) {
             return $val ? (int)$val : -1;
         } else {

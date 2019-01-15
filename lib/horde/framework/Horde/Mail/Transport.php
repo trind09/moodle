@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright 1997-2017 Horde LLC (http://www.horde.org/)
+ * Copyright 1997-2014 Horde LLC (http://www.horde.org/)
  * Copyright (c) 2002-2007, Richard Heyes
  * All rights reserved.
  *
@@ -30,7 +30,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * @category  Horde
- * @copyright 1997-2017 Horde LLC (http://www.horde.org/)
+ * @copyright 1997-2014 Horde LLC (http://www.horde.org/)
  * @copyright 2002-2007 Richard Heyes
  * @license   http://www.horde.org/licenses/bsd New BSD License
  * @package   Mail
@@ -43,13 +43,10 @@
  * @author    Richard Heyes <richard@phpguru.org>
  * @author    Michael Slusarz <slusarz@horde.org>
  * @category  Horde
- * @copyright 1997-2017 Horde LLC (http://www.horde.org/)
+ * @copyright 1997-2014 Horde LLC (http://www.horde.org/)
  * @copyright 2002-2007 Richard Heyes
  * @license   http://www.horde.org/licenses/bsd New BSD License
  * @package   Mail
- *
- * @property-read boolean $eai  Does the transport driver support EAI (RFC
- *                              6532) headers? (@since 2.5.0)
  */
 abstract class Horde_Mail_Transport
 {
@@ -66,16 +63,6 @@ abstract class Horde_Mail_Transport
      * @var array
      */
     protected $_params = array();
-
-    /**
-     */
-    public function __get($name)
-    {
-        switch ($name) {
-        case 'eai':
-            return false;
-        }
-    }
 
     /**
      * Send a message.
@@ -134,7 +121,7 @@ abstract class Horde_Mail_Transport
             if (strcasecmp($key, 'From') === 0) {
                 $parser = new Horde_Mail_Rfc822();
                 $addresses = $parser->parseAddressList($value, array(
-                    'validate' => $this->eai ? 'eai' : true
+                    'validate' => true
                 ));
                 $from = $addresses[0]->bare_address;
 
@@ -190,7 +177,7 @@ abstract class Horde_Mail_Transport
         // should already be in the headers.
         $rfc822 = new Horde_Mail_Rfc822();
         return $rfc822->parseAddressList($recipients, array(
-            'validate' => $this->eai ? 'eai' : true
+            'validate' => true
         ))->bare_addresses_idn;
     }
 

@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Helper to get behat contexts from other contexts.
+ * Helper to initialise behat contexts from moodle code.
  *
  * @package    core
  * @category   test
@@ -25,7 +25,8 @@
 
 // NOTE: no MOODLE_INTERNAL test here, this file may be required by behat before including /config.php.
 
-use Behat\Testwork\Environment\Environment;
+use Behat\Mink\Session as Session,
+    Behat\Mink\Mink as Mink;
 
 /**
  * Helper to get behat contexts.
@@ -38,44 +39,28 @@ use Behat\Testwork\Environment\Environment;
 class behat_context_helper {
 
     /**
-     * Behat environment.
+     * List of already initialized contexts.
      *
-     * @var Environment
+     * @var array
      */
-    protected static $environment = null;
+    protected static $contexts = array();
 
     /**
-     * @var Escaper::escapeLiteral
+     * @var Mink.
      */
-    protected static $escaper;
-
-    /**
-     * @var array keep track of nonexisting contexts, to avoid exception tracking.
-     */
-    protected static $nonexistingcontexts = array();
+    protected static $mink = false;
 
     /**
      * Sets the browser session.
      *
-     * @param Environment $environment
-     * @return void
-     * @deprecated since 3.2 MDL-55072 - please use behat_context_helper::set_environment()
-     * @todo MDL-55365 This will be deleted in Moodle 3.6.
-     */
-    public static function set_session(Environment $environment) {
-        debugging('set_session is deprecated. Please use set_environment instead.', DEBUG_DEVELOPER);
-
-        self::set_environment($environment);
-    }
-
-    /**
-     * Sets behat environment.
-     *
-     * @param Environment $environment
+     * @param Session $session
      * @return void
      */
-    public static function set_environment(Environment $environment) {
-        self::$environment = $environment;
+    public static function set_session(Session $session) {
+
+        // Set mink to be able to init a context.
+        self::$mink = new Mink(array('mink' => $session));
+        self::$mink->setDefaultSessionName('mink');
     }
 
     /**
@@ -85,45 +70,42 @@ class behat_context_helper {
      * that uses direct API calls; steps returning step chains
      * can not be executed like this.
      *
-     * @throws Behat\Behat\Context\Exception\ContextNotFoundException
+     * @throws coding_exception
      * @param string $classname Context identifier (the class name).
      * @return behat_base
      */
     public static function get($classname) {
 
-        $suitename = self::$environment->getSuite()->getName();
-        // If default suite, then get the default theme name.
-        if ($suitename == 'default') {
-            $suitename = theme_config::DEFAULT_THEME;
-        }
-        $overridencontextname = 'behat_theme_'.$suitename.'_'.$classname;
-
-        // If contexts has not been checked before and doesn't exist then just use core one.
-        if (!isset(self::$nonexistingcontexts[$overridencontextname])) {
-            try {
-                $subcontext = self::$environment->getContext($overridencontextname);
-
-                return $subcontext;
-            } catch (Behat\Behat\Context\Exception\ContextNotFoundException $e) {
-                // If context not found then it's not overridden.
-                self::$nonexistingcontexts[$overridencontextname] = 1;
-            }
+        if (!self::init_context($classname)) {
+            throw coding_exception('The required "' . $classname . '" class does not exist');
         }
 
-        // Get the actual context.
-        return self::$environment->getContext($classname);
+        return self::$contexts[$classname];
     }
 
     /**
-     * Translates string to XPath literal.
+     * Initializes the required context.
      *
-     * @param string $label label to escape
-     * @return string escaped string.
+     * @throws coding_exception
+     * @param string $classname
+     * @return bool
      */
-    public static function escape($label) {
-        if (empty(self::$escaper)) {
-            self::$escaper = new \Behat\Mink\Selector\Xpath\Escaper();
+    protected static function init_context($classname) {
+
+        if (!empty(self::$contexts[$classname])) {
+            return true;
         }
-        return self::$escaper->escapeLiteral($label);
+
+        if (!class_exists($classname)) {
+            return false;
+        }
+
+        $instance = new $classname();
+        $instance->setMink(self::$mink);
+
+        self::$contexts[$classname] = $instance;
+
+        return true;
     }
+
 }

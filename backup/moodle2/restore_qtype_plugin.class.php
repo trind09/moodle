@@ -181,7 +181,7 @@ abstract class restore_qtype_plugin extends restore_plugin {
                 $info = new stdClass();
                 $info->filequestionid = $oldquestionid;
                 $info->dbquestionid   = $newquestionid;
-                $info->answer         = s($data->answertext);
+                $info->answer         = $data->answertext;
                 throw new restore_step_exception('error_question_answers_missing_in_db', $info);
             }
             $newitemid = $this->questionanswercache[$data->answertext];

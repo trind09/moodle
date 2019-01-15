@@ -3,14 +3,14 @@
 /*
  * This file is part of Mustache.php.
  *
- * (c) 2010-2017 Justin Hileman
+ * (c) 2010-2014 Justin Hileman
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
 
 /**
- * Describes a Mustache logger instance.
+ * Describes a Mustache logger instance
  *
  * This is identical to the Psr\Log\LoggerInterface.
  *
@@ -29,7 +29,7 @@
 interface Mustache_Logger
 {
     /**
-     * Psr\Log compatible log levels.
+     * Psr\Log compatible log levels
      */
     const EMERGENCY = 'emergency';
     const ALERT     = 'alert';
@@ -45,6 +45,8 @@ interface Mustache_Logger
      *
      * @param string $message
      * @param array  $context
+     *
+     * @return null
      */
     public function emergency($message, array $context = array());
 
@@ -56,6 +58,8 @@ interface Mustache_Logger
      *
      * @param string $message
      * @param array  $context
+     *
+     * @return null
      */
     public function alert($message, array $context = array());
 
@@ -66,6 +70,8 @@ interface Mustache_Logger
      *
      * @param string $message
      * @param array  $context
+     *
+     * @return null
      */
     public function critical($message, array $context = array());
 
@@ -75,6 +81,8 @@ interface Mustache_Logger
      *
      * @param string $message
      * @param array  $context
+     *
+     * @return null
      */
     public function error($message, array $context = array());
 
@@ -86,6 +94,8 @@ interface Mustache_Logger
      *
      * @param string $message
      * @param array  $context
+     *
+     * @return null
      */
     public function warning($message, array $context = array());
 
@@ -94,6 +104,8 @@ interface Mustache_Logger
      *
      * @param string $message
      * @param array  $context
+     *
+     * @return null
      */
     public function notice($message, array $context = array());
 
@@ -104,6 +116,8 @@ interface Mustache_Logger
      *
      * @param string $message
      * @param array  $context
+     *
+     * @return null
      */
     public function info($message, array $context = array());
 
@@ -112,6 +126,8 @@ interface Mustache_Logger
      *
      * @param string $message
      * @param array  $context
+     *
+     * @return null
      */
     public function debug($message, array $context = array());
 
@@ -121,6 +137,8 @@ interface Mustache_Logger
      * @param mixed  $level
      * @param string $message
      * @param array  $context
+     *
+     * @return null
      */
     public function log($level, $message, array $context = array());
 }

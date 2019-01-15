@@ -118,6 +118,7 @@ function xmldb_main_install() {
     $defaults = array(
         'rolesactive'           => '0', // marks fully set up system
         'auth'                  => 'email',
+        'auth_pop3mailbox'      => 'INBOX',
         'enrol_plugins_enabled' => 'manual,guest,self,cohort',
         'theme'                 => theme_config::DEFAULT_THEME,
         'filter_multilang_converted' => 1,
@@ -129,11 +130,9 @@ function xmldb_main_install() {
         'stringfilters'         => '', // These two are managed in a strange way by the filters
         'filterall'             => 0, // setting page, so have to be initialised here.
         'texteditors'           => 'atto,tinymce,textarea',
-        'antiviruses'           => '',
-        'media_plugins_sortorder' => 'videojs,youtube,swf',
+        'upgrade_minmaxgradestepignored' => 1, // New installs should not run this upgrade step.
         'upgrade_extracreditweightsstepignored' => 1, // New installs should not run this upgrade step.
         'upgrade_calculatedgradeitemsignored' => 1, // New installs should not run this upgrade step.
-        'upgrade_letterboundarycourses' => 1, // New installs should not run this upgrade step.
     );
     foreach($defaults as $key => $value) {
         set_config($key, $value);
@@ -266,8 +265,8 @@ function xmldb_main_install() {
 
     // Default allow role matrices.
     foreach ($DB->get_records('role') as $role) {
-        foreach (array('assign', 'override', 'switch', 'view') as $type) {
-            $function = "core_role_set_{$type}_allowed";
+        foreach (array('assign', 'override', 'switch') as $type) {
+            $function = 'allow_'.$type;
             $allows = get_default_role_archetype_allows($type, $role->archetype);
             foreach ($allows as $allowid) {
                 $function($role->id, $allowid);
@@ -307,19 +306,4 @@ function xmldb_main_install() {
     $DB->insert_record('my_pages', $mypage);
     $mypage->private = 1;
     $DB->insert_record('my_pages', $mypage);
-
-    // Set a sensible default sort order for the most-used question types.
-    set_config('multichoice_sortorder', 1, 'question');
-    set_config('truefalse_sortorder', 2, 'question');
-    set_config('match_sortorder', 3, 'question');
-    set_config('shortanswer_sortorder', 4, 'question');
-    set_config('numerical_sortorder', 5, 'question');
-    set_config('essay_sortorder', 6, 'question');
-
-    require_once($CFG->libdir . '/db/upgradelib.php');
-    make_default_scale();
-    make_competence_scale();
-
-    // Add built-in prediction models.
-    \core_analytics\manager::add_builtin_models();
 }
